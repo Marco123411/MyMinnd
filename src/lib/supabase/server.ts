@@ -29,8 +29,11 @@ export async function createClient() {
 
 // WARNING: bypasses RLS — use only in trusted server-side code, never in user-facing routes
 export function createAdminClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set in environment variables')
+  }
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 }

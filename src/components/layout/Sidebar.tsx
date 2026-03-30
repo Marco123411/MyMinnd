@@ -6,14 +6,14 @@ import { cn } from '@/lib/utils'
 import { LayoutDashboard, Users, BarChart2, Settings, ShieldCheck } from 'lucide-react'
 
 const coachNavItems = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/dashboard/clients', label: 'Clients', icon: Users },
-  { href: '/dashboard/rapports', label: 'Rapports', icon: BarChart2 },
-  { href: '/dashboard/parametres', label: 'Paramètres', icon: Settings },
+  { href: '/coach', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
+  { href: '/coach/clients', label: 'Clients', icon: Users },
+  { href: '/coach/rapports', label: 'Rapports', icon: BarChart2 },
+  { href: '/coach/parametres', label: 'Paramètres', icon: Settings },
 ]
 
 const adminNavItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
   { href: '/admin/monitoring', label: 'Monitoring', icon: BarChart2 },
   { href: '/admin/config', label: 'Configuration', icon: ShieldCheck },
@@ -35,7 +35,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`)
           return (
             <Link
               key={item.href}
