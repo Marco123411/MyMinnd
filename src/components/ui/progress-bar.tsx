@@ -18,7 +18,7 @@ export function ProgressBar({
   color = 'teal',
   className,
 }: ProgressBarProps) {
-  const percentage = Math.min(100, Math.round((value / max) * 100))
+  const percentage = max <= 0 ? 0 : Math.min(100, Math.round((value / max) * 100))
 
   return (
     <div className={cn('space-y-1', className)}>

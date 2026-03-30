@@ -32,15 +32,17 @@ const MOCK_DATA: RadarDataPoint[] = [
 ]
 
 export function RadarChart({
-  data = MOCK_DATA,
+  data,
   color = '#20808D',
   height = 300,
   className,
 }: RadarChartProps) {
+  const chartData = data && data.length > 0 ? data : MOCK_DATA
+
   return (
     <div className={className} style={{ width: '100%', height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsRadarChart data={data}>
+        <RechartsRadarChart data={chartData}>
           <PolarGrid />
           <PolarAngleAxis
             dataKey="subject"
@@ -55,7 +57,10 @@ export function RadarChart({
             strokeWidth={2}
           />
           <Tooltip
-            formatter={(value) => [`${Number(value).toFixed(1)} / 10`, 'Score']}
+            formatter={(value, _name, props) => {
+              const fullMark = (props as { payload?: { fullMark?: number } }).payload?.fullMark ?? 10
+              return [`${Number(value).toFixed(1)} / ${fullMark}`, 'Score']
+            }}
           />
         </RechartsRadarChart>
       </ResponsiveContainer>
