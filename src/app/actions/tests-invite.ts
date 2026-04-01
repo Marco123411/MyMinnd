@@ -57,12 +57,13 @@ async function requireCoach() {
 /**
  * Crée un test d'invitation pour un client depuis la fiche CRM du coach.
  * Le test est toujours créé en status 'pending' : le client doit cliquer le lien pour démarrer.
+ * Si le client a un email, l'invitation lui est envoyée automatiquement.
  */
 export async function createInvitationAction(
   clientId: string,
   testDefinitionId: string,
   levelSlug: string
-): Promise<{ data: { testId: string; inviteUrl: string } | null; error: string | null }> {
+): Promise<{ data: { testId: string; inviteUrl: string; emailSent: boolean } | null; error: string | null }> {
   const parsed = createInvitationSchema.safeParse({ clientId, testDefinitionId, levelSlug })
   if (!parsed.success) return { data: null, error: parsed.error.issues[0].message }
 
@@ -107,7 +108,42 @@ export async function createInvitationAction(
 
   if (insertError || !test) return { data: null, error: insertError?.message ?? 'Erreur création test' }
 
-  return { data: { testId: test.id, inviteUrl: buildInviteUrl(token) }, error: null }
+  const inviteUrl = buildInviteUrl(token)
+
+  // Auto-envoi de l'email si le client a une adresse et que Resend est configuré
+  let emailSent = false
+  const clientEmail = client.email as string | null
+  if (clientEmail && process.env.RESEND_API_KEY) {
+    const [{ data: coachData }, { data: defData }] = await Promise.all([
+      admin.from('users').select('nom').eq('id', user.id).single(),
+      admin.from('test_definitions').select('name').eq('id', parsed.data.testDefinitionId).single(),
+    ])
+
+    const coachName = (coachData as { nom: string } | null)?.nom ?? 'Votre coach'
+    const testName = (defData as { name: string } | null)?.name ?? 'Test MINND'
+
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const { error: emailError } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL ?? 'MINND <noreply@myminnd.com>',
+      to: [clientEmail],
+      subject: `${coachName} vous invite à passer le ${testName} sur MINND`,
+      react: TestInvitationEmail({
+        coachName,
+        clientName: client.nom as string,
+        testName,
+        inviteUrl,
+        expiresAt: formatDateFr(expiresAt),
+      }),
+    })
+
+    if (emailError) {
+      console.error('[createInvitationAction] Erreur envoi email:', emailError.message)
+    } else {
+      emailSent = true
+    }
+  }
+
+  return { data: { testId: test.id, inviteUrl, emailSent }, error: null }
 }
 
 /**
@@ -125,20 +161,23 @@ export async function resendInvitationAction(
 
   const admin = createAdminClient()
 
-  // Récupère le test avec les infos nécessaires (admin requis pour invitation_token)
-  const { data: test, error: fetchError } = await admin
-    .from('tests')
-    .select(`
-      id,
-      coach_id,
-      invitation_token,
-      token_expires_at,
-      status,
-      test_definitions ( name ),
-      clients ( nom, email )
-    `)
-    .eq('id', testId)
-    .single()
+  // Parallélisation : test + nom du coach simultanément
+  const [{ data: test, error: fetchError }, { data: coachData }] = await Promise.all([
+    admin
+      .from('tests')
+      .select(`
+        id,
+        coach_id,
+        invitation_token,
+        token_expires_at,
+        status,
+        test_definitions ( name ),
+        clients ( nom, email )
+      `)
+      .eq('id', testId)
+      .single(),
+    admin.from('users').select('nom').eq('id', user.id).single(),
+  ])
 
   if (fetchError || !test) return { error: 'Test introuvable' }
   if (test.coach_id !== user.id) return { error: 'Accès refusé' }
@@ -156,13 +195,6 @@ export async function resendInvitationAction(
   const defRecord = definition as { name: string } | null
 
   if (!clientRecord?.email) return { error: 'Ce client n\'a pas d\'email renseigné' }
-
-  // Récupère le nom du coach
-  const { data: coachData } = await admin
-    .from('users')
-    .select('nom')
-    .eq('id', user.id)
-    .single()
 
   const coachName = coachData?.nom ?? 'Votre coach'
   const testName = defRecord?.name ?? 'Test MINND'

@@ -58,15 +58,12 @@ export default async function ProfilePage({ searchParams }: PageProps) {
       )}
 
       {data.selectedTest === null ? (
-        /* Aucun test complété */
+        /* Aucun test complété — message neutre, pas de CTA autonome */
         <div className="py-12 text-center">
           <p className="text-muted-foreground">Aucun test complété pour l&apos;instant.</p>
-          <Link
-            href="/test/pma"
-            className="mt-4 inline-block text-sm font-medium text-[#20808D] hover:underline"
-          >
-            Passer mon premier test →
-          </Link>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Votre coach vous enverra un test dès que vous serez prêt.
+          </p>
         </div>
       ) : (
         <>
@@ -100,8 +97,6 @@ export default async function ProfilePage({ searchParams }: PageProps) {
           <ProfileCard
             profile={data.profile}
             levelSlug={data.selectedTest.level_slug}
-            testSlug={data.selectedTest.definition_slug}
-            showUpsell
           />
         </>
       )}

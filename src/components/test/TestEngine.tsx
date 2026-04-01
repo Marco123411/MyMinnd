@@ -66,7 +66,7 @@ export function TestEngine({ testId, testSlug, questions, existingAnswers }: Tes
         setError(completeError)
         return
       }
-      router.push(`/test/${testSlug}/results/${testId}`)
+      router.push(`/test/${testSlug}/merci/${testId}`)
     },
     [currentIndex, questions, saving, testId, testSlug, router]
   )

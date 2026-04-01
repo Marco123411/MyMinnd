@@ -3,6 +3,8 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { computeTestScores } from '@/lib/scoring'
 import { z } from 'zod'
+import { Resend } from 'resend'
+import { TestCompletedCoachEmail } from '@/emails/TestCompletedCoachEmail'
 
 const createTestSchema = z.object({
   testDefinitionId: z.string().uuid(),
@@ -108,7 +110,7 @@ export async function completeTestAction(
   // Vérification propriété (lecture seule — le write atomique viendra après)
   const { data: test, error: testError } = await supabase
     .from('tests')
-    .select('id, test_definition_id, level_slug, status')
+    .select('id, test_definition_id, level_slug, status, coach_id')
     .eq('id', testId)
     .eq('user_id', user.id)
     .single()
@@ -170,6 +172,49 @@ export async function completeTestAction(
     await admin.from('test_scores').delete().eq('test_id', testId)
     const { error: insertError } = await admin.from('test_scores').insert(testScores)
     if (insertError) return { error: insertError.message }
+  }
+
+  // Notification email au coach si Resend configuré et coach assigné
+  if (process.env.RESEND_API_KEY && test.coach_id) {
+    const [{ data: coachAuthData }, { data: defData }, { data: clientData }] = await Promise.all([
+      admin.auth.admin.getUserById(test.coach_id),
+      admin.from('test_definitions').select('name').eq('id', test.test_definition_id).single(),
+      admin.from('users').select('nom, prenom').eq('id', user.id).single(),
+    ])
+
+    const coachEmail = coachAuthData?.user?.email
+    if (coachEmail) {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+
+      const { data: coachData } = await admin
+        .from('users')
+        .select('nom, prenom')
+        .eq('id', test.coach_id)
+        .single()
+
+      const coachFirstName = coachData?.prenom ?? coachData?.nom ?? 'Coach'
+      const clientFullName = [clientData?.prenom, clientData?.nom].filter(Boolean).join(' ') || 'Client'
+      const testName = defData?.name ?? 'Test MINND'
+      const annotateUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/coach/tests/${testId}/results`
+
+      const { error: emailError } = await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL ?? 'MINND <noreply@myminnd.com>',
+        to: [coachEmail],
+        subject: `${clientFullName} a complété son test ${testName}`,
+        react: TestCompletedCoachEmail({
+          coachName: coachFirstName,
+          clientName: clientFullName,
+          testName,
+          levelSlug: test.level_slug,
+          globalScore: scoring.globalScore ?? 0,
+          annotateUrl,
+        }),
+      })
+
+      if (emailError) {
+        console.error('[completeTestAction] Erreur envoi email coach:', emailError.message)
+      }
+    }
   }
 
   return { error: null }

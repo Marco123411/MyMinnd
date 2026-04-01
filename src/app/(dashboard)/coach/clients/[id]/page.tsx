@@ -13,6 +13,17 @@ import { NotesEditor } from './NotesEditor'
 import { SendTestModal } from '@/components/coach/SendTestModal'
 import { TestHistoryCoach } from '@/components/coach/TestHistoryCoach'
 import { Pencil } from 'lucide-react'
+import { SessionTimeline } from '@/components/sessions/SessionTimeline'
+import { PlanCabinetSessionModal } from '@/components/sessions/PlanCabinetSessionModal'
+import { AssignAutonomousSessionModal } from '@/components/sessions/AssignAutonomousSessionModal'
+import { CreateRecurringTemplateModal } from '@/components/sessions/CreateRecurringTemplateModal'
+import { InvitationActions } from '@/components/coach/InvitationActions'
+import { ClientAccountActions } from '@/components/coach/ClientAccountActions'
+import { getClientSessionHistoryAction } from '@/app/actions/sessions'
+import { getExercisesAction } from '@/app/actions/exercises'
+import { getCognitiveSessionsForClient } from '@/app/actions/cognitive-results'
+import { CognitiveTab } from './CognitiveTab'
+import { ProfileIntelligenceTab } from './ProfileIntelligenceTab'
 import type { ClientContext, TestLevelConfig, SubscriptionTier } from '@/types'
 
 interface TestDefinitionForModal {
@@ -38,23 +49,30 @@ const CONTEXT_COLORS: Record<ClientContext, string> = {
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { data: client, error } = await getClientAction(id)
+
+  // Parallélisation : auth + fetch client simultanément
+  const supabase = await createClient()
+  const [{ data: client, error }, { data: { user } }] = await Promise.all([
+    getClientAction(id),
+    supabase.auth.getUser(),
+  ])
 
   if (error || !client) notFound()
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
   const coachId = user?.id ?? ''
 
   // Admin client nécessaire pour lire invitation_token (révoqué pour authenticated)
   const admin = createAdminClient()
 
-  // Requêtes parallèles : dernier test complété + définitions + historique + nom du coach
+  // Requêtes parallèles : dernier test complété + définitions + historique + coach + réponses exercices
   const [
     { data: lastTest },
     { data: testDefinitionsRaw },
     { data: testHistory },
     { data: coachData },
+    { data: sessionHistory, error: sessionHistoryError },
+    { data: exercises },
+    { data: cognitiveSessions },
   ] = await Promise.all([
     // Dernier test complété pour le radar/score
     client.user_id
@@ -88,6 +106,15 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
     // Données du coach (nom pour emails, subscription_tier pour SendTestModal)
     admin.from('users').select('nom, subscription_tier').eq('id', coachId).single(),
+
+    // Historique des séances — client_id dans cabinet/autonomous_sessions = auth user_id, pas le CRM id
+    getClientSessionHistoryAction(client.user_id ?? ''),
+
+    // Exercices disponibles pour les modals de séance
+    getExercisesAction(),
+
+    // Sessions cognitives complètes du client (onglet Cognitif)
+    getCognitiveSessionsForClient(id),
   ])
 
   // Scores par domaine du dernier test (dépend de lastTest.id)
@@ -168,6 +195,23 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     ))}
                   </div>
                 )}
+                {/* Statut d'invitation et bouton d'action */}
+                <div className="mt-2">
+                  <InvitationActions
+                    clientId={id}
+                    status={client.invitation_status}
+                    hasUserAccount={!!client.user_id}
+                  />
+                </div>
+                {/* Actions de gestion du compte (reset MDP, changement email) */}
+                {client.user_id && client.email && (
+                  <div className="mt-2">
+                    <ClientAccountActions
+                      clientId={id}
+                      currentEmail={client.email}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -225,64 +269,30 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               <Badge variant="secondary" className="ml-1.5 text-xs">{testHistory.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="cognitif">
+            Cognitif
+            {cognitiveSessions && cognitiveSessions.length > 0 && (
+              <Badge variant="secondary" className="ml-1.5 text-xs">{cognitiveSessions.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="seances">Séances</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
 
-        {/* Profil */}
-        <TabsContent value="profil" className="mt-4 space-y-4">
-          {!client.user_id || !lastTest ? (
+        {/* Profil — Intelligence Layer étape 25 */}
+        <TabsContent value="profil" className="mt-4">
+          {!client.user_id ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
-                {!client.user_id
-                  ? 'Ce client n\'a pas encore de compte MINND lié.'
-                  : 'Aucun test complété pour ce client.'}
+                Ce client n&apos;a pas encore de compte MINND lié.
               </CardContent>
             </Card>
           ) : (
-            <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Card>
-                  <CardHeader><CardTitle className="text-sm">Score global</CardTitle></CardHeader>
-                  <CardContent>
-                    {lastTest.score_global !== null ? (
-                      <ScoreDisplay score={lastTest.score_global} size="lg" />
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle className="text-sm">Profil MINND</CardTitle></CardHeader>
-                  <CardContent>
-                    {profile ? (
-                      <Badge style={{ backgroundColor: profile.color, color: '#fff' }} className="text-sm">
-                        {profile.name}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Non disponible</span>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle className="text-sm">Dernier test</CardTitle></CardHeader>
-                  <CardContent className="text-sm text-muted-foreground">
-                    {lastTest.completed_at
-                      ? new Date(lastTest.completed_at).toLocaleDateString('fr-FR')
-                      : '—'}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {radarData.length > 0 && (
-                <Card>
-                  <CardHeader><CardTitle className="text-sm">Radar des domaines</CardTitle></CardHeader>
-                  <CardContent>
-                    <RadarChart data={radarData} height={280} />
-                  </CardContent>
-                </Card>
-              )}
-            </>
+            <ProfileIntelligenceTab
+              lastTestId={lastTest?.id ?? null}
+              levelSlug={lastTest?.level_slug ?? null}
+              hasProfile={!!profile}
+            />
           )}
         </TabsContent>
 
@@ -300,13 +310,54 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </Card>
         </TabsContent>
 
-        {/* Séances */}
+        {/* Cognitif — tests trial-based */}
+        <TabsContent value="cognitif" className="mt-4">
+          <CognitiveTab
+            sessions={cognitiveSessions ?? []}
+            clientId={id}
+            coachId={coachId}
+          />
+        </TabsContent>
+
+        {/* Séances — historique cabinet, autonomie et récurrentes */}
         <TabsContent value="seances" className="mt-4">
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-2xl">🚧</p>
-              <p className="mt-2 font-medium">Bientôt disponible</p>
-              <p className="text-sm text-muted-foreground">La gestion des séances sera disponible dans une prochaine mise à jour.</p>
+            <CardHeader>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-sm">Historique des séances</CardTitle>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {!sessionHistoryError && (
+                    <span className="text-xs text-gray-400">
+                      {sessionHistory.length} séance{sessionHistory.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {client.user_id && (
+                    <>
+                      <PlanCabinetSessionModal
+                        clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
+                        exercises={exercises ?? []}
+                      />
+                      <AssignAutonomousSessionModal
+                        clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
+                        exercises={exercises ?? []}
+                      />
+                      <CreateRecurringTemplateModal
+                        clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
+                        exercises={exercises ?? []}
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {sessionHistoryError ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  Impossible de charger les séances.
+                </p>
+              ) : (
+                <SessionTimeline items={sessionHistory} />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -26,7 +26,7 @@ export default async function PassPage({ params }: PageProps) {
     .single()
 
   if (testError || !test) redirect(`/test/${slug}`)
-  if (test.status === 'completed') redirect(`/test/${slug}/results/${testId}`)
+  if (test.status === 'completed') redirect(`/test/${slug}/merci/${testId}`)
 
   // Récupère les questions selon le niveau du test
   const questionsQuery =
@@ -65,7 +65,7 @@ export default async function PassPage({ params }: PageProps) {
   const allAnswered = questionList.length > 0 && questionList.every((q) => q.id in existingAnswers)
   if (allAnswered) {
     await completeTestAction(testId) // idempotent si déjà complété
-    redirect(`/test/${slug}/results/${testId}`)
+    redirect(`/test/${slug}/merci/${testId}`)
   }
 
   return (

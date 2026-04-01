@@ -28,6 +28,12 @@ export interface ClientHomeData {
   globalScore: number | null
   globalPercentile: number | null
   profile: { id: string; name: string; color: string } | null
+  pendingTests: Array<{
+    id: string
+    inviteUrl: string
+    definition_name: string
+    level_slug: TestLevelSlug
+  }>
 }
 
 export interface ClientProfileData {
@@ -78,6 +84,7 @@ export interface ClientTestDetail {
   }>
   profile: MentalProfile | null
   globalPercentile: number | null
+  notesMap: Record<string, string>
 }
 
 export interface ClientHistoryData {
@@ -105,11 +112,18 @@ async function requireAuthUser() {
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
-/** Données pour la page d'accueil client : dernier test + radar + profil */
+// Construit l'URL d'invitation à partir du token (même logique que tests-invite.ts)
+function buildInviteUrl(token: string): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  return `${base}/test/invite/${token}`
+}
+
+/** Données pour la page d'accueil client : dernier test + radar + profil + tests en attente */
 export async function getClientHomeData(): Promise<ClientHomeData> {
   const { supabase, userId } = await requireAuthUser()
+  const admin = createAdminClient()
 
-  const [userResult, testResult] = await Promise.all([
+  const [userResult, testResult, clientCrmResult] = await Promise.all([
     supabase
       .from('users')
       .select('id, nom, prenom, context')
@@ -120,7 +134,15 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
       .select('id, level_slug, score_global, profile_id, completed_at, test_definition_id, test_definitions(id, name, slug)')
       .eq('user_id', userId)
       .eq('status', 'completed')
+      .not('results_released_at', 'is', null)
       .order('completed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // Admin requis : RLS de clients n'autorise que coach_id = auth.uid()
+    admin
+      .from('clients')
+      .select('id')
+      .eq('user_id', userId)
       .limit(1)
       .maybeSingle(),
   ])
@@ -130,6 +152,34 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
   const userData = userResult.data
   const latestTestRaw = testResult.data as (typeof testResult.data & { test_definitions: { id: string; name: string; slug: string } | null }) | null
 
+  // Récupère les tests en attente via le record CRM (les tests pending ont user_id = null)
+  type PendingRow = {
+    id: string
+    level_slug: string
+    invitation_token: string | null
+    test_definitions: { name: string } | null
+  }
+  let pendingTests: ClientHomeData['pendingTests'] = []
+  const clientCrmRecord = clientCrmResult.data
+  if (clientCrmRecord) {
+    const { data: pendingRows } = await admin
+      .from('tests')
+      .select('id, level_slug, invitation_token, test_definitions(name)')
+      .eq('client_id', clientCrmRecord.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    pendingTests = ((pendingRows ?? []) as unknown as PendingRow[])
+      .filter((r) => r.invitation_token)
+      .map((r) => ({
+        id: r.id,
+        inviteUrl: buildInviteUrl(r.invitation_token!),
+        definition_name: r.test_definitions?.name ?? '—',
+        level_slug: r.level_slug as TestLevelSlug,
+      }))
+  }
+
   if (!latestTestRaw || !latestTestRaw.test_definitions) {
     return {
       user: userData,
@@ -138,6 +188,7 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
       globalScore: null,
       globalPercentile: null,
       profile: null,
+      pendingTests,
     }
   }
 
@@ -189,6 +240,7 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
     globalScore,
     globalPercentile,
     profile: profileResult.data ?? null,
+    pendingTests,
   }
 }
 
@@ -303,7 +355,7 @@ export async function getClientTestDetail(testId: string): Promise<ClientTestDet
 
   const { data: testRaw, error: testError } = await supabase
     .from('tests')
-    .select('id, level_slug, score_global, completed_at, report_url, profile_id, test_definition_id, test_definitions(id, name, slug)')
+    .select('id, level_slug, score_global, completed_at, report_url, profile_id, test_definition_id, results_released_at, test_definitions(id, name, slug)')
     .eq('id', testId)
     .eq('user_id', userId)
     .eq('status', 'completed')
@@ -319,13 +371,17 @@ export async function getClientTestDetail(testId: string): Promise<ClientTestDet
     report_url: string | null
     profile_id: string | null
     test_definition_id: string
+    results_released_at: string | null
     test_definitions: { id: string; name: string; slug: string } | null
   }
   const test = testRaw as unknown as TestRaw
   if (!test.test_definitions) return null
 
-  // Requête profil incluse dans le Promise.all (supprime le waterfall séquentiel)
-  const [nodesResult, scoresResult, profileResult] = await Promise.all([
+  // Si les résultats ne sont pas encore publiés par le coach, bloquer l'accès
+  if (!test.results_released_at) return null
+
+  // Requête profil + notes incluses dans le Promise.all (supprime le waterfall séquentiel)
+  const [nodesResult, scoresResult, profileResult, notesResult] = await Promise.all([
     supabase
       .from('competency_tree')
       .select('id, parent_id, name, depth, is_leaf, order_index')
@@ -342,11 +398,20 @@ export async function getClientTestDetail(testId: string): Promise<ClientTestDet
           .eq('id', test.profile_id)
           .single()
       : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from('test_coach_notes')
+      .select('node_id, note')
+      .eq('test_id', testId),
   ])
 
   const nodes = nodesResult.data ?? []
   const scores = scoresResult.data ?? []
   const profile = profileResult.data as MentalProfile | null
+
+  const notesMap: Record<string, string> = {}
+  for (const row of notesResult.data ?? []) {
+    notesMap[row.node_id] = row.note
+  }
 
   const globalRow = scores.find((s) => s.entity_type === 'global')
 
@@ -365,6 +430,7 @@ export async function getClientTestDetail(testId: string): Promise<ClientTestDet
     scores,
     profile,
     globalPercentile: globalRow?.percentile ?? null,
+    notesMap,
   }
 }
 
@@ -377,6 +443,7 @@ export async function getClientHistory(): Promise<ClientHistoryData> {
     .select('id, level_slug, score_global, completed_at, profile_id, test_definition_id, test_definitions(id, name, slug)')
     .eq('user_id', userId)
     .eq('status', 'completed')
+    .not('results_released_at', 'is', null)
     .order('completed_at', { ascending: false })
 
   type TestRaw = {
@@ -500,8 +567,10 @@ export async function getClientHistory(): Promise<ClientHistoryData> {
 export async function getClientCoach() {
   const { supabase, userId } = await requireAuthUser()
 
-  // Chercher l'enregistrement CRM où user_id = userId
-  const { data: clientRecord } = await supabase
+  // Admin client nécessaire : la RLS de `clients` autorise uniquement coach_id = auth.uid()
+  // Un client ne peut pas lire son propre enregistrement CRM via le client RLS standard
+  const admin = createAdminClient()
+  const { data: clientRecord } = await admin
     .from('clients')
     .select('id, coach_id, nom, email')
     .eq('user_id', userId)
@@ -511,16 +580,18 @@ export async function getClientCoach() {
   if (!clientRecord) return { coach: null, sentTests: [] }
 
   const [coachResult, testsResult] = await Promise.all([
-    supabase
+    // Admin client : la RLS de `users` n'autorise pas un client à lire le profil d'un autre user
+    admin
       .from('users')
       .select('id, nom, prenom, photo_url')
       .eq('id', clientRecord.coach_id)
       .single(),
-    supabase
+    // Admin requis : les tests pending ont user_id = null, invisibles via RLS client standard
+    // On filtre par client_id (record CRM) pour inclure les tests en attente
+    admin
       .from('tests')
       .select('id, level_slug, status, score_global, completed_at, created_at, test_definitions(name)')
-      .eq('user_id', userId)
-      .eq('coach_id', clientRecord.coach_id)
+      .eq('client_id', clientRecord.id)
       .order('created_at', { ascending: false })
       .limit(10),
   ])
@@ -607,4 +678,54 @@ export async function deleteClientAccount(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
+}
+
+// ─── Nav visibility ───────────────────────────────────────────────────────────
+
+export interface ClientNavVisibility {
+  hasExercises: boolean
+  hasSessions: boolean
+  hasTests: boolean
+  hasCognitive: boolean
+}
+
+/** Détermine quels onglets nav afficher selon le contenu assigné au client */
+export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { hasExercises: false, hasSessions: false, hasTests: false, hasCognitive: false }
+  }
+
+  const [exercises, sessions, tests, cognitive] = await Promise.all([
+    supabase
+      .from('exercises')
+      .select('id', { count: 'exact', head: true })
+      .eq('client_id', user.id)
+      .limit(1),
+    supabase
+      .from('cabinet_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('client_id', user.id)
+      .limit(1),
+    supabase
+      .from('tests')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .limit(1),
+    supabase
+      .from('cognitive_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .limit(1),
+  ])
+
+  return {
+    hasExercises: (exercises.count ?? 0) > 0,
+    hasSessions: (sessions.count ?? 0) > 0,
+    hasTests: (tests.count ?? 0) > 0,
+    hasCognitive: (cognitive.count ?? 0) > 0,
+  }
 }

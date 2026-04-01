@@ -9,11 +9,17 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   completeProfileSchema,
+  clientOnboardingSchema,
+  updateProfileSchema,
+  changePasswordSchema,
   type LoginFormData,
   type RegisterFormData,
   type ForgotPasswordFormData,
   type ResetPasswordFormData,
   type CompleteProfileFormData,
+  type ClientOnboardingFormData,
+  type UpdateProfileFormData,
+  type ChangePasswordFormData,
 } from '@/lib/validations/auth'
 import type { UserRole } from '@/types'
 
@@ -32,14 +38,15 @@ export async function signUpAction(
     return { error: parsed.error.issues[0].message }
   }
 
-  const { email, password, nom, prenom, role, context } = parsed.data
+  // Inscription publique = coachs uniquement
+  const { email, password, nom, prenom } = parsed.data
   const supabase = await createClient()
 
   const { data, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { nom, prenom: prenom ?? null, role, context: role === 'coach' ? null : (context ?? null) },
+      data: { nom, prenom: prenom ?? null, role: 'coach', context: null },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/callback`,
     },
   })
@@ -47,13 +54,13 @@ export async function signUpAction(
   if (signUpError) return { error: signUpError.message }
   if (!data.user) return { error: "Erreur lors de la création du compte" }
 
-  // Met à jour le rôle et contexte via client admin (le trigger crée avec role='client' par défaut)
+  // Met à jour le rôle via client admin (le trigger crée avec role='client' par défaut)
   const admin = createAdminClient()
   const { error: profileError } = await admin
     .from('users')
     .update({
-      role,
-      context: role === 'coach' ? null : (context ?? null),
+      role: 'coach',
+      context: null,
       nom,
       prenom: prenom ?? null,
     })
@@ -197,4 +204,96 @@ export async function completeProfileAction(
   if (!parsedRole.success) return { error: 'Rôle invalide' }
 
   redirectByRole(parsedRole.data)
+}
+
+export async function updateProfileAction(
+  formData: UpdateProfileFormData
+): Promise<{ error: string | null }> {
+  const parsed = updateProfileSchema.safeParse(formData)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ nom: parsed.data.nom, prenom: parsed.data.prenom ?? null })
+    .eq('id', user.id)
+
+  if (error) return { error: 'Impossible de mettre à jour le profil' }
+  return { error: null }
+}
+
+export async function changePasswordAction(
+  formData: ChangePasswordFormData
+): Promise<{ error: string | null }> {
+  const parsed = changePasswordSchema.safeParse(formData)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+// Complète l'onboarding client : enregistre le contexte (sport/corporate/wellbeing/coaching)
+// et les champs conditionnels (discipline, entreprise) dans public.users + public.clients
+export async function completeClientOnboardingAction(
+  formData: ClientOnboardingFormData
+): Promise<{ error: string | null }> {
+  const parsed = clientOnboardingSchema.safeParse(formData)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const { context, sport, entreprise } = parsed.data
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) return { error: 'Non authentifié' }
+
+  // Vérifie que l'utilisateur est bien un client
+  const { data: currentProfile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!currentProfile) return { error: 'Profil introuvable' }
+  if (currentProfile.role !== 'client') return { error: 'Action réservée aux clients' }
+
+  const admin = createAdminClient()
+
+  // Met à jour le contexte dans public.users via client admin (contourne RLS)
+  const { error: userUpdateError } = await admin
+    .from('users')
+    .update({ context })
+    .eq('id', user.id)
+
+  if (userUpdateError) return { error: userUpdateError.message }
+
+  // Met à jour les champs conditionnels dans public.clients si applicable
+  if (context === 'sport' || context === 'corporate') {
+    const clientUpdate: { sport?: string; entreprise?: string } = {}
+    if (context === 'sport') clientUpdate.sport = sport ?? undefined
+    if (context === 'corporate') clientUpdate.entreprise = entreprise ?? undefined
+
+    const { error: clientUpdateError } = await admin
+      .from('clients')
+      .update(clientUpdate)
+      .eq('user_id', user.id)
+
+    if (clientUpdateError) {
+      console.error('[completeClientOnboardingAction] clients update error:', clientUpdateError.message)
+      // Non-bloquant : le contexte principal est enregistré, les champs secondaires peuvent être mis à jour plus tard
+    }
+  }
+
+  return { error: null }
 }

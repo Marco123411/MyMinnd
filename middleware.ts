@@ -1,12 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { z } from 'zod'
 import type { UserRole } from '@/types'
+
+const roleSchema = z.enum(['client', 'coach', 'admin'])
 
 // Routes publiques — accessibles sans session
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/complete-profile']
 
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((r) => pathname === r) || pathname.startsWith('/auth/') || pathname.startsWith('/test/invite/')
+  return PUBLIC_ROUTES.some((r) => pathname === r)
+    || pathname.startsWith('/auth/')
+    || pathname.startsWith('/test/invite/')
+    || pathname.startsWith('/marketplace')   // Annuaire public des experts MINND
+    || pathname === '/api/stripe/webhooks' // Stripe envoie sans cookie de session (exact match)
 }
 
 // Redirige vers l'espace approprié selon le rôle
@@ -65,7 +72,7 @@ export async function middleware(request: NextRequest) {
   // Récupère le rôle depuis public.users pour les routes protégées
   const { data: userData } = await supabase
     .from('users')
-    .select('role')
+    .select('role, context')
     .eq('id', user.id)
     .single()
 
@@ -73,11 +80,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  const role = userData.role as UserRole
+  // F1: validation du rôle avec Zod (cohérent avec auth/callback)
+  const parsedRole = roleSchema.safeParse(userData.role)
+  if (!parsedRole.success) {
+    return NextResponse.redirect(new URL('/login?error=invalid_role', request.url))
+  }
+  const role: UserRole = parsedRole.data
 
   // Mauvais rôle pour cette route → redirection vers l'espace approprié
   if (!isRouteAllowed(pathname, role)) {
     return NextResponse.redirect(new URL(roleHome(role), request.url))
+  }
+
+  // F2: Client sans contexte → onboarding obligatoire (couvre /client/* ET /test/*)
+  // Exception : /accept-invite permet au client invité de définir son mot de passe avant l'onboarding
+  if (
+    role === 'client' &&
+    userData.context === null &&
+    !pathname.startsWith('/client/onboarding') &&
+    pathname !== '/accept-invite'
+  ) {
+    return NextResponse.redirect(new URL('/client/onboarding', request.url))
   }
 
   return response

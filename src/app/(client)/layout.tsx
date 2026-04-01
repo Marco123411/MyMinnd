@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { ClientNav } from '@/components/client/ClientNav'
+import { ClientNavWrapper } from '@/components/client/ClientNavWrapper'
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +11,9 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <Footer />
-      <ClientNav />
+      <Suspense fallback={<nav className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t bg-background" />}>
+        <ClientNavWrapper />
+      </Suspense>
     </div>
   )
 }

@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatsCards } from '@/components/coach/StatsCards'
 import { AlertsList, type CoachAlert } from '@/components/coach/AlertsList'
 import { Badge } from '@/components/ui/badge'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, Brain } from 'lucide-react'
+import { getCoachCognitiveStatsAction } from '@/app/actions/cognitive-results'
 
 export default async function CoachPage() {
   const supabase = await createClient()
@@ -48,31 +49,49 @@ export default async function CoachPage() {
       ? Math.round(((testsCompletesMois ?? 0) / testsEnvoyesMois) * 100)
       : 0
 
-  // F7+F13+F14 FIX : alertes correctes sans N+1 ni boucle défectueuse
   const threeMonthsAgo = new Date()
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
-  // Toutes les requêtes d'alertes en parallèle
+  // Étape 1 : clients actifs (nécessaire pour filtrer les tests par user_id ensuite)
+  const { data: clientsData } = await supabase
+    .from('clients')
+    .select('id, nom, user_id')
+    .eq('coach_id', user?.id ?? '')
+    .eq('statut', 'actif')
+
+  // IDs et user_ids des clients du coach pour les deux axes de recherche
+  const clientIds = (clientsData ?? []).map((c) => c.id)
+  const clientUserIds = (clientsData ?? []).map((c) => c.user_id).filter(Boolean) as string[]
+
+  // Admin client : bypass RLS pour voir tous les tests des clients (peu importe coach_id)
+  const admin = createAdminClient()
+
+  // Étape 2 : requêtes parallèles
   const [
-    { data: clientsData },
     { data: recentTestRows },
     { data: pendingTests },
     { data: recentResults },
+    { data: cognitiveStats },
   ] = await Promise.all([
-    // Clients actifs du coach
-    supabase
-      .from('clients')
-      .select('id, nom, user_id')
-      .eq('coach_id', user?.id ?? '')
-      .eq('statut', 'actif'),
-    // user_ids avec un test complété dans les 3 derniers mois
-    supabase
-      .from('tests')
-      .select('user_id')
-      .eq('coach_id', user?.id ?? '')
-      .eq('status', 'completed')
-      .gte('completed_at', threeMonthsAgo.toISOString()),
+    // Tests complétés dans les 3 derniers mois pour ces clients
+    // Croise par client_id (tests assignés par coach) ET user_id (tests auto-démarrés)
+    // Utilise le client admin pour bypasser la RLS (tests_select_coach ne suffit pas pour les tests sans coach_id)
+    clientIds.length > 0 || clientUserIds.length > 0
+      ? admin
+          .from('tests')
+          .select('client_id, user_id')
+          .eq('status', 'completed')
+          .gte('completed_at', threeMonthsAgo.toISOString())
+          .or(
+            [
+              clientIds.length > 0 ? `client_id.in.(${clientIds.join(',')})` : null,
+              clientUserIds.length > 0 ? `user_id.in.(${clientUserIds.join(',')})` : null,
+            ]
+              .filter(Boolean)
+              .join(',')
+          )
+      : Promise.resolve({ data: [] as { client_id: string | null; user_id: string | null }[] }),
     // Tests en attente depuis plus de 7 jours
     supabase
       .from('tests')
@@ -81,7 +100,7 @@ export default async function CoachPage() {
       .in('status', ['pending', 'in_progress'])
       .lt('created_at', sevenDaysAgo.toISOString())
       .limit(10),
-    // Derniers résultats
+    // Derniers résultats (filtre coach_id pour la vue coach uniquement)
     supabase
       .from('tests')
       .select(`
@@ -96,9 +115,15 @@ export default async function CoachPage() {
       .eq('status', 'completed')
       .order('completed_at', { ascending: false })
       .limit(5),
+    // Stats cognitives (widget)
+    getCoachCognitiveStatsAction(),
   ])
 
-  // Calcul des alertes en mémoire (zéro requête supplémentaire)
+  // Calcul des alertes en mémoire
+  // Un client est "testé récemment" si un test récent le référence par client_id OU par user_id
+  const recentClientIdSet = new Set(
+    (recentTestRows ?? []).map((t) => t.client_id).filter(Boolean)
+  )
   const recentUserIdSet = new Set(
     (recentTestRows ?? []).map((t) => t.user_id).filter(Boolean)
   )
@@ -113,9 +138,10 @@ export default async function CoachPage() {
 
   const alerts: CoachAlert[] = []
 
-  // Clients sans re-test depuis 3 mois (a un compte lié et pas de test récent)
+  // Clients sans re-test depuis 3 mois
+  // Exclut si un test récent les référence par client_id OU par user_id
   ;(clientsData ?? [])
-    .filter((c) => c.user_id && !recentUserIdSet.has(c.user_id))
+    .filter((c) => !recentClientIdSet.has(c.id) && !(c.user_id && recentUserIdSet.has(c.user_id)))
     .slice(0, 5)
     .forEach((c) => {
       alerts.push({
@@ -164,6 +190,40 @@ export default async function CoachPage() {
         testsEnvoyesMois={testsEnvoyesMois ?? 0}
         tauxCompletion={tauxCompletion}
       />
+
+      {/* Widget tests cognitifs */}
+      {cognitiveStats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Brain className="h-4 w-4 text-[#20808D]" />
+              Tests cognitifs
+              <Badge variant="secondary" className="ml-auto text-xs">
+                {cognitiveStats.count} ce mois
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cognitiveStats.recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun test cognitif complété récemment.</p>
+            ) : (
+              <ul className="space-y-2">
+                {cognitiveStats.recent.map((s) => {
+                  const client = s.computed_metrics ? clientByUserId.get(s.id) : null
+                  return (
+                    <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="font-medium">{s.test_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {s.completed_at ? new Date(s.completed_at).toLocaleDateString('fr-FR') : ''}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Alertes */}

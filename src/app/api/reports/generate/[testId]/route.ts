@@ -117,7 +117,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     test.profile_id
       ? admin
           .from('profiles')
-          .select('id, test_definition_id, name, family, color, population_pct, avg_score, description, strengths, weaknesses, recommendations')
+          .select('id, test_definition_id, name, family, color, population_pct, avg_score, description, strengths, weaknesses, recommendations, tagline, celebrity_examples, coach_priority, coach_exercise, coach_trap, team_role, team_contribution, avg_compatibility, forces_details, faiblesses_details')
           .eq('id', test.profile_id)
           .single()
       : Promise.resolve({ data: null, error: null }),
@@ -193,8 +193,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     pdfBuffer = await renderToBuffer(
       createElement(ReportDocument, { data: reportData }) as ReactElement<DocumentProps>
     )
-  } catch {
-    return NextResponse.json({ error: 'Erreur de génération du rapport PDF' }, { status: 500 })
+  } catch (renderErr) {
+    console.error('[PDF] renderToBuffer failed:', renderErr)
+    const message = renderErr instanceof Error ? renderErr.message : String(renderErr)
+    return NextResponse.json({ error: `Erreur de génération du rapport PDF: ${message}` }, { status: 500 })
   }
 
   // ── Upload sur Supabase Storage (bucket privé) ───────────────

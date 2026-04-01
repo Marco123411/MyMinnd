@@ -62,17 +62,20 @@ export default async function ResultsPage({ params }: PageProps) {
 
   const { data: testRow, error: testError } = await supabase
     .from('tests')
-    .select('id, level_slug, status, score_global, profile_id, test_definition_id, test_definitions(id, name, levels)')
+    .select('id, level_slug, status, score_global, profile_id, test_definition_id, results_released_at, test_definitions(id, name, levels)')
     .eq('id', testId)
     .eq('user_id', user.id)
     .single()
 
   if (testError || !testRow) redirect(`/test/${slug}`)
 
-  const test = testRow as unknown as TestRow
+  const test = testRow as unknown as TestRow & { results_released_at: string | null }
 
   // Redirige si le test n'est pas encore terminé
   if (test.status !== 'completed') redirect(`/test/${slug}/pass/${testId}`)
+
+  // Si les résultats ne sont pas encore publiés par le coach, rediriger vers la page d'attente
+  if (!test.results_released_at) redirect(`/test/${slug}/merci/${testId}`)
 
   const definition = test.test_definitions
   if (!definition) redirect(`/test/${slug}`)

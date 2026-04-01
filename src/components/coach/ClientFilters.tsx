@@ -75,6 +75,7 @@ export function ClientFilters({ onFilterChange, availableTags = [] }: ClientFilt
         <SelectContent>
           <SelectItem value="all">Tous les statuts</SelectItem>
           <SelectItem value="actif">Actif</SelectItem>
+          <SelectItem value="en_attente">En attente de test</SelectItem>
           <SelectItem value="en_pause">En pause</SelectItem>
           <SelectItem value="archive">Archivé</SelectItem>
         </SelectContent>

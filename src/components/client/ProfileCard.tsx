@@ -1,36 +1,16 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import type { MentalProfile, TestLevelSlug } from '@/types'
 
 interface ProfileCardProps {
   profile: MentalProfile | null
   levelSlug: TestLevelSlug
-  testSlug?: string
-  showUpsell?: boolean
 }
 
-export function ProfileCard({ profile, levelSlug, testSlug, showUpsell }: ProfileCardProps) {
+export function ProfileCard({ profile, levelSlug }: ProfileCardProps) {
   const isDiscovery = levelSlug === 'discovery'
 
-  // Upsell pour les tests Discovery sans profil
+  // Pas de profil disponible pour ce niveau → rien à afficher
   if (isDiscovery || !profile) {
-    if (!showUpsell) return null
-    return (
-      <div className="rounded-xl border-2 border-[#20808D] bg-[#E8F4F5] p-6 text-center">
-        <h3 className="text-lg font-bold text-[#1A1A2E]">Débloquez votre profil mental</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Passez au test Complet pour découvrir votre profil MINND détaillé, vos forces, axes
-          d&apos;amélioration et recommandations personnalisées.
-        </p>
-        {testSlug && (
-          <Link href={`/test/${testSlug}`} className="mt-4 inline-block">
-            <Button className="bg-[#20808D] hover:bg-[#186870]">
-              Passer au test Complet
-            </Button>
-          </Link>
-        )}
-      </div>
-    )
+    return null
   }
 
   return (

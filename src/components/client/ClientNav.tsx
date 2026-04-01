@@ -2,19 +2,26 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Brain, Clock, UserCheck, Settings } from 'lucide-react'
+import { Home, Brain, Clock, UserCheck, Dumbbell, CalendarDays, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { ClientNavVisibility } from '@/app/actions/client-data'
 
-const navItems = [
-  { href: '/client', label: 'Accueil', icon: Home, exact: true },
-  { href: '/client/profile', label: 'Profil', icon: Brain, exact: false },
-  { href: '/client/history', label: 'Historique', icon: Clock, exact: false },
-  { href: '/client/coach', label: 'Coach', icon: UserCheck, exact: false },
-  { href: '/client/settings', label: 'Réglages', icon: Settings, exact: false },
-]
+interface ClientNavProps {
+  visibility: ClientNavVisibility
+}
 
-export function ClientNav() {
+export function ClientNav({ visibility }: ClientNavProps) {
   const pathname = usePathname()
+
+  const navItems = [
+    { href: '/client', label: 'Accueil', icon: Home, exact: true, show: true },
+    { href: '/client/profile', label: 'Profil', icon: Brain, exact: false, show: true },
+    { href: '/client/exercises', label: 'Exercices', icon: Dumbbell, exact: false, show: visibility.hasExercises },
+    { href: '/client/sessions', label: 'Séances', icon: CalendarDays, exact: false, show: visibility.hasSessions },
+    { href: '/client/history', label: 'Historique', icon: Clock, exact: false, show: visibility.hasTests },
+    { href: '/client/cognitive', label: 'Cognitif', icon: Activity, exact: false, show: visibility.hasCognitive },
+    { href: '/client/coach', label: 'Coach', icon: UserCheck, exact: false, show: true },
+  ].filter((item) => item.show)
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background shadow-[0_-1px_10px_rgba(0,0,0,0.06)]">
@@ -32,9 +39,7 @@ export function ClientNav() {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Icon
-                className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')}
-              />
+              <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
               <span>{label}</span>
             </Link>
           )

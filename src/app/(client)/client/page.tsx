@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CalendarDays, ClipboardList } from 'lucide-react'
+import { CalendarDays, ClipboardList, PlayCircle } from 'lucide-react'
 import { getClientHomeData } from '@/app/actions/client-data'
 import { RadarChart } from '@/components/ui/radar-chart'
 import { ScoreDisplay } from '@/components/ui/score-display'
@@ -30,6 +30,35 @@ export default async function ClientHomePage() {
         <h1 className="text-2xl font-bold text-[#1A1A2E]">Bonjour, {prenom}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{labels.title}</p>
       </div>
+
+      {/* Tests en attente — toujours affichés si présents */}
+      {data.pendingTests.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Tests assignés
+          </h2>
+          <div className="space-y-2">
+            {data.pendingTests.map((test) => (
+              <Card key={test.id} className="border-[#20808D]/40 bg-[#E8F4F5]/50">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-[#1A1A2E]">{test.definition_name}</p>
+                      <Badge variant="outline" className="mt-1 text-xs capitalize">{test.level_slug}</Badge>
+                    </div>
+                    <Link href={test.inviteUrl}>
+                      <Button size="sm" className="shrink-0 bg-[#20808D] hover:bg-[#186870]">
+                        <PlayCircle className="mr-1.5 h-4 w-4" />
+                        Commencer
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {data.latestTest ? (
         <>
@@ -85,15 +114,10 @@ export default async function ClientHomePage() {
                   {data.latestTest.definition_name}
                 </Badge>
               </div>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <Link href={`/client/results/${data.latestTest.id}`} className="flex-1">
+              <div className="mt-4">
+                <Link href={`/client/results/${data.latestTest.id}`}>
                   <Button variant="outline" className="w-full" size="sm">
                     Voir mes résultats
-                  </Button>
-                </Link>
-                <Link href={`/test/${data.latestTest.definition_slug}`} className="flex-1">
-                  <Button className="w-full bg-[#20808D] hover:bg-[#186870]" size="sm">
-                    Repasser le test
                   </Button>
                 </Link>
               </div>
@@ -101,21 +125,16 @@ export default async function ClientHomePage() {
           </Card>
         </>
       ) : (
-        /* Pas encore de test */
-        <Card className="border-2 border-[#20808D] bg-[#E8F4F5]">
+        /* Pas encore de test — état vide neutre, pas de CTA autonome */
+        <Card>
           <CardContent className="pt-6 pb-6 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#20808D]/10">
-              <ClipboardList className="h-7 w-7 text-[#20808D]" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <ClipboardList className="h-7 w-7 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-bold text-[#1A1A2E]">Prêt à vous découvrir ?</h2>
+            <h2 className="text-lg font-bold text-[#1A1A2E]">Bienvenue sur MINND</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              {labels.ctaTest} et obtenez votre profil de performance mental.
+              Votre coach va bientôt vous envoyer vos premiers contenus.
             </p>
-            <Link href="/test/pma" className="mt-4 inline-block">
-              <Button className="bg-[#20808D] hover:bg-[#186870]">
-                Passer votre premier test
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       )}

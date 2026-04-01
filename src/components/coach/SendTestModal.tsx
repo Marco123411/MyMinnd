@@ -108,6 +108,8 @@ export function SendTestModal({
     if (result.error || !result.data) { setError(result.error ?? 'Erreur inattendue'); return }
     setInviteUrl(result.data.inviteUrl)
     setTestId(result.data.testId)
+    // Si l'email a été envoyé automatiquement, marquer comme envoyé
+    if (result.data.emailSent) setEmailSent(true)
     setStep('success')
   }
 

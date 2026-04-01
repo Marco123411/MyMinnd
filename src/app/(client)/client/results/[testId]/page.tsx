@@ -3,9 +3,11 @@ import Link from 'next/link'
 import { FileDown } from 'lucide-react'
 import { z } from 'zod'
 import { getClientTestDetail } from '@/app/actions/client-data'
+import { getProfileIntelligenceData } from '@/app/actions/profile-intelligence'
 import { RadarChart } from '@/components/ui/radar-chart'
 import { SubcompetenceBar } from '@/components/test/SubcompetenceBar'
 import { ProfileCard } from '@/components/client/ProfileCard'
+import { ClientProfileView } from '@/components/profile-intelligence/ClientProfileView'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -34,11 +36,14 @@ export default async function ClientResultsPage({ params }: PageProps) {
   const uuidSchema = z.string().uuid()
   if (!uuidSchema.safeParse(testId).success) notFound()
 
-  const detail = await getClientTestDetail(testId)
+  const [detail, intelligenceData] = await Promise.all([
+    getClientTestDetail(testId),
+    getProfileIntelligenceData(testId),
+  ])
 
   if (!detail) notFound()
 
-  const { test, nodes, scores, profile, globalPercentile } = detail
+  const { test, nodes, scores, profile, globalPercentile, notesMap } = detail
 
   const getScore = (nodeId: string) =>
     scores.find((s) => s.entity_id === nodeId)?.score ?? 0
@@ -85,7 +90,7 @@ export default async function ClientResultsPage({ params }: PageProps) {
       </div>
 
       {/* Score global */}
-      {globalScore !== undefined && (
+      {globalScore != null && (
         <div className="flex flex-col items-center py-4">
           <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#E8F4F5]">
             <span className="text-4xl font-bold text-[#20808D]">
@@ -113,8 +118,6 @@ export default async function ClientResultsPage({ params }: PageProps) {
       <ProfileCard
         profile={profile}
         levelSlug={test.level_slug}
-        testSlug={test.definition_slug}
-        showUpsell={isDiscovery}
       />
 
       {/* Détail par compétence — Complete / Expert uniquement */}
@@ -134,14 +137,29 @@ export default async function ClientResultsPage({ params }: PageProps) {
                     {getScore(domain.id).toFixed(1)}/10
                   </span>
                 </div>
+                {/* Note du coach sur le domaine */}
+                {notesMap[domain.id] && (
+                  <div className="mb-3 rounded-md bg-[#E8F4F5] px-3 py-2">
+                    <p className="text-xs font-semibold text-[#20808D] mb-0.5">Note de votre coach</p>
+                    <p className="text-sm text-[#1A1A2E]">{notesMap[domain.id]}</p>
+                  </div>
+                )}
                 <div className="space-y-3 pl-2">
                   {leaves.map((leaf) => (
-                    <SubcompetenceBar
-                      key={leaf.id}
-                      name={leaf.name}
-                      score={getScore(leaf.id)}
-                      percentile={getPercentile(leaf.id)}
-                    />
+                    <div key={leaf.id}>
+                      <SubcompetenceBar
+                        name={leaf.name}
+                        score={getScore(leaf.id)}
+                        percentile={getPercentile(leaf.id)}
+                      />
+                      {/* Note du coach sur la sous-compétence */}
+                      {notesMap[leaf.id] && (
+                        <div className="mt-1 ml-2 rounded-md bg-[#E8F4F5] px-3 py-2">
+                          <p className="text-xs font-semibold text-[#20808D] mb-0.5">Note de votre coach</p>
+                          <p className="text-sm text-[#1A1A2E]">{notesMap[leaf.id]}</p>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -183,6 +201,14 @@ export default async function ClientResultsPage({ params }: PageProps) {
               ))}
             </ul>
           </div>
+        </div>
+      )}
+
+      {/* Vue intelligence profil (Complete / Expert uniquement) */}
+      {intelligenceData && !isDiscovery && (
+        <div>
+          <h2 className="text-lg font-semibold text-[#1A1A2E] mb-4">Analyse de profil détaillée</h2>
+          <ClientProfileView data={intelligenceData} />
         </div>
       )}
 

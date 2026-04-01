@@ -58,13 +58,13 @@ export interface ReportData {
 }
 
 // PDFKit-compatible painter interface (subset needed for radar drawing)
+// Note: closePath() n'est pas disponible dans react-pdf v4 — fermer le polygone avec lineTo()
 interface PDFPainter {
   moveTo: (x: number, y: number) => PDFPainter
   lineTo: (x: number, y: number) => PDFPainter
   stroke: (color: string) => PDFPainter
   fill: (color: string) => PDFPainter
   fillAndStroke: (fillColor: string, strokeColor: string) => PDFPainter
-  closePath: () => PDFPainter
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -364,14 +364,16 @@ function ScoreOverviewPage({ data }: { data: ReportData }) {
                 painter.moveTo(cx, cy).lineTo(x, y).stroke('#e2e8f0')
               })
 
-              // Data polygon — filled
+              // Data polygon — filled (closePath not available in react-pdf v4, close manually)
+              const firstScore = getScore(data.scores, domainNodes[0].id) / 10
+              const { x: x0, y: y0 } = toXY(0, firstScore)
               domainNodes.forEach((d, i) => {
                 const score = getScore(data.scores, d.id) / 10
                 const { x, y } = toXY(i, score)
                 if (i === 0) painter.moveTo(x, y)
                 else painter.lineTo(x, y)
               })
-              painter.closePath().fillAndStroke(LIGHT_TEAL, TEAL)
+              painter.lineTo(x0, y0).fillAndStroke(LIGHT_TEAL, TEAL)
               return null
             }}
           />

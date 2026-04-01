@@ -31,6 +31,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${base}/login?error=auth_failed`)
     }
   }
+  // Flux acceptation d'invitation client — redirige vers /accept-invite pour définir le mot de passe
+  else if (tokenHash && type === 'invite') {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'invite',
+    })
+    if (error) {
+      return NextResponse.redirect(`${base}/login?error=invite_failed`)
+    }
+    return NextResponse.redirect(`${base}/accept-invite`)
+  }
   // Flux confirmation email (token_hash)
   else if (tokenHash && type === 'email') {
     const { error } = await supabase.auth.verifyOtp({
@@ -66,9 +77,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${base}/complete-profile`)
   }
 
-  // Premier login OAuth : role='client' + context=null = profil à compléter
+  // Client invité sans contexte → onboarding obligatoire
   if (userData.context === null && userData.role === 'client') {
-    return NextResponse.redirect(`${base}/complete-profile`)
+    return NextResponse.redirect(`${base}/client/onboarding`)
   }
 
   const parsedRole = z.enum(['client', 'coach', 'admin']).safeParse(userData.role)
