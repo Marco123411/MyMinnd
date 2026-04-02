@@ -5,12 +5,14 @@ import { z } from 'zod'
 import type {
   CabinetSession,
   AutonomousSession,
+  AutonomousSessionEnrichi,
   RecurringTemplate,
   RecurringExecution,
   SessionHistoryItem,
   SessionsObservanceMetrics,
   ClientSelectOption,
   ExerciceOrdonné,
+  Exercise,
 } from '@/types'
 
 // ============================================================
@@ -27,7 +29,7 @@ const planCabinetSessionSchema = z.object({
   client_id: z.string().uuid(),
   date_seance: z.string().min(1),
   objectif: z.string().min(1, 'L\'objectif est requis'),
-  exercices_utilises: z.array(z.string().uuid()).optional().default([]),
+  exercices_utilises: z.array(exerciceOrdonnéSchema).optional().default([]),
   contenu: z.string().optional(),
 })
 
@@ -37,7 +39,7 @@ const updateCabinetSessionSchema = z.object({
   observations: z.string().optional(),
   prochaine_etape: z.string().optional(),
   duree_minutes: z.number().int().min(0).optional(),
-  exercices_utilises: z.array(z.string().uuid()).optional(),
+  exercices_utilises: z.array(exerciceOrdonnéSchema).optional(),
   statut: z.enum(['planifiee', 'realisee', 'annulee']).optional(),
 })
 
@@ -291,7 +293,7 @@ export async function getAutonomousSessionsAction(): Promise<{
  * Récupère les séances autonomie du client connecté
  */
 export async function getMyAutonomousSessionsAction(): Promise<{
-  data: AutonomousSession[]
+  data: AutonomousSessionEnrichi[]
   error: string | null
 }> {
   await syncOverdueStatuses()
@@ -309,7 +311,36 @@ export async function getMyAutonomousSessionsAction(): Promise<{
     .order('created_at', { ascending: false })
 
   if (error) return { data: [], error: error.message }
-  return { data: (data ?? []) as AutonomousSession[], error: null }
+
+  const sessions = (data ?? []) as AutonomousSession[]
+
+  // Collecte les exercise_ids uniques sur toutes les séances
+  const exerciseIds = [...new Set(
+    sessions.flatMap((s) => s.exercices.map((e) => e.exercise_id))
+  )]
+
+  // Récupère les données complètes des exercices (admin pour inclure les exercices custom du coach)
+  const exerciseMap = new Map<string, Exercise>()
+  if (exerciseIds.length > 0) {
+    const admin = createAdminClient()
+    const { data: exercises } = await admin
+      .from('exercises')
+      .select('*')
+      .in('id', exerciseIds)
+    for (const ex of exercises ?? []) {
+      exerciseMap.set(ex.id as string, ex as Exercise)
+    }
+  }
+
+  const enriched: AutonomousSessionEnrichi[] = sessions.map((s) => ({
+    ...s,
+    exercices: s.exercices.map((e) => ({
+      ...e,
+      exercise: exerciseMap.get(e.exercise_id) ?? null,
+    })),
+  }))
+
+  return { data: enriched, error: null }
 }
 
 /**
@@ -715,5 +746,196 @@ export async function getClientsForSelectAction(): Promise<{
       prenom: c.prenom as string,
     })),
     error: null,
+  }
+}
+
+// ============================================================
+// Timeline unifiée coach — 3 types de séances avec progression exercices
+// ============================================================
+
+export interface ProgrammeTimelineItem {
+  id: string
+  type: 'cabinet' | 'autonomie' | 'recurrente'
+  titre: string
+  date: string
+  statut: string
+  objectif: string | null
+  exercices_total: number
+  exercices_completes: number
+  cabinet?: CabinetSession
+  autonomous?: AutonomousSession
+  template?: RecurringTemplate
+}
+
+/**
+ * Retourne la timeline unifiée de toutes les séances d'un client,
+ * triées par date décroissante (plus récent en premier).
+ * Utilisée par le coach sur la fiche client.
+ */
+export async function getClientSessionTimelineAction(
+  clientUserId: string,
+): Promise<{ data: ProgrammeTimelineItem[] | null; error: string | null }> {
+  const parsedId = z.string().uuid().safeParse(clientUserId)
+  if (!parsedId.success) return { data: null, error: 'ID client invalide' }
+
+  const { user, error: authError } = await requireCoach()
+  if (authError || !user) return { data: null, error: authError ?? 'Non authentifié' }
+
+  await syncOverdueStatuses()
+
+  const admin = createAdminClient()
+
+  const [cabinetRes, autonomousRes, templatesRes] = await Promise.all([
+    admin
+      .from('cabinet_sessions')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', clientUserId)
+      .order('date_seance', { ascending: false }),
+
+    admin
+      .from('autonomous_sessions')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', clientUserId)
+      .order('created_at', { ascending: false }),
+
+    admin
+      .from('recurring_templates')
+      .select('*, recurring_executions(*)')
+      .eq('coach_id', user.id)
+      .eq('client_id', clientUserId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+  ])
+
+  if (cabinetRes.error)    return { data: null, error: cabinetRes.error.message }
+  if (autonomousRes.error) return { data: null, error: autonomousRes.error.message }
+  if (templatesRes.error)  return { data: null, error: templatesRes.error.message }
+
+  const cabinetItems: ProgrammeTimelineItem[] = (cabinetRes.data ?? []).map((s) => {
+    const exercices = (s.exercices_utilises as ExerciceOrdonné[]) ?? []
+    return {
+      id:                  s.id,
+      type:                'cabinet',
+      titre:               s.objectif,
+      date:                s.date_seance,
+      statut:              s.statut,
+      objectif:            s.objectif,
+      exercices_total:     exercices.length,
+      exercices_completes: exercices.length, // cabinet = tous faits en séance
+      cabinet:             s as CabinetSession,
+    }
+  })
+
+  const autonomousItems: ProgrammeTimelineItem[] = (autonomousRes.data ?? []).map((s) => {
+    const exercices = (s.exercices as ExerciceOrdonné[]) ?? []
+    return {
+      id:                  s.id,
+      type:                'autonomie',
+      titre:               s.titre,
+      date:                (s.date_cible as string | null) ?? s.created_at,
+      statut:              s.statut,
+      objectif:            s.objectif,
+      exercices_total:     exercices.length,
+      exercices_completes: s.statut === 'terminee' ? exercices.length : 0,
+      autonomous:          s as AutonomousSession,
+    }
+  })
+
+  const recurringItems: ProgrammeTimelineItem[] = (templatesRes.data ?? []).map((t) => {
+    const executions = (t.recurring_executions ?? []) as RecurringExecution[]
+    const lastExecution = [...executions].sort(
+      (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
+    )[0]
+    const exercices = (t.exercices as ExerciceOrdonné[]) ?? []
+    return {
+      id:                  t.id,
+      type:                'recurrente',
+      titre:               t.titre,
+      date:                lastExecution?.started_at ?? t.created_at,
+      statut:              lastExecution?.completed ? 'completee' : 'active',
+      objectif:            (t.description as string | null) ?? null,
+      exercices_total:     exercices.length,
+      exercices_completes: executions.filter((e) => e.completed).length,
+      template:            t as RecurringTemplate,
+    }
+  })
+
+  const timeline = [...cabinetItems, ...autonomousItems, ...recurringItems].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  )
+
+  return { data: timeline, error: null }
+}
+
+// ============================================================
+// Récupérer les séances brutes d'un client pour le module Programme
+// Utilisé pour alimenter AddEtapeDialog (sélection de séances existantes)
+// ============================================================
+
+/**
+ * Récupère les séances cabinet du client connecté (vue client)
+ */
+export async function getMyCabinetSessionsAction(): Promise<{
+  data: CabinetSession[]
+  error: string | null
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: [], error: 'Non authentifié' }
+
+  const { data, error } = await supabase
+    .from('cabinet_sessions')
+    .select('*')
+    .eq('client_id', user.id)
+    .order('date_seance', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  return { data: (data ?? []) as CabinetSession[], error: null }
+}
+
+export async function getClientSessionsForProgramme(clientUserId: string): Promise<{
+  cabinetSessions: CabinetSession[]
+  autonomousSessions: AutonomousSession[]
+  recurringTemplates: RecurringTemplate[]
+  error: string | null
+}> {
+  const empty = { cabinetSessions: [], autonomousSessions: [], recurringTemplates: [], error: null }
+
+  const parsedId = z.string().uuid().safeParse(clientUserId)
+  if (!parsedId.success) return { ...empty, error: 'Identifiant client invalide' }
+
+  const { user, error: authError } = await requireCoach()
+  if (authError || !user) return { ...empty, error: authError ?? 'Non authentifié' }
+
+  const admin = createAdminClient()
+
+  const [cabinetRes, autonomousRes, templatesRes] = await Promise.all([
+    admin
+      .from('cabinet_sessions')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', parsedId.data)
+      .order('date_seance', { ascending: false }),
+    admin
+      .from('autonomous_sessions')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', parsedId.data)
+      .order('created_at', { ascending: false }),
+    admin
+      .from('recurring_templates')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', parsedId.data)
+      .eq('is_active', true),
+  ])
+
+  return {
+    cabinetSessions:   (cabinetRes.data ?? []) as CabinetSession[],
+    autonomousSessions: (autonomousRes.data ?? []) as AutonomousSession[],
+    recurringTemplates: (templatesRes.data ?? []) as RecurringTemplate[],
+    error: cabinetRes.error?.message ?? autonomousRes.error?.message ?? templatesRes.error?.message ?? null,
   }
 }

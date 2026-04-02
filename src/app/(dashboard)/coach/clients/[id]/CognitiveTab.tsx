@@ -32,6 +32,7 @@ import {
   createCognitiveInvitationAction,
   getCognitiveSessionTrials,
   type CognitiveSessionWithDefinition,
+  type PendingCognitiveSession,
   type TrialForHistogram,
 } from '@/app/actions/cognitive-results'
 import { getAllCognitivePresetsAction } from '@/app/actions/presets'
@@ -145,11 +146,12 @@ function MetricsGrid({ metrics, slug }: { metrics: CognitiveTestResult; slug: st
 
 interface CognitiveTabProps {
   sessions: CognitiveSessionWithDefinition[]
+  pendingSessions: PendingCognitiveSession[]
   clientId: string
   coachId: string
 }
 
-export function CognitiveTab({ sessions, clientId }: CognitiveTabProps) {
+export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveTabProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [trialsMap, setTrialsMap] = useState<Record<string, TrialForHistogram[]>>({})
   const [isPending, startTransition] = useTransition()
@@ -347,6 +349,28 @@ export function CognitiveTab({ sessions, clientId }: CognitiveTabProps) {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Tests en attente */}
+      {pendingSessions.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            En attente
+          </p>
+          {pendingSessions.map((s) => (
+            <div key={s.id} className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-[#1A1A2E]">{s.test_name}</p>
+                {s.preset_name && (
+                  <p className="text-xs text-muted-foreground">{s.preset_name}</p>
+                )}
+              </div>
+              <Badge variant="outline" className="text-amber-600 border-amber-300 shrink-0">
+                {s.status === 'in_progress' ? 'En cours' : 'En attente'}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tableau récapitulatif */}
       {sessions.length === 0 ? (

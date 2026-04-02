@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CalendarDays, ClipboardList, PlayCircle } from 'lucide-react'
+import { CalendarDays, ClipboardList, PlayCircle, UserCheck } from 'lucide-react'
 import { getClientHomeData } from '@/app/actions/client-data'
 import { RadarChart } from '@/components/ui/radar-chart'
 import { ScoreDisplay } from '@/components/ui/score-display'
@@ -139,18 +139,35 @@ export default async function ClientHomePage() {
         </Card>
       )}
 
-      {/* Séances — placeholder */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-          Mes séances
-        </h2>
-        <Card className="opacity-60">
-          <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-muted-foreground">
-            <ClipboardList className="h-4 w-4 shrink-0" />
-            <span>Bientôt disponible</span>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Prochaine séance avec le coach */}
+      {data.nextCabinetSession && (
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Prochaine séance
+          </h2>
+          <Link href="/client/sessions">
+            <Card className="border-[#20808D]/30 hover:border-[#20808D] transition-colors cursor-pointer">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start gap-3">
+                  <UserCheck className="h-4 w-4 text-[#20808D] shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#1A1A2E] truncate">
+                      {data.nextCabinetSession.objectif}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {formatDate(data.nextCabinetSession.date_seance)}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {data.nextCabinetSession.statut === 'planifiee' ? 'Planifiée' :
+                     data.nextCabinetSession.statut === 'realisee' ? 'Réalisée' : 'Annulée'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

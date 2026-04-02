@@ -34,6 +34,7 @@ export interface ClientHomeData {
     definition_name: string
     level_slug: TestLevelSlug
   }>
+  nextCabinetSession: { objectif: string; date_seance: string; statut: string } | null
 }
 
 export interface ClientProfileData {
@@ -123,7 +124,7 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
   const { supabase, userId } = await requireAuthUser()
   const admin = createAdminClient()
 
-  const [userResult, testResult, clientCrmResult] = await Promise.all([
+  const [userResult, testResult, clientCrmResult, nextSessionResult] = await Promise.all([
     supabase
       .from('users')
       .select('id, nom, prenom, context')
@@ -143,6 +144,14 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
       .from('clients')
       .select('id')
       .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle(),
+    // Prochaine séance cabinet planifiée (RLS client permet la lecture)
+    supabase
+      .from('cabinet_sessions')
+      .select('objectif, date_seance, statut')
+      .eq('client_id', userId)
+      .order('date_seance', { ascending: true })
       .limit(1)
       .maybeSingle(),
   ])
@@ -180,6 +189,8 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
       }))
   }
 
+  const nextCabinetSession = nextSessionResult.data as { objectif: string; date_seance: string; statut: string } | null
+
   if (!latestTestRaw || !latestTestRaw.test_definitions) {
     return {
       user: userData,
@@ -189,6 +200,7 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
       globalPercentile: null,
       profile: null,
       pendingTests,
+      nextCabinetSession,
     }
   }
 
@@ -241,6 +253,7 @@ export async function getClientHomeData(): Promise<ClientHomeData> {
     globalPercentile,
     profile: profileResult.data ?? null,
     pendingTests,
+    nextCabinetSession,
   }
 }
 
@@ -687,6 +700,7 @@ export interface ClientNavVisibility {
   hasSessions: boolean
   hasTests: boolean
   hasCognitive: boolean
+  hasProgramme: boolean
 }
 
 /** Détermine quels onglets nav afficher selon le contenu assigné au client */
@@ -695,10 +709,10 @@ export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { hasExercises: false, hasSessions: false, hasTests: false, hasCognitive: false }
+    return { hasExercises: false, hasSessions: false, hasTests: false, hasCognitive: false, hasProgramme: false }
   }
 
-  const [exercises, sessions, tests, cognitive] = await Promise.all([
+  const [exercises, sessions, tests, cognitive, programmes] = await Promise.all([
     supabase
       .from('exercises')
       .select('id', { count: 'exact', head: true })
@@ -720,6 +734,12 @@ export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .limit(1),
+    supabase
+      .from('programmes')
+      .select('id', { count: 'exact', head: true })
+      .eq('client_id', user.id)
+      .eq('statut', 'actif')
+      .limit(1),
   ])
 
   return {
@@ -727,5 +747,6 @@ export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
     hasSessions: (sessions.count ?? 0) > 0,
     hasTests: (tests.count ?? 0) > 0,
     hasCognitive: (cognitive.count ?? 0) > 0,
+    hasProgramme: (programmes.count ?? 0) > 0,
   }
 }

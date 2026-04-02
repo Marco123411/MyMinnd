@@ -30,7 +30,11 @@ export function CompteRenduForm({ session, exercises }: CompteRenduFormProps) {
   const [prochaine_etape, setProchaine_etape] = useState(session.prochaine_etape ?? '')
   const [duree_minutes, setDuree_minutes] = useState(session.duree_minutes?.toString() ?? '')
   const [selectedExercices, setSelectedExercices] = useState<string[]>(
-    session.exercices_utilises ?? []
+    session.exercices_utilises.map((e) => e.exercise_id)
+  )
+  // Preserve existing consignes per exercise to avoid data loss on save
+  const consignesMap = Object.fromEntries(
+    session.exercices_utilises.map((e) => [e.exercise_id, e.consignes])
   )
 
   function toggleExercice(id: string) {
@@ -49,7 +53,11 @@ export function CompteRenduForm({ session, exercises }: CompteRenduFormProps) {
         observations: observations || undefined,
         prochaine_etape: prochaine_etape || undefined,
         duree_minutes: duree_minutes ? parseInt(duree_minutes, 10) : undefined,
-        exercices_utilises: selectedExercices,
+        exercices_utilises: selectedExercices.map((id, idx) => ({
+          exercise_id: id,
+          ordre: idx,
+          consignes: consignesMap[id] ?? '',
+        })),
         statut: newStatut,
       })
 

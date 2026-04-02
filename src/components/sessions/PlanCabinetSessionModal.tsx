@@ -69,7 +69,11 @@ export function PlanCabinetSessionModal({ clients, exercises }: PlanCabinetSessi
         date_seance: dateSeance,
         objectif,
         contenu: contenu || undefined,
-        exercices_utilises: selectedExercices,
+        exercices_utilises: selectedExercices.map((id, idx) => ({
+          exercise_id: id,
+          ordre: idx,
+          consignes: '',
+        })),
       })
 
       if (result.error) {

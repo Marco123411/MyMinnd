@@ -183,6 +183,90 @@ export async function getCognitiveSessionTrials(
   return { data: (data ?? []) as TrialForHistogram[], error: null }
 }
 
+// ── Sessions en attente (pending/in_progress) ─────────────────────────────────
+
+export interface PendingCognitiveSession {
+  id: string
+  test_slug: string
+  test_name: string
+  preset_name: string | null
+  status: 'pending' | 'in_progress'
+  created_at: string
+}
+
+const PENDING_SELECT = 'id, status, created_at, cognitive_test_definitions(slug, name), cognitive_test_presets(name)'
+
+function mapPendingRow(s: {
+  id: string
+  status: string
+  created_at: string
+  cognitive_test_definitions: unknown
+  cognitive_test_presets: unknown
+}): PendingCognitiveSession {
+  const def = (Array.isArray(s.cognitive_test_definitions) ? s.cognitive_test_definitions[0] : s.cognitive_test_definitions) as { slug: string; name: string } | null
+  const preset = (Array.isArray(s.cognitive_test_presets) ? s.cognitive_test_presets[0] : s.cognitive_test_presets) as { name: string } | null
+  return {
+    id: s.id,
+    test_slug: def?.slug ?? '',
+    test_name: def?.name ?? '',
+    preset_name: preset?.name ?? null,
+    status: s.status as 'pending' | 'in_progress',
+    created_at: s.created_at,
+  }
+}
+
+// Coach — sessions pending/in_progress pour un client donné
+export async function getPendingCognitiveSessionsForClient(
+  clientId: string
+): Promise<{ data: PendingCognitiveSession[]; error: string | null }> {
+  const parsed = uuidSchema.safeParse(clientId)
+  if (!parsed.success) return { data: [], error: 'clientId invalide' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: [], error: 'Non authentifié' }
+
+  const { data: clientData, error: clientError } = await supabase
+    .from('clients')
+    .select('user_id')
+    .eq('id', parsed.data)
+    .eq('coach_id', user.id)
+    .single()
+
+  if (clientError || !clientData?.user_id) return { data: [], error: null }
+
+  const { data, error } = await supabase
+    .from('cognitive_sessions')
+    .select(PENDING_SELECT)
+    .eq('user_id', clientData.user_id)
+    .eq('coach_id', user.id)
+    .in('status', ['pending', 'in_progress'])
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  return { data: (data ?? []).map(mapPendingRow), error: null }
+}
+
+// Client — ses propres sessions pending/in_progress
+export async function getMyPendingCognitiveSessions(): Promise<{
+  data: PendingCognitiveSession[]
+  error: string | null
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: [], error: 'Non authentifié' }
+
+  const { data, error } = await supabase
+    .from('cognitive_sessions')
+    .select(PENDING_SELECT)
+    .eq('user_id', user.id)
+    .in('status', ['pending', 'in_progress'])
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  return { data: (data ?? []).map(mapPendingRow), error: null }
+}
+
 // ── Invitation de test cognitif ───────────────────────────────────────────────
 
 // Le coach crée une session pending pour un client (invitation sans token)

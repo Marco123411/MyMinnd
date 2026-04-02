@@ -447,8 +447,12 @@ export interface ExerciseResponseRecord {
   id: string
   exercise_id: string
   user_id: string
+  // Champs legacy (ne plus utiliser pour les nouveaux writes)
   session_id: string | null
   session_type: 'autonomous' | 'recurring' | null
+  // Nouveaux champs typés (FK vers les tables de sessions)
+  autonomous_session_id: string | null
+  recurring_execution_id: string | null
   responses: ExerciseResponseItem[]
   completed_at: string
 }
@@ -503,6 +507,7 @@ export interface InteractiveExerciseResult {
   exercise_type: 'bonhomme_performance' | 'figure_performance'
   coach_id: string
   client_id: string | null
+  autonomous_session_id: string | null
   data: Record<string, unknown>
   created_at: string
 }
@@ -694,7 +699,7 @@ export interface CabinetSession {
   contenu: string | null
   observations: string | null
   prochaine_etape: string | null
-  exercices_utilises: string[]
+  exercices_utilises: ExerciceOrdonné[]
   statut: CabinetSessionStatut
   created_at: string
   updated_at: string
@@ -715,6 +720,16 @@ export interface AutonomousSession {
   feedback_client: string | null
   created_at: string
   updated_at: string
+}
+
+// Exercice enrichi avec les données complètes depuis la bibliothèque
+export interface ExerciceEnrichi extends ExerciceOrdonné {
+  exercise: Exercise | null
+}
+
+// Séance autonomie enrichie avec les données des exercices (vue client)
+export type AutonomousSessionEnrichi = Omit<AutonomousSession, 'exercices'> & {
+  exercices: ExerciceEnrichi[]
 }
 
 // Template récurrent (routine pré-comp, quotidienne, etc.)
@@ -956,3 +971,56 @@ export interface CoachNote {
 
 // Map node_id → note pour accès rapide côté composant
 export type CoachNotesMap = Record<string, string>
+
+// ============================================================
+// Module Programme
+// ============================================================
+
+export type ProgrammeStatut = 'actif' | 'archive'
+
+export type TypeSeance = 'cabinet' | 'autonomie' | 'recurrente'
+
+export interface Programme {
+  id: string
+  coach_id: string
+  client_id: string
+  nom: string
+  description: string | null
+  statut: ProgrammeStatut
+  created_at: string
+  updated_at: string
+}
+
+export interface ProgrammeEtape {
+  id: string
+  programme_id: string
+  ordre: number
+  type_seance: TypeSeance
+  cabinet_session_id: string | null
+  autonomous_session_id: string | null
+  recurring_template_id: string | null
+  created_at: string
+}
+
+export interface ProgrammeEtapeEnrichie extends ProgrammeEtape {
+  // Données dénormalisées pour affichage (une seule sera non-null selon type_seance)
+  cabinet?: CabinetSession
+  autonomous?: AutonomousSession
+  template?: RecurringTemplate
+  // Statut de complétion calculé
+  est_complete: boolean
+  titre_display: string
+}
+
+// Programme enrichi avec ses étapes et les données brutes des séances
+export interface ProgrammeAvecEtapes extends Programme {
+  etapes: ProgrammeEtapeEnrichie[]
+}
+
+// Statistiques d'avancement d'un programme
+export interface ProgrammeStats {
+  programme_id: string
+  total_etapes: number
+  etapes_completes: number
+  taux_completion: number
+}

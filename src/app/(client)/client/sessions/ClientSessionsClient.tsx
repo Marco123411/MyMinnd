@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, Play, RotateCcw, Clock } from 'lucide-react'
+import { CheckCircle, Play, RotateCcw, Clock, UserCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,13 +20,27 @@ import {
   updateAutonomousSessionStatutAction,
   executeRecurringTemplateAction,
 } from '@/app/actions/sessions'
-import type { AutonomousSession, RecurringTemplate, RecurringExecution, ExerciceOrdonné } from '@/types'
+import type { AutonomousSessionEnrichi, ExerciceEnrichi, ExerciseResponseItem, RecurringTemplate, RecurringExecution, CabinetSession } from '@/types'
+import { saveExerciseResponseAction, saveClientInteractiveExerciseResultAction } from '@/app/actions/exercises'
+import { BonhommePerformance } from '@/components/exercises/BonhommePerformance'
+import { FigurePerformance } from '@/components/exercises/FigurePerformance'
 
 type TemplateWithExecutions = RecurringTemplate & { executions: RecurringExecution[] }
 
 interface ClientSessionsClientProps {
-  autonomousSessions: AutonomousSession[]
+  autonomousSessions: AutonomousSessionEnrichi[]
   templates: TemplateWithExecutions[]
+  cabinetSessions: CabinetSession[]
+}
+
+type ResponseMap = Record<string, ExerciseResponseItem>
+
+// Détermine le type d'exercice interactif MINND à partir du titre
+function interactiveTypeFromTitle(titre: string): 'bonhomme_performance' | 'figure_performance' | null {
+  const t = titre.toLowerCase()
+  if (t.includes('bonhomme')) return 'bonhomme_performance'
+  if (t.includes('figure'))   return 'figure_performance'
+  return null
 }
 
 function formatDate(iso: string) {
@@ -43,45 +57,186 @@ function countThisWeek(executions: RecurringExecution[]): number {
   return executions.filter((e) => new Date(e.started_at) >= weekAgo).length
 }
 
-// Affichage séquentiel des exercices d'une séance en cours
-function ExerciseDisplay({ exercices }: { exercices: ExerciceOrdonné[] }) {
+// Affichage interactif des exercices d'une séance en cours
+function ExerciseDisplay({
+  exercices,
+  sessionId,
+}: {
+  exercices: ExerciceEnrichi[]
+  sessionId: string
+}) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [responses, setResponses] = useState<ResponseMap>({})
+  const [isPending, startTransition] = useTransition()
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   if (exercices.length === 0) {
     return <p className="text-sm text-gray-500">Aucun exercice dans cette séance.</p>
   }
 
+  // Tous les exercices terminés — le client peut cliquer sur "Terminer"
+  if (currentIndex >= exercices.length) {
+    return (
+      <p className="text-sm text-green-700 font-medium bg-green-50 border border-green-200 rounded px-3 py-2">
+        ✓ Tous les exercices sont complétés. Cliquez sur &ldquo;Terminer&rdquo; pour valider la séance.
+      </p>
+    )
+  }
+
   const current = exercices[currentIndex]
+  const exercise = current.exercise
+  const questions = exercise?.questions ?? []
+  const hasQuestions = questions.length > 0
+  const isInteractive = exercise?.format === 'interactive'
+  const interactiveType = exercise ? interactiveTypeFromTitle(exercise.titre) : null
+  const isLastExercise = currentIndex === exercices.length - 1
+
+  function goNext() {
+    setCurrentIndex((i) => i + 1)
+    setResponses({})
+    setSaveError(null)
+  }
+
+  function handlePrev() {
+    setCurrentIndex((i) => i - 1)
+    setResponses({})
+    setSaveError(null)
+  }
+
+  function handleResponseChange(questionId: string, type: ExerciseResponseItem['type'], value: string | number) {
+    setResponses((prev) => ({
+      ...prev,
+      [questionId]: { question_id: questionId, type, value },
+    }))
+  }
+
+  function handleQuestionnaireNext() {
+    if (!hasQuestions || !exercise) { goNext(); return }
+    const responseList = Object.values(responses)
+    startTransition(async () => {
+      const result = await saveExerciseResponseAction(exercise.id, responseList, sessionId, 'autonomous')
+      if (result.error) { setSaveError(result.error); return }
+      goNext()
+    })
+  }
+
+  function handleInteractiveSave(data: Record<string, unknown>) {
+    if (!interactiveType) return
+    startTransition(async () => {
+      const result = await saveClientInteractiveExerciseResultAction(interactiveType, data, sessionId)
+      if (result.error) { setSaveError(result.error); return }
+      goNext()
+    })
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-gray-500">
-        <span>Exercice {currentIndex + 1} / {exercices.length}</span>
-      </div>
+      <p className="text-sm text-gray-500">
+        Exercice {currentIndex + 1} / {exercices.length}
+      </p>
 
-      <div className="p-4 border rounded-lg bg-[#E8F4F5]">
-        <p className="font-semibold text-[#1A1A2E]">Exercice {currentIndex + 1}</p>
-        {current.consignes && (
-          <p className="text-sm text-gray-600 mt-2">{current.consignes}</p>
-        )}
-      </div>
+      {/* Exercice interactif MINND natif (Bonhomme / Figure) */}
+      {isInteractive && interactiveType ? (
+        <div className="space-y-3">
+          {current.consignes && (
+            <div className="px-3 py-2 rounded-lg bg-[#E8F4F5] text-sm text-gray-700 border border-[#20808D]/20">
+              <span className="text-xs font-medium text-[#20808D] uppercase tracking-wide block mb-0.5">Consignes</span>
+              {current.consignes}
+            </div>
+          )}
+          {interactiveType === 'bonhomme_performance' && (
+            <BonhommePerformance
+              onSave={(data) => handleInteractiveSave(data as unknown as Record<string, unknown>)}
+              isPending={isPending}
+            />
+          )}
+          {interactiveType === 'figure_performance' && (
+            <FigurePerformance
+              onSave={(data) => handleInteractiveSave(data as unknown as Record<string, unknown>)}
+              isPending={isPending}
+            />
+          )}
+          {saveError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{saveError}</p>
+          )}
+        </div>
+      ) : (
+        /* Exercice questionnaire ou sans questions */
+        <div className="p-4 border rounded-lg bg-[#E8F4F5] space-y-3">
+          <p className="font-semibold text-[#1A1A2E]">
+            {exercise?.titre ?? `Exercice ${currentIndex + 1}`}
+          </p>
+          {exercise?.description && (
+            <p className="text-sm text-gray-600">{exercise.description}</p>
+          )}
+          {current.consignes && (
+            <div className="border-t border-[#20808D]/20 pt-3">
+              <p className="text-xs font-medium text-[#20808D] uppercase tracking-wide mb-1">Consignes</p>
+              <p className="text-sm text-gray-700">{current.consignes}</p>
+            </div>
+          )}
+          {hasQuestions && (
+            <div className="border-t border-[#20808D]/20 pt-3 space-y-4">
+              {questions.map((q) => {
+                const val = responses[q.id]?.value
+                if (q.type === 'open') return (
+                  <div key={q.id} className="space-y-1.5">
+                    <Label className="text-sm font-medium text-[#1A1A2E]">{q.label}</Label>
+                    <Textarea value={(val as string) ?? ''} onChange={(e) => handleResponseChange(q.id, 'open', e.target.value)} placeholder="Votre réponse..." rows={3} className="bg-white" />
+                  </div>
+                )
+                if (q.type === 'scale') {
+                  const min = q.min ?? 1; const max = q.max ?? 10; const num = (val as number) ?? min
+                  return (
+                    <div key={q.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-[#1A1A2E]">{q.label}</Label>
+                        <span className="text-sm font-bold text-[#20808D]">{num}</span>
+                      </div>
+                      <input type="range" min={min} max={max} value={num} onChange={(e) => handleResponseChange(q.id, 'scale', parseInt(e.target.value, 10))} className="w-full accent-[#20808D]" />
+                      <div className="flex justify-between text-xs text-gray-400"><span>{min}</span><span>{max}</span></div>
+                    </div>
+                  )
+                }
+                if (q.type === 'mcq' && q.options) return (
+                  <div key={q.id} className="space-y-2">
+                    <Label className="text-sm font-medium text-[#1A1A2E]">{q.label}</Label>
+                    <div className="space-y-1.5">
+                      {q.options.map((opt) => (
+                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name={q.id} value={opt} checked={val === opt} onChange={() => handleResponseChange(q.id, 'mcq', opt)} className="accent-[#20808D]" />
+                          <span className="text-sm text-gray-700">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )
+                return null
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-      <div className="flex gap-2">
-        {currentIndex > 0 && (
-          <Button variant="outline" size="sm" onClick={() => setCurrentIndex((i) => i - 1)}>
-            Précédent
-          </Button>
-        )}
-        {currentIndex < exercices.length - 1 && (
-          <Button
-            size="sm"
-            className="bg-[#20808D] hover:bg-[#1a6b78] text-white"
-            onClick={() => setCurrentIndex((i) => i + 1)}
-          >
-            Exercice suivant
-          </Button>
-        )}
-      </div>
+      {!isInteractive && saveError && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{saveError}</p>
+      )}
+
+      {/* Navigation (questionnaire et exercices sans questions uniquement — les interactifs ont leur propre bouton Valider) */}
+      {!isInteractive && (
+        <div className="flex gap-2">
+          {currentIndex > 0 && (
+            <Button variant="outline" size="sm" onClick={handlePrev} disabled={isPending}>
+              Précédent
+            </Button>
+          )}
+          {!isLastExercise && (
+            <Button size="sm" onClick={handleQuestionnaireNext} disabled={isPending} className="bg-[#20808D] hover:bg-[#1a6b78] text-white">
+              {isPending ? 'Enregistrement…' : hasQuestions ? 'Valider et continuer' : 'Exercice suivant'}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -169,6 +324,7 @@ function TerminerModal({
 export function ClientSessionsClient({
   autonomousSessions,
   templates,
+  cabinetSessions,
 }: ClientSessionsClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -237,9 +393,42 @@ export function ClientSessionsClient({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">{activeSession.objectif}</p>
-            <ExerciseDisplay exercices={activeSession.exercices} />
+            <ExerciseDisplay exercices={activeSession.exercices} sessionId={activeSession.id} />
           </CardContent>
         </Card>
+      )}
+
+      {/* Séances cabinet (coach-client) */}
+      {cabinetSessions.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-[#1A1A2E]">Séances avec votre coach</h2>
+          <div className="space-y-3">
+            {cabinetSessions.map((s) => (
+              <Card key={s.id}>
+                <CardContent className="pt-4">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <UserCheck className="h-4 w-4 text-[#20808D] shrink-0" />
+                        <p className="font-medium text-[#1A1A2E] truncate">{s.objectif}</p>
+                      </div>
+                      <p className="text-xs text-gray-400">{formatDate(s.date_seance)}</p>
+                      {s.observations && (
+                        <p className="text-sm text-gray-500 mt-2 line-clamp-2">{s.observations}</p>
+                      )}
+                      {s.prochaine_etape && (
+                        <p className="text-sm text-[#20808D] mt-1 italic line-clamp-1">
+                          Prochaine étape : {s.prochaine_etape}
+                        </p>
+                      )}
+                    </div>
+                    <SessionStatusBadge statut={s.statut} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Séances en autonomie */}
