@@ -13,17 +13,21 @@ import { NotesEditor } from './NotesEditor'
 import { SendTestModal } from '@/components/coach/SendTestModal'
 import { TestHistoryCoach } from '@/components/coach/TestHistoryCoach'
 import { Pencil } from 'lucide-react'
-import { SessionTimeline } from '@/components/sessions/SessionTimeline'
 import { PlanCabinetSessionModal } from '@/components/sessions/PlanCabinetSessionModal'
 import { AssignAutonomousSessionModal } from '@/components/sessions/AssignAutonomousSessionModal'
 import { CreateRecurringTemplateModal } from '@/components/sessions/CreateRecurringTemplateModal'
 import { InvitationActions } from '@/components/coach/InvitationActions'
 import { ClientAccountActions } from '@/components/coach/ClientAccountActions'
-import { getClientSessionHistoryAction } from '@/app/actions/sessions'
+import { getClientSessionTimelineAction, getClientSessionsForProgramme } from '@/app/actions/sessions'
+import { getClientProgrammesAction } from '@/app/actions/programmes'
+import { ProgrammeEtapesList } from '@/components/coach/ProgrammeEtapesList'
+import { CreateProgrammeDialog } from '@/components/coach/CreateProgrammeDialog'
+import { AddEtapeDialog } from '@/components/coach/AddEtapeDialog'
 import { getExercisesAction } from '@/app/actions/exercises'
-import { getCognitiveSessionsForClient } from '@/app/actions/cognitive-results'
+import { getCognitiveSessionsForClient, getPendingCognitiveSessionsForClient } from '@/app/actions/cognitive-results'
 import { CognitiveTab } from './CognitiveTab'
 import { ProfileIntelligenceTab } from './ProfileIntelligenceTab'
+import { ClientSessionTimeline } from '@/components/coach/ClientSessionTimeline'
 import type { ClientContext, TestLevelConfig, SubscriptionTier } from '@/types'
 
 interface TestDefinitionForModal {
@@ -70,9 +74,12 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     { data: testDefinitionsRaw },
     { data: testHistory },
     { data: coachData },
-    { data: sessionHistory, error: sessionHistoryError },
     { data: exercises },
     { data: cognitiveSessions },
+    { data: pendingCognitiveSessions },
+    { data: timeline },
+    { data: programmes },
+    { cabinetSessions, autonomousSessions, recurringTemplates },
   ] = await Promise.all([
     // Dernier test complété pour le radar/score
     client.user_id
@@ -107,14 +114,28 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     // Données du coach (nom pour emails, subscription_tier pour SendTestModal)
     admin.from('users').select('nom, subscription_tier').eq('id', coachId).single(),
 
-    // Historique des séances — client_id dans cabinet/autonomous_sessions = auth user_id, pas le CRM id
-    getClientSessionHistoryAction(client.user_id ?? ''),
-
     // Exercices disponibles pour les modals de séance
     getExercisesAction(),
 
     // Sessions cognitives complètes du client (onglet Cognitif)
     getCognitiveSessionsForClient(id),
+    // Sessions cognitives en attente du client (onglet Cognitif)
+    getPendingCognitiveSessionsForClient(id),
+
+    // Timeline unifiée enrichie (exercices_total, exercices_completes par séance)
+    client.user_id
+      ? getClientSessionTimelineAction(client.user_id)
+      : Promise.resolve({ data: null }),
+
+    // Programmes actifs du client (module Programme)
+    client.user_id
+      ? getClientProgrammesAction(client.user_id)
+      : Promise.resolve({ data: [] }),
+
+    // Séances brutes du client pour AddEtapeDialog
+    client.user_id
+      ? getClientSessionsForProgramme(client.user_id)
+      : Promise.resolve({ cabinetSessions: [], autonomousSessions: [], recurringTemplates: [], error: null }),
   ])
 
   // Scores par domaine du dernier test (dépend de lastTest.id)
@@ -314,52 +335,93 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <TabsContent value="cognitif" className="mt-4">
           <CognitiveTab
             sessions={cognitiveSessions ?? []}
+            pendingSessions={pendingCognitiveSessions ?? []}
             clientId={id}
             coachId={coachId}
           />
         </TabsContent>
 
-        {/* Séances — historique cabinet, autonomie et récurrentes */}
-        <TabsContent value="seances" className="mt-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle className="text-sm">Historique des séances</CardTitle>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {!sessionHistoryError && (
-                    <span className="text-xs text-gray-400">
-                      {sessionHistory.length} séance{sessionHistory.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                  {client.user_id && (
-                    <>
-                      <PlanCabinetSessionModal
-                        clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
-                        exercises={exercises ?? []}
-                      />
-                      <AssignAutonomousSessionModal
-                        clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
-                        exercises={exercises ?? []}
-                      />
-                      <CreateRecurringTemplateModal
-                        clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
-                        exercises={exercises ?? []}
-                      />
-                    </>
-                  )}
-                </div>
+        {/* Séances — programme actif + historique cabinet, autonomie et récurrentes */}
+        <TabsContent value="seances" className="mt-4 space-y-6">
+
+          {/* Section Programme */}
+          {client.user_id && (
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-[#1A1A2E]">Programme actif</h3>
+                {(!programmes || programmes.length === 0) && (
+                  <CreateProgrammeDialog clientId={client.user_id} />
+                )}
               </div>
-            </CardHeader>
-            <CardContent>
-              {sessionHistoryError ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  Impossible de charger les séances.
-                </p>
+
+              {programmes && programmes.length > 0 ? (
+                <div className="space-y-4">
+                  {programmes.map((prog) => (
+                    <div key={prog.id} className="border rounded-lg p-4 space-y-3">
+                      <ProgrammeEtapesList programme={prog} />
+                      <AddEtapeDialog
+                        programmeId={prog.id}
+                        cabinetSessions={cabinetSessions ?? []}
+                        autonomousSessions={autonomousSessions ?? []}
+                        recurringTemplates={recurringTemplates ?? []}
+                      />
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <SessionTimeline items={sessionHistory} />
+                <p className="text-sm text-muted-foreground">
+                  Aucun programme actif. Créez un programme pour structurer le parcours de ce client.
+                </p>
               )}
-            </CardContent>
-          </Card>
+            </section>
+          )}
+
+          {/* Séparateur */}
+          {client.user_id && <div className="border-t" />}
+
+          {/* Historique des séances */}
+          <section>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <CardTitle className="text-sm">Historique des séances</CardTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {timeline && (
+                      <span className="text-xs text-gray-400">
+                        {timeline.length} séance{timeline.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {client.user_id && (
+                      <>
+                        <PlanCabinetSessionModal
+                          clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
+                          exercises={exercises ?? []}
+                        />
+                        <AssignAutonomousSessionModal
+                          clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
+                          exercises={exercises ?? []}
+                        />
+                        <CreateRecurringTemplateModal
+                          clients={[{ id: client.user_id, nom: client.nom, prenom: '' }]}
+                          exercises={exercises ?? []}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!client.user_id ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    Ce client n&apos;a pas encore de compte — invitez-le pour activer le suivi des séances.
+                  </p>
+                ) : (
+                  <ClientSessionTimeline items={timeline ?? []} clientCrmId={id} />
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
         </TabsContent>
 
         {/* Notes */}

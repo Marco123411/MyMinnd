@@ -328,6 +328,7 @@ export async function saveExerciseResponseAction(
   exerciseId: string,
   responses: ExerciseResponseItem[],
   sessionId?: string,
+  sessionType?: 'autonomous' | 'recurring',
 ): Promise<{ error: string | null }> {
   const idResult = uuidSchema.safeParse(exerciseId)
   if (!idResult.success) return { error: 'exercise_id invalide' }
@@ -353,11 +354,12 @@ export async function saveExerciseResponseAction(
   const { error: insertError } = await admin
     .from('exercise_responses')
     .insert({
-      exercise_id:  exerciseId,
-      user_id:      user.id,
-      session_id:   sessionId ?? null,
-      session_type: null,
-      responses:    parsedResponses.data,
+      exercise_id:           exerciseId,
+      user_id:               user.id,
+      autonomous_session_id: sessionType === 'autonomous' ? (sessionId ?? null) : null,
+      recurring_execution_id: sessionType === 'recurring' ? (sessionId ?? null) : null,
+      session_type:          sessionType ?? null,
+      responses:             parsedResponses.data,
     })
 
   if (insertError) {
@@ -468,4 +470,148 @@ export async function getFigureEvolutionAction(clientId: string): Promise<{
 
   if (error) return { data: null, error: error.message }
   return { data: data as InteractiveExerciseResult[], error: null }
+}
+
+// ============================================================
+// saveClientInteractiveExerciseResultAction
+// Enregistre un résultat d'exercice interactif depuis une séance autonomie client
+// ============================================================
+export async function saveClientInteractiveExerciseResultAction(
+  exerciseType: string,
+  data: Record<string, unknown>,
+  autonomousSessionId: string,
+): Promise<{ error: string | null }> {
+  const typeResult = exerciseTypeSchema.safeParse(exerciseType)
+  if (!typeResult.success) return { error: 'Type d\'exercice invalide' }
+
+  const sessionIdResult = uuidSchema.safeParse(autonomousSessionId)
+  if (!sessionIdResult.success) return { error: 'ID de séance invalide' }
+
+  // Validation du payload
+  const dataValidation = validateExerciseData(typeResult.data, data)
+  if (!dataValidation.success) return { error: dataValidation.error }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const admin = createAdminClient()
+
+  // Vérifie que la séance appartient bien au client connecté et récupère le coach_id
+  const { data: session } = await admin
+    .from('autonomous_sessions')
+    .select('coach_id, client_id')
+    .eq('id', sessionIdResult.data)
+    .eq('client_id', user.id)
+    .single()
+
+  if (!session) return { error: 'Séance introuvable ou non autorisée' }
+
+  const { error: insertError } = await admin
+    .from('interactive_exercise_results')
+    .insert({
+      exercise_type:         typeResult.data,
+      coach_id:              session.coach_id as string,
+      client_id:             user.id,
+      data:                  dataValidation.data,
+      autonomous_session_id: sessionIdResult.data,
+    })
+
+  if (insertError) return { error: insertError.message }
+  return { error: null }
+}
+
+// ============================================================
+// getAutonomousSessionResultsForCoachAction
+// Retourne les résultats complets d'une séance autonomie pour le coach
+// ============================================================
+import type { AutonomousSession } from '@/types'
+
+export async function getAutonomousSessionResultsForCoachAction(
+  sessionId: string,
+  clientCrmId: string,
+): Promise<{
+  session: AutonomousSession | null
+  exerciseResponses: (ExerciseResponseRecord & { exercise: Exercise })[]
+  interactiveResults: InteractiveExerciseResult[]
+  error: string | null
+}> {
+  const empty = { session: null, exerciseResponses: [], interactiveResults: [], error: null }
+
+  const parsedSessionId  = uuidSchema.safeParse(sessionId)
+  const parsedClientId   = uuidSchema.safeParse(clientCrmId)
+  if (!parsedSessionId.success || !parsedClientId.success) {
+    return { ...empty, error: 'Identifiants invalides' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ...empty, error: 'Non authentifié' }
+
+  const admin = createAdminClient()
+
+  // Vérifie que le coach possède ce client et récupère son user_id
+  const { data: clientRow } = await admin
+    .from('clients')
+    .select('user_id, coach_id')
+    .eq('id', parsedClientId.data)
+    .eq('coach_id', user.id)
+    .single()
+
+  if (!clientRow?.user_id) return { ...empty, error: 'Client introuvable ou non autorisé' }
+  const clientUserId = clientRow.user_id as string
+
+  // Fetch session first — needed as time anchor for legacy fallback
+  const sessionRes = await admin
+    .from('autonomous_sessions')
+    .select('*')
+    .eq('id', parsedSessionId.data)
+    .eq('coach_id', user.id)
+    .single()
+
+  if (sessionRes.error) return { ...empty, error: sessionRes.error.message }
+
+  const sessionUpdatedAt = (sessionRes.data as { updated_at?: string }).updated_at
+    ?? (sessionRes.data as { created_at?: string }).created_at
+
+  const [responsesRes, interactiveRes] = await Promise.all([
+    admin
+      .from('exercise_responses')
+      .select('*, exercise:exercises(*)')
+      .eq('user_id', clientUserId)
+      .eq('autonomous_session_id', parsedSessionId.data)
+      .order('completed_at', { ascending: true }),
+    admin
+      .from('interactive_exercise_results')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', clientUserId)
+      .eq('autonomous_session_id', parsedSessionId.data)
+      .order('created_at', { ascending: true }),
+  ])
+
+  // Fallback pour les résultats enregistrés avant l'ajout du FK autonomous_session_id
+  let interactiveResults = (interactiveRes.data ?? []) as InteractiveExerciseResult[]
+  if (interactiveResults.length === 0 && sessionUpdatedAt) {
+    const anchor = new Date(sessionUpdatedAt)
+    const from  = new Date(anchor.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const to    = new Date(anchor.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: legacyData } = await admin
+      .from('interactive_exercise_results')
+      .select('*')
+      .eq('coach_id', user.id)
+      .eq('client_id', clientUserId)
+      .is('autonomous_session_id', null)
+      .gte('created_at', from)
+      .lte('created_at', to)
+      .order('created_at', { ascending: true })
+    interactiveResults = (legacyData ?? []) as InteractiveExerciseResult[]
+  }
+
+  return {
+    session: sessionRes.data as AutonomousSession,
+    exerciseResponses: (responsesRes.data ?? []) as (ExerciseResponseRecord & { exercise: Exercise })[],
+    interactiveResults,
+    error: null,
+  }
 }

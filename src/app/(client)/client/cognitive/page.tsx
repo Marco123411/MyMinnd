@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getClientCognitiveSessions } from '@/app/actions/cognitive-results'
+import Link from 'next/link'
+import { getClientCognitiveSessions, getMyPendingCognitiveSessions } from '@/app/actions/cognitive-results'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Brain, CheckCircle2 } from 'lucide-react'
@@ -241,7 +242,10 @@ function DigitalSpanCard({ sessions }: { sessions: CognitiveSessionWithDefinitio
 
 // F15: suppression du double getUser() — getClientCognitiveSessions vérifie l'auth en interne
 export default async function ClientCognitivePage() {
-  const { data: sessions, error } = await getClientCognitiveSessions()
+  const [{ data: sessions, error }, { data: pendingSessions }] = await Promise.all([
+    getClientCognitiveSessions(),
+    getMyPendingCognitiveSessions(),
+  ])
   if (error === 'Non authentifié') redirect('/login')
 
   // Grouper par slug de test
@@ -262,6 +266,32 @@ export default async function ClientCognitivePage() {
         <Brain className="h-5 w-5 text-[#20808D]" />
         <h1 className="text-xl font-bold text-[#1A1A2E]">Mes résultats cognitifs</h1>
       </div>
+
+      {/* Tests assignés par le coach, non encore complétés */}
+      {(pendingSessions ?? []).length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Tests à faire
+          </h2>
+          {(pendingSessions ?? []).map((s) => (
+            <Link key={s.id} href={`/test/cognitive/${s.test_slug}`}>
+              <Card className="border-[#20808D]/40 hover:border-[#20808D] hover:bg-[#E8F4F5]/30 transition-colors cursor-pointer">
+                <CardContent className="pt-4 pb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-sm text-[#1A1A2E]">{s.test_name}</p>
+                    {s.preset_name && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{s.preset_name}</p>
+                    )}
+                  </div>
+                  <Badge className="bg-[#20808D] text-white shrink-0">
+                    {s.status === 'in_progress' ? 'Continuer' : 'Commencer'}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {!hasSessions ? (
         <Card>
