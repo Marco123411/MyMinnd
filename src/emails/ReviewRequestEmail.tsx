@@ -9,6 +9,7 @@ import {
   Button,
   Hr,
   Section,
+  Img,
 } from '@react-email/components'
 
 interface ReviewRequestEmailProps {
@@ -22,6 +23,7 @@ export function ReviewRequestEmail({
   expertName,
   reviewUrl,
 }: ReviewRequestEmailProps) {
+  const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://myminnd.com'}/logo.png`
   return (
     <Html lang="fr">
       <Head />
@@ -29,8 +31,7 @@ export function ReviewRequestEmail({
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
           <Section style={logoSectionStyle}>
-            <Heading style={logoStyle}>MINND</Heading>
-            <Text style={logoSubtitleStyle}>Performance Mentale</Text>
+            <Img src={logoUrl} alt="MINND" width="180" style={{ display: 'block', margin: '0 auto' }} />
           </Section>
 
           <Hr style={dividerStyle} />
@@ -97,26 +98,12 @@ const containerStyle: React.CSSProperties = {
 }
 
 const logoSectionStyle: React.CSSProperties = {
-  backgroundColor: '#1A1A2E',
+  backgroundColor: '#ffffff',
   padding: '24px 32px',
   textAlign: 'center',
 }
 
-const logoStyle: React.CSSProperties = {
-  color: '#20808D',
-  fontSize: '28px',
-  fontWeight: '800',
-  letterSpacing: '4px',
-  margin: '0',
-}
 
-const logoSubtitleStyle: React.CSSProperties = {
-  color: '#E8F4F5',
-  fontSize: '12px',
-  letterSpacing: '2px',
-  margin: '4px 0 0',
-  textTransform: 'uppercase',
-}
 
 const dividerStyle: React.CSSProperties = {
   borderColor: '#e4e4e7',
@@ -128,7 +115,7 @@ const contentStyle: React.CSSProperties = {
 }
 
 const headingStyle: React.CSSProperties = {
-  color: '#1A1A2E',
+  color: '#141325',
   fontSize: '22px',
   fontWeight: '700',
   margin: '0 0 16px',
@@ -147,7 +134,7 @@ const buttonSectionStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  backgroundColor: '#20808D',
+  backgroundColor: '#7069F4',
   borderRadius: '6px',
   color: '#ffffff',
   display: 'inline-block',

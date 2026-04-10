@@ -9,6 +9,7 @@ import {
   Button,
   Hr,
   Section,
+  Img,
 } from '@react-email/components'
 
 interface DispatchExpertEmailProps {
@@ -30,6 +31,7 @@ export function DispatchExpertEmail({
   profileName,
   dispatchUrl,
 }: DispatchExpertEmailProps) {
+  const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://myminnd.com'}/logo.png`
   const contextLabel = CONTEXT_LABELS[clientContext] ?? clientContext
 
   return (
@@ -41,8 +43,7 @@ export function DispatchExpertEmail({
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
           <Section style={logoSectionStyle}>
-            <Heading style={logoStyle}>MINND</Heading>
-            <Text style={logoSubtitleStyle}>Mission Expert</Text>
+            <Img src={logoUrl} alt="MINND" width="180" style={{ display: 'block', margin: '0 auto' }} />
           </Section>
 
           <Hr style={dividerStyle} />
@@ -147,26 +148,12 @@ const containerStyle: React.CSSProperties = {
 }
 
 const logoSectionStyle: React.CSSProperties = {
-  backgroundColor: '#1A1A2E',
+  backgroundColor: '#ffffff',
   padding: '24px 32px',
   textAlign: 'center',
 }
 
-const logoStyle: React.CSSProperties = {
-  color: '#20808D',
-  fontSize: '28px',
-  fontWeight: '800',
-  letterSpacing: '4px',
-  margin: '0',
-}
 
-const logoSubtitleStyle: React.CSSProperties = {
-  color: '#FFC553',
-  fontSize: '12px',
-  letterSpacing: '2px',
-  margin: '4px 0 0',
-  textTransform: 'uppercase',
-}
 
 const dividerStyle: React.CSSProperties = {
   borderColor: '#e4e4e7',
@@ -178,7 +165,7 @@ const contentStyle: React.CSSProperties = {
 }
 
 const headingStyle: React.CSSProperties = {
-  color: '#1A1A2E',
+  color: '#141325',
   fontSize: '22px',
   fontWeight: '700',
   margin: '0 0 16px',
@@ -192,15 +179,15 @@ const textStyle: React.CSSProperties = {
 }
 
 const profileBoxStyle: React.CSSProperties = {
-  backgroundColor: '#E8F4F5',
-  borderLeft: '4px solid #20808D',
+  backgroundColor: '#F1F0FE',
+  borderLeft: '4px solid #7069F4',
   borderRadius: '0 6px 6px 0',
   padding: '16px 20px',
   margin: '0 0 20px',
 }
 
 const profileLabelStyle: React.CSSProperties = {
-  color: '#20808D',
+  color: '#7069F4',
   fontSize: '11px',
   fontWeight: '700',
   letterSpacing: '1px',
@@ -209,7 +196,7 @@ const profileLabelStyle: React.CSSProperties = {
 }
 
 const profileClientNameStyle: React.CSSProperties = {
-  color: '#1A1A2E',
+  color: '#141325',
   fontSize: '18px',
   fontWeight: '700',
   margin: '0 0 12px',
@@ -228,9 +215,9 @@ const buttonSectionStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  backgroundColor: '#FFC553',
+  backgroundColor: '#FF9F40',
   borderRadius: '6px',
-  color: '#1A1A2E',
+  color: '#141325',
   display: 'inline-block',
   fontSize: '15px',
   fontWeight: '700',
