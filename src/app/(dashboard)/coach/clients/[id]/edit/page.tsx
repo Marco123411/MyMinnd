@@ -12,7 +12,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-[#1A1A2E]">Modifier {client.nom}</h1>
+        <h1 className="text-2xl font-semibold text-[#141325]">Modifier {client.nom}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Mettez à jour les informations du client.</p>
       </div>
 

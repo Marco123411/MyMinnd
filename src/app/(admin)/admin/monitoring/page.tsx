@@ -11,9 +11,9 @@ const FREQUENCY_LABELS: Record<string, string> = {
 }
 
 const FREQUENCY_COLORS: Record<string, string> = {
-  quotidien: 'bg-[#E8F4F5] text-[#20808D]',
+  quotidien: 'bg-[#F1F0FE] text-[#7069F4]',
   hebdo: 'bg-blue-50 text-blue-700',
-  mensuel: 'bg-[#FFC553]/20 text-[#A84B2F]',
+  mensuel: 'bg-[#FF9F40]/20 text-[#EC638B]',
 }
 
 function formatValue(value: number | string, unit?: string): string {
@@ -62,7 +62,7 @@ function MetricCard({ label, value, previous, unit, frequency, delta_pct }: Moni
         </Badge>
       </CardHeader>
       <CardContent className="space-y-1">
-        <p className="text-2xl font-bold text-[#1A1A2E]">
+        <p className="text-2xl font-bold text-[#141325]">
           {formatValue(value, unit)}
         </p>
         <div className={`flex items-center gap-1 text-xs ${trendColor}`}>
@@ -88,7 +88,7 @@ export default async function AdminMonitoringPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1A2E]">Monitoring plateforme</h1>
+        <h1 className="text-3xl font-bold text-[#141325]">Monitoring plateforme</h1>
         <p className="text-muted-foreground">
           Métriques clés de la plateforme MINND avec évolution par période
         </p>

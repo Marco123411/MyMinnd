@@ -42,7 +42,7 @@ export function PublishTestButton({ testId }: PublishTestButtonProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#20808D] hover:bg-[#186870]">
+        <Button className="bg-[#7069F4] hover:bg-[#5B54D6]">
           Publier les résultats
         </Button>
       </DialogTrigger>
@@ -64,7 +64,7 @@ export function PublishTestButton({ testId }: PublishTestButtonProps) {
           <Button
             onClick={handlePublish}
             disabled={publishing}
-            className="bg-[#20808D] hover:bg-[#186870]"
+            className="bg-[#7069F4] hover:bg-[#5B54D6]"
           >
             {publishing ? 'Publication…' : 'Confirmer la publication'}
           </Button>

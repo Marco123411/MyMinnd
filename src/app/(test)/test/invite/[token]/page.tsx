@@ -23,7 +23,7 @@ export default async function InvitePage({ params }: PageProps) {
   if (error || !test) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-2xl font-bold text-[#944454]">Lien invalide</h1>
+        <h1 className="text-2xl font-bold text-[#3C3CD6]">Lien invalide</h1>
         <p className="mt-2 text-muted-foreground">Ce lien d'invitation est invalide ou a déjà été utilisé.</p>
         <Link href="/login" className="mt-6">
           <Button>Se connecter</Button>
@@ -35,7 +35,7 @@ export default async function InvitePage({ params }: PageProps) {
   if (test.token_expires_at && new Date(test.token_expires_at) < new Date()) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-2xl font-bold text-[#944454]">Lien expiré</h1>
+        <h1 className="text-2xl font-bold text-[#3C3CD6]">Lien expiré</h1>
         <p className="mt-2 text-muted-foreground">Ce lien d'invitation a expiré. Demandez un nouveau lien à votre coach.</p>
       </div>
     )
@@ -60,7 +60,7 @@ export default async function InvitePage({ params }: PageProps) {
     if (result.error) {
       return (
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-          <h1 className="text-2xl font-bold text-[#944454]">Erreur</h1>
+          <h1 className="text-2xl font-bold text-[#3C3CD6]">Erreur</h1>
           <p className="mt-2 text-muted-foreground">{result.error}</p>
         </div>
       )
@@ -75,7 +75,7 @@ export default async function InvitePage({ params }: PageProps) {
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <div className="w-full max-w-md space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Invitation à passer un test</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Invitation à passer un test</h1>
           <p className="mt-2 text-muted-foreground">
             Vous avez été invité à passer le test <strong>{testName}</strong>.
           </p>
@@ -83,7 +83,7 @@ export default async function InvitePage({ params }: PageProps) {
 
         <div className="flex flex-col gap-3">
           <Link href={`/login?returnUrl=${encodeURIComponent(returnUrl)}`}>
-            <Button className="w-full bg-[#20808D] hover:bg-[#186870]">Se connecter</Button>
+            <Button className="w-full bg-[#7069F4] hover:bg-[#5B54D6]">Se connecter</Button>
           </Link>
           <Link href={`/register?returnUrl=${encodeURIComponent(returnUrl)}`}>
             <Button variant="outline" className="w-full">

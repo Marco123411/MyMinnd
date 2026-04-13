@@ -26,7 +26,7 @@ export async function ProfileIntelligenceTab({
     return (
       <Card>
         <CardContent className="py-10 text-center">
-          <p className="text-sm font-medium text-[#1A1A2E] mb-1">
+          <p className="text-sm font-medium text-[#141325] mb-1">
             Profil Intelligence non disponible
           </p>
           <p className="text-xs text-muted-foreground">
@@ -111,7 +111,7 @@ export async function ProfileIntelligenceTab({
             <CardTitle className="text-xs text-muted-foreground">Score global</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-[#20808D]">{globalScore.toFixed(1)}</p>
+            <p className="text-2xl font-bold text-[#7069F4]">{globalScore.toFixed(1)}</p>
             <p className="text-xs text-muted-foreground">/10 · {globalPercentile}e percentile</p>
           </CardContent>
         </Card>
@@ -127,7 +127,7 @@ export async function ProfileIntelligenceTab({
               )
               return (
                 <>
-                  <p className="text-sm font-semibold text-[#1A1A2E]">{closest.level}</p>
+                  <p className="text-sm font-semibold text-[#141325]">{closest.level}</p>
                   <p className="text-xs text-muted-foreground">Niveau le plus proche ({closest.score})</p>
                 </>
               )
@@ -144,7 +144,7 @@ export async function ProfileIntelligenceTab({
               const top = [...leafZScores].sort((a, b) => b.z - a.z)[0]
               return (
                 <>
-                  <p className="text-xs font-semibold text-[#1A1A2E] leading-tight">{top.name}</p>
+                  <p className="text-xs font-semibold text-[#141325] leading-tight">{top.name}</p>
                   <p className="text-xs text-green-600 mt-0.5">z=+{top.z.toFixed(2)}</p>
                 </>
               )
@@ -161,7 +161,7 @@ export async function ProfileIntelligenceTab({
               const bottom = [...leafZScores].sort((a, b) => a.z - b.z)[0]
               return (
                 <>
-                  <p className="text-xs font-semibold text-[#1A1A2E] leading-tight">{bottom.name}</p>
+                  <p className="text-xs font-semibold text-[#141325] leading-tight">{bottom.name}</p>
                   <p className="text-xs text-orange-600 mt-0.5">z={bottom.z.toFixed(2)}</p>
                 </>
               )
@@ -191,7 +191,7 @@ export async function ProfileIntelligenceTab({
 
       {/* Section 4 : Forces et faiblesses z-scores */}
       <div>
-        <h3 className="text-sm font-semibold text-[#1A1A2E] mb-3">Forces et axes de travail</h3>
+        <h3 className="text-sm font-semibold text-[#141325] mb-3">Forces et axes de travail</h3>
         <ZScoreForcesFaiblesses
           leafZScores={leafZScores}
           profileForces={profile.forces_details}
@@ -211,7 +211,7 @@ export async function ProfileIntelligenceTab({
       {/* Section 6 : Prédicteurs de performance */}
       {topPredictors.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-[#1A1A2E] mb-3">Prédicteurs de performance</h3>
+          <h3 className="text-sm font-semibold text-[#141325] mb-3">Prédicteurs de performance</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {topPredictors.map((pred) => (
               <PredictorCard
@@ -224,9 +224,9 @@ export async function ProfileIntelligenceTab({
             ))}
           </div>
           {cerclVirtueux && (
-            <div className="mt-3 rounded-lg border-l-4 border-[#20808D] bg-[#E8F4F5] px-4 py-3">
-              <p className="text-sm font-semibold text-[#20808D]">✓ Cercle vertueux Confiance-Flow actif</p>
-              <p className="text-xs text-[#1A1A2E]/80 mt-0.5">
+            <div className="mt-3 rounded-lg border-l-4 border-[#7069F4] bg-[#F1F0FE] px-4 py-3">
+              <p className="text-sm font-semibold text-[#7069F4]">✓ Cercle vertueux Confiance-Flow actif</p>
+              <p className="text-xs text-[#141325]/80 mt-0.5">
                 La confiance et le flow se renforcent mutuellement (r=0.532). Principal avantage compétitif.
               </p>
             </div>
@@ -237,7 +237,7 @@ export async function ProfileIntelligenceTab({
       {/* Section 7 : Insights conditionnels */}
       {activeInsights.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-[#1A1A2E] mb-3">Insights personnalisés</h3>
+          <h3 className="text-sm font-semibold text-[#141325] mb-3">Insights personnalisés</h3>
           <div className="space-y-2">
             {activeInsights.slice(0, 4).map((insight) => (
               <ConditionalInsightCard key={insight.id} insight={insight} />

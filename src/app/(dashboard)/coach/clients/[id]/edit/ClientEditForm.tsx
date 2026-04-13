@@ -258,7 +258,7 @@ export function ClientEditForm({ client }: ClientEditFormProps) {
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-[#20808D] text-white hover:bg-[#20808D]/90"
+          className="bg-[#7069F4] text-white hover:bg-[#7069F4]/90"
         >
           {isLoading ? 'Enregistrement…' : 'Enregistrer'}
         </Button>

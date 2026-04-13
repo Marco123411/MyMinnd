@@ -25,7 +25,7 @@ export function ProfileCard({ profile, levelSlug }: ProfileCardProps) {
         )}
       </div>
 
-      <h2 className="text-2xl font-bold text-[#1A1A2E]">{profile.name}</h2>
+      <h2 className="text-2xl font-bold text-[#141325]">{profile.name}</h2>
 
       {profile.description && (
         <p className="mt-3 text-sm text-muted-foreground">{profile.description}</p>
@@ -35,13 +35,13 @@ export function ProfileCard({ profile, levelSlug }: ProfileCardProps) {
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {profile.strengths && (
             <div>
-              <p className="mb-1 text-sm font-semibold text-[#1A1A2E]">Points forts</p>
+              <p className="mb-1 text-sm font-semibold text-[#141325]">Points forts</p>
               <p className="text-sm text-muted-foreground">{profile.strengths}</p>
             </div>
           )}
           {profile.weaknesses && (
             <div>
-              <p className="mb-1 text-sm font-semibold text-[#1A1A2E]">Points de vigilance</p>
+              <p className="mb-1 text-sm font-semibold text-[#141325]">Points de vigilance</p>
               <p className="text-sm text-muted-foreground">{profile.weaknesses}</p>
             </div>
           )}
@@ -50,7 +50,7 @@ export function ProfileCard({ profile, levelSlug }: ProfileCardProps) {
 
       {profile.recommendations && (
         <div className="mt-4 rounded-lg bg-white/60 p-3">
-          <p className="mb-1 text-sm font-semibold text-[#1A1A2E]">Recommandations</p>
+          <p className="mb-1 text-sm font-semibold text-[#141325]">Recommandations</p>
           <p className="text-sm text-muted-foreground">{profile.recommendations}</p>
         </div>
       )}

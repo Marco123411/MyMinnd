@@ -34,7 +34,7 @@ function BonhommeResultDisplay({ data }: { data: Record<string, unknown> }) {
   return (
     <div className="space-y-2">
       {scores.global_score !== undefined && (
-        <p className="text-sm font-semibold text-[#20808D]">
+        <p className="text-sm font-semibold text-[#7069F4]">
           Score global : {Math.round(scores.global_score)}/100
         </p>
       )}
@@ -44,7 +44,7 @@ function BonhommeResultDisplay({ data }: { data: Record<string, unknown> }) {
           <div key={key} className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground w-28 shrink-0">{label}</span>
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-[#20808D] rounded-full" style={{ width: `${val}%` }} />
+              <div className="h-full bg-[#7069F4] rounded-full" style={{ width: `${val}%` }} />
             </div>
             <span className="text-xs font-medium w-8 text-right">{val}</span>
           </div>
@@ -63,7 +63,7 @@ function FigureResultDisplay({ data }: { data: Record<string, unknown> }) {
   return (
     <div className="space-y-2">
       {scores.global_score !== undefined && (
-        <p className="text-sm font-semibold text-[#20808D]">
+        <p className="text-sm font-semibold text-[#7069F4]">
           Score global : {Math.round(scores.global_score)}/100
         </p>
       )}
@@ -141,7 +141,7 @@ export default async function SessionDetailPage({
       {/* En-tête de séance */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#1A1A2E]">{session.titre}</h1>
+          <h1 className="text-xl font-bold text-[#141325]">{session.titre}</h1>
           {session.objectif && (
             <p className="text-sm text-muted-foreground mt-1">{session.objectif}</p>
           )}
@@ -169,11 +169,11 @@ export default async function SessionDetailPage({
 
       {/* Feedback client */}
       {session.feedback_client && (
-        <Card className="border-[#20808D]/30 bg-[#E8F4F5]/50">
+        <Card className="border-[#7069F4]/30 bg-[#F1F0FE]/50">
           <CardContent className="pt-4 flex gap-3">
-            <MessageSquare className="h-4 w-4 text-[#20808D] shrink-0 mt-0.5" />
+            <MessageSquare className="h-4 w-4 text-[#7069F4] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-[#20808D] uppercase tracking-wide mb-1">
+              <p className="text-xs font-medium text-[#7069F4] uppercase tracking-wide mb-1">
                 Ressenti du client
               </p>
               <p className="text-sm italic text-foreground">« {session.feedback_client} »</p>

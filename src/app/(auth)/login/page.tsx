@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Mot de passe</Label>
-              <Link href="/forgot-password" className="text-xs text-teal hover:underline">
+              <Link href="/forgot-password" className="text-xs text-[#7069F4] hover:underline">
                 Mot de passe oublié ?
               </Link>
             </div>
@@ -124,14 +124,14 @@ export default function LoginPage() {
             <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2">{error}</p>
           )}
 
-          <Button type="submit" className="w-full bg-teal text-white hover:bg-teal/90" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-[#7069F4] text-white hover:bg-[#5B54D6]" disabled={isLoading}>
             {isLoading ? 'Connexion…' : 'Se connecter'}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Pas encore de compte ?{' '}
-          <Link href="/register" className="text-teal hover:underline font-medium">
+          <Link href="/register" className="text-[#7069F4] hover:underline font-medium">
             S&apos;inscrire
           </Link>
         </p>

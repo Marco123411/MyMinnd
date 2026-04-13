@@ -53,7 +53,7 @@ export function CognitiveLandingClient({ slug }: CognitiveLandingClientProps) {
       <Button
         onClick={handleStart}
         disabled={loading}
-        className="w-full bg-[#20808D] hover:bg-[#186870] text-white font-semibold h-12 text-base rounded-xl"
+        className="w-full bg-[#7069F4] hover:bg-[#5B54D6] text-white font-semibold h-12 text-base rounded-xl"
       >
         {loading ? 'Démarrage…' : 'Commencer le test'}
       </Button>

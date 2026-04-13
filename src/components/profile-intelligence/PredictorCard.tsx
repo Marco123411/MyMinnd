@@ -36,26 +36,26 @@ export function PredictorCard({ label, r, clientScore }: PredictorCardProps) {
       <CardContent className="pt-4 pb-4">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <p className="text-sm font-semibold text-[#1A1A2E]">{label}</p>
+            <p className="text-sm font-semibold text-[#141325]">{label}</p>
             <p className="text-xs text-muted-foreground">
               Corrélation avec le score global : r={r.toFixed(3)}
             </p>
           </div>
-          <span className="text-lg font-bold text-[#20808D] shrink-0">
+          <span className="text-lg font-bold text-[#7069F4] shrink-0">
             {clientScore.toFixed(1)}/10
           </span>
         </div>
 
         {/* Barre de score */}
-        <div className="h-2 w-full rounded-full bg-[#E8F4F5] mb-3">
+        <div className="h-2 w-full rounded-full bg-[#F1F0FE] mb-3">
           <div
-            className="h-2 rounded-full bg-[#20808D] transition-all"
+            className="h-2 rounded-full bg-[#7069F4] transition-all"
             style={{ width: `${widthPct}%` }}
           />
         </div>
 
         {/* Interprétation */}
-        <div className={`flex items-start gap-2 text-xs ${positive ? 'text-[#20808D]' : 'text-orange-700'}`}>
+        <div className={`flex items-start gap-2 text-xs ${positive ? 'text-[#7069F4]' : 'text-orange-700'}`}>
           {positive ? (
             <TrendingUp className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           ) : (

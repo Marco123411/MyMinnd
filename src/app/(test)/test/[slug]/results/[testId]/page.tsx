@@ -138,17 +138,17 @@ export default async function ResultsPage({ params }: PageProps) {
     <div className="mx-auto max-w-3xl px-4 py-12">
       {/* En-tête résultats */}
       <div className="mb-10 text-center">
-        <p className="text-sm font-medium uppercase tracking-wide text-[#20808D]">
+        <p className="text-sm font-medium uppercase tracking-wide text-[#7069F4]">
           {definition.name}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-[#1A1A2E]">Vos résultats</h1>
+        <h1 className="mt-1 text-3xl font-bold text-[#141325]">Vos résultats</h1>
       </div>
 
       {/* Score global */}
       {globalScore !== undefined && (
         <div className="mb-10 flex flex-col items-center">
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#E8F4F5]">
-            <span className="text-4xl font-bold text-[#20808D]">
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#F1F0FE]">
+            <span className="text-4xl font-bold text-[#7069F4]">
               {globalScore.toFixed(1)}
             </span>
           </div>
@@ -159,7 +159,7 @@ export default async function ResultsPage({ params }: PageProps) {
       {/* Radar chart */}
       {radarDomains.length > 0 && (
         <div className="mb-10">
-          <h2 className="mb-4 text-lg font-semibold text-[#1A1A2E]">Profil par domaine</h2>
+          <h2 className="mb-4 text-lg font-semibold text-[#141325]">Profil par domaine</h2>
           <ResultsRadar domains={radarDomains} height={320} />
         </div>
       )}
@@ -177,7 +177,7 @@ export default async function ResultsPage({ params }: PageProps) {
             />
             <span className="text-sm font-medium text-muted-foreground">{profile.family}</span>
           </div>
-          <h2 className="text-2xl font-bold text-[#1A1A2E]">{profile.name}</h2>
+          <h2 className="text-2xl font-bold text-[#141325]">{profile.name}</h2>
           {profile.description && (
             <p className="mt-3 text-muted-foreground">{profile.description}</p>
           )}
@@ -185,13 +185,13 @@ export default async function ResultsPage({ params }: PageProps) {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {profile.strengths && (
                 <div>
-                  <p className="mb-1 text-sm font-semibold text-[#1A1A2E]">Points forts</p>
+                  <p className="mb-1 text-sm font-semibold text-[#141325]">Points forts</p>
                   <p className="text-sm text-muted-foreground">{profile.strengths}</p>
                 </div>
               )}
               {profile.weaknesses && (
                 <div>
-                  <p className="mb-1 text-sm font-semibold text-[#1A1A2E]">Points de vigilance</p>
+                  <p className="mb-1 text-sm font-semibold text-[#141325]">Points de vigilance</p>
                   <p className="text-sm text-muted-foreground">{profile.weaknesses}</p>
                 </div>
               )}
@@ -199,7 +199,7 @@ export default async function ResultsPage({ params }: PageProps) {
           )}
           {profile.recommendations && (
             <div className="mt-4 rounded-lg bg-white/60 p-3">
-              <p className="mb-1 text-sm font-semibold text-[#1A1A2E]">Recommandations</p>
+              <p className="mb-1 text-sm font-semibold text-[#141325]">Recommandations</p>
               <p className="text-sm text-muted-foreground">{profile.recommendations}</p>
             </div>
           )}
@@ -209,7 +209,7 @@ export default async function ResultsPage({ params }: PageProps) {
       {/* Détail par domaine — Complete / Expert uniquement */}
       {!isDiscovery && (
         <div className="mb-10 space-y-8">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Détail par compétence</h2>
+          <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
           {domainNodes.map((domain) => {
             const leaves = competencyNodes
               .filter((n) => n.is_leaf && n.parent_id === domain.id)
@@ -218,8 +218,8 @@ export default async function ResultsPage({ params }: PageProps) {
             return (
               <div key={domain.id}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold text-[#1A1A2E]">{domain.name}</h3>
-                  <span className="text-sm font-medium text-[#20808D]">
+                  <h3 className="font-semibold text-[#141325]">{domain.name}</h3>
+                  <span className="text-sm font-medium text-[#7069F4]">
                     {getScore(domain.id).toFixed(1)}/10
                   </span>
                 </div>
@@ -241,17 +241,17 @@ export default async function ResultsPage({ params }: PageProps) {
 
       {/* Upsell Discovery → Complete */}
       {isDiscovery && completeLevel && (
-        <div className="rounded-xl border-2 border-[#20808D] bg-[#E8F4F5] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#1A1A2E]">Allez plus loin</h2>
+        <div className="rounded-xl border-2 border-[#7069F4] bg-[#F1F0FE] p-6 text-center">
+          <h2 className="text-xl font-bold text-[#141325]">Allez plus loin</h2>
           <p className="mt-2 text-muted-foreground">
             Accédez au profil MINND complet, au détail de vos compétences et à votre rapport PDF
             personnalisé.
           </p>
           {completePrice && (
-            <p className="mt-3 text-2xl font-bold text-[#20808D]">{completePrice}</p>
+            <p className="mt-3 text-2xl font-bold text-[#7069F4]">{completePrice}</p>
           )}
           <Link href={`/test/${slug}`} className="mt-4 inline-block">
-            <Button className="bg-[#20808D] hover:bg-[#186870]">Passer au niveau Complet</Button>
+            <Button className="bg-[#7069F4] hover:bg-[#5B54D6]">Passer au niveau Complet</Button>
           </Link>
         </div>
       )}

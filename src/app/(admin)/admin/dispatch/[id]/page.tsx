@@ -21,9 +21,9 @@ const STATUS_LABELS: Record<DispatchStatus, string> = {
 }
 
 const STATUS_COLORS: Record<DispatchStatus, string> = {
-  nouveau: 'bg-[#20808D]',
+  nouveau: 'bg-[#7069F4]',
   en_cours: 'bg-blue-500',
-  dispatche: 'bg-[#FFC553]',
+  dispatche: 'bg-[#FF9F40]',
   accepte: 'bg-green-500',
   en_session: 'bg-purple-500',
   termine: 'bg-gray-400',
@@ -66,7 +66,7 @@ export default async function AdminDispatchDetailPage({ params }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#1A1A2E]">{clientName}</h1>
+          <h1 className="text-3xl font-bold text-[#141325]">{clientName}</h1>
           <p className="text-muted-foreground">Dispatch Level 3 · {dispatch.id.slice(0, 8)}...</p>
         </div>
         <span
@@ -96,7 +96,7 @@ export default async function AdminDispatchDetailPage({ params }: Props) {
               {dispatch.test_score_global !== null && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Score global</p>
-                  <p className="text-4xl font-bold text-[#20808D]">
+                  <p className="text-4xl font-bold text-[#7069F4]">
                     {dispatch.test_score_global.toFixed(1)}
                     <span className="text-lg text-muted-foreground"> / 10</span>
                   </p>
@@ -107,7 +107,7 @@ export default async function AdminDispatchDetailPage({ params }: Props) {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: dispatch.test_profile_color ?? '#20808D' }}
+                    style={{ backgroundColor: dispatch.test_profile_color ?? '#7069F4' }}
                   />
                   <span className="font-medium">{dispatch.test_profile_name}</span>
                 </div>
@@ -134,7 +134,7 @@ export default async function AdminDispatchDetailPage({ params }: Props) {
                       </div>
                       <div className="h-1.5 rounded-full bg-gray-100">
                         <div
-                          className="h-full rounded-full bg-[#20808D]"
+                          className="h-full rounded-full bg-[#7069F4]"
                           style={{ width: `${((score - 1) / 9) * 100}%` }}
                         />
                       </div>

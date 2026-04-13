@@ -10,8 +10,9 @@ import {
   type ClientFormData,
   type UpdateClientFormData,
 } from '@/lib/validations/clients'
-import type { Client, ClientWithLastTest } from '@/types'
+import type { Client, ClientDocument, ClientWithLastTest } from '@/types'
 import { ClientInvitationEmail } from '@/emails/ClientInvitationEmail'
+import { ClientManualActivationEmail } from '@/emails/ClientManualActivationEmail'
 import { PasswordResetEmail } from '@/emails/PasswordResetEmail'
 
 const uuidSchema = z.string().uuid()
@@ -668,6 +669,213 @@ export async function updateClientEmailAction(
 
   revalidatePath(`/coach/clients/${clientId}`)
   return { error: null }
+}
+
+// Activation manuelle d'un client pré-existant (bypass flux invitation email).
+// Crée le compte Supabase Auth avec email déjà confirmé, lie le client CRM,
+// et envoie un lien "créer mot de passe" au client.
+export async function manuallyValidateClientAction(
+  clientId: string
+): Promise<{ error: string | null }> {
+  const parsed = uuidSchema.safeParse(clientId)
+  if (!parsed.success) return { error: 'ID client invalide' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (!currentUser || !['coach', 'admin'].includes(currentUser.role)) {
+    return { error: 'Accès refusé' }
+  }
+
+  const { data: client, error: clientError } = await supabase
+    .from('clients')
+    .select('id, nom, email, coach_id, invitation_status, user_id')
+    .eq('id', clientId)
+    .single()
+
+  if (clientError || !client) return { error: 'Client introuvable' }
+  if (currentUser.role === 'coach' && client.coach_id !== user.id) {
+    return { error: 'Ce client ne vous appartient pas' }
+  }
+  if (!client.email) return { error: 'Ce client n\'a pas d\'email — impossible de créer un compte' }
+  if (client.invitation_status === 'accepted') return { error: 'Ce client est déjà activé' }
+  // Guard F2 : éviter double-activation si user_id déjà lié (statut incohérent en base)
+  if (client.user_id) return { error: 'Ce client a déjà un compte lié — vérifiez son statut' }
+
+  const admin = createAdminClient()
+
+  // Vérifier si un compte auth existe déjà pour cet email (via RPC sécurisé)
+  const { data: existingUserId } = await admin.rpc('get_confirmed_user_id_by_email', {
+    p_email: client.email,
+  })
+
+  if (existingUserId) {
+    // Lier directement le compte auth existant au client CRM
+    const { error: linkError } = await admin
+      .from('clients')
+      .update({
+        user_id: existingUserId,
+        invitation_status: 'accepted',
+        manually_validated_at: new Date().toISOString(),
+        manually_validated_by: user.id,
+      })
+      .eq('id', clientId)
+    if (linkError) return { error: 'Erreur lors de la liaison du compte existant' }
+    revalidatePath(`/coach/clients/${clientId}`)
+    return { error: null }
+  }
+
+  // Créer le compte Supabase Auth avec email déjà confirmé (bypass confirmation email)
+  const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+    email: client.email,
+    email_confirm: true,
+    user_metadata: { nom: client.nom },
+    app_metadata: { role: 'client', coach_id: client.coach_id },
+  })
+
+  if (createError) {
+    console.error('[manuallyValidateClientAction] createUser error:', createError)
+    return { error: 'Erreur lors de la création du compte — réessayez ou contactez le support' }
+  }
+
+  // Upsert dans public.users (le trigger handle_new_user peut ne pas se déclencher
+  // avec email_confirm=true sur l'Admin API selon la config Supabase)
+  const { error: profileError } = await admin
+    .from('users')
+    .upsert(
+      { id: newUser.user.id, role: 'client', nom: client.nom, is_active: true },
+      { onConflict: 'id', ignoreDuplicates: true }
+    )
+
+  if (profileError) {
+    await admin.auth.admin.deleteUser(newUser.user.id)
+    return { error: 'Erreur création profil utilisateur' }
+  }
+
+  // Lier le client CRM au nouveau compte Auth (bypass du trigger link_client_on_email_confirm)
+  const { error: linkError } = await admin
+    .from('clients')
+    .update({
+      user_id: newUser.user.id,
+      invitation_status: 'accepted',
+      manually_validated_at: new Date().toISOString(),
+      manually_validated_by: user.id,
+    })
+    .eq('id', clientId)
+
+  if (linkError) {
+    // Rollback : supprimer auth user ET public.users pour éviter des orphelins
+    await admin.auth.admin.deleteUser(newUser.user.id)
+    await admin.from('users').delete().eq('id', newUser.user.id)
+    return { error: 'Erreur lors de la liaison du client' }
+  }
+
+  // Générer lien "créer votre mot de passe" (type recovery = reset password)
+  const { data: linkData } = await admin.auth.admin.generateLink({
+    type: 'recovery',
+    email: client.email,
+    options: { redirectTo: `${getAppUrl()}/client/onboarding` },
+  })
+
+  if (linkData?.properties?.action_link) {
+    try {
+      const resend = getResend()
+      await resend.emails.send({
+        from: getFromEmail(),
+        to: client.email,
+        subject: 'Votre espace MINND est prêt — Créez votre mot de passe',
+        react: ClientManualActivationEmail({
+          clientNom: client.nom,
+          setPasswordUrl: linkData.properties.action_link,
+        }),
+      })
+    } catch (emailErr) {
+      // Non bloquant : le compte est actif, le coach peut renvoyer un lien manuellement
+      console.error('[manuallyValidateClientAction] email send error:', emailErr)
+    }
+  }
+
+  revalidatePath(`/coach/clients/${clientId}`)
+  return { error: null }
+}
+
+// Upload d'un document PDF et attachement à la fiche client.
+// Chemin storage : dossiers/{coach_id}/{client_id}/{timestamp}_{filename}
+export async function uploadClientDocumentAction(
+  clientId: string,
+  formData: FormData
+): Promise<{ data: { path: string } | null; error: string | null }> {
+  const parsed = uuidSchema.safeParse(clientId)
+  if (!parsed.success) return { data: null, error: 'ID client invalide' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: 'Non authentifié' }
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('id, coach_id, documents, nom')
+    .eq('id', clientId)
+    .eq('coach_id', user.id)
+    .single()
+
+  if (!client) return { data: null, error: 'Client introuvable ou accès refusé' }
+
+  const file = formData.get('file') as File | null
+  if (!file) return { data: null, error: 'Aucun fichier fourni' }
+  if (file.type !== 'application/pdf') return { data: null, error: 'Fichier invalide — PDF uniquement' }
+  if (file.size > 10 * 1024 * 1024) return { data: null, error: 'Fichier trop volumineux — 10 Mo maximum' }
+
+  // Validation magic bytes : vérifier l'en-tête %PDF indépendamment du MIME déclaré par le client
+  const headerBuf = await file.slice(0, 4).arrayBuffer()
+  const header = new Uint8Array(headerBuf)
+  const isPdf = header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46
+  if (!isPdf) return { data: null, error: 'Fichier invalide — PDF uniquement' }
+
+  const documentName = (formData.get('name') as string | null)?.trim() || file.name
+  const rawType = formData.get('type') as string | null
+  const docType: ClientDocument['type'] =
+    rawType === 'contrat' || rawType === 'autre' ? rawType : 'inscription'
+
+  const timestamp = Date.now()
+  const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const storagePath = `${user.id}/${clientId}/${timestamp}_${safeFilename}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('dossiers')
+    .upload(storagePath, file, { contentType: 'application/pdf', upsert: false })
+
+  if (uploadError) return { data: null, error: `Erreur upload : ${uploadError.message}` }
+
+  // Stocker le chemin storage (pas une URL signée) — URL générée à la volée côté serveur à l'affichage
+  const newDoc: ClientDocument = {
+    name: documentName,
+    path: storagePath,
+    type: docType,
+    uploaded_at: new Date().toISOString(),
+    uploaded_by: user.id,
+  }
+
+  const currentDocs = (client.documents ?? []) as ClientDocument[]
+  const { error: updateError } = await supabase
+    .from('clients')
+    .update({ documents: [...currentDocs, newDoc] })
+    .eq('id', clientId)
+
+  if (updateError) {
+    // Nettoyage : supprimer le fichier uploadé si la mise à jour de la fiche échoue
+    await supabase.storage.from('dossiers').remove([storagePath])
+    return { data: null, error: 'Erreur mise à jour fiche client' }
+  }
+
+  revalidatePath(`/coach/clients/${clientId}`)
+  return { data: { path: storagePath }, error: null }
 }
 
 // Met à jour les notes privées et objectifs (pour l'onglet Notes)

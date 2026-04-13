@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { TestTimer } from '@/components/cognitive/TestTimer'
 
 interface CognitiveTestShellProps {
   children: React.ReactNode
@@ -18,6 +19,7 @@ interface CognitiveTestShellProps {
   progressValue: number // 0–100
   progressLabel: string
   onAbandon: () => void
+  durationSec?: number // affiche TestTimer mm:ss quand fourni (mode programme)
 }
 
 export function CognitiveTestShell({
@@ -26,6 +28,7 @@ export function CognitiveTestShell({
   progressValue,
   progressLabel,
   onAbandon,
+  durationSec,
 }: CognitiveTestShellProps) {
   const [showAbandonDialog, setShowAbandonDialog] = useState(false)
 
@@ -58,6 +61,11 @@ export function CognitiveTestShell({
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gray-950 text-white">
+      {/* Timer mm:ss visible en mode programme */}
+      {durationSec !== undefined && (
+        <TestTimer durationSec={durationSec} onExpire={() => {}} />
+      )}
+
       {/* Barre de progression en haut */}
       <div className="flex-shrink-0 px-4 pt-3 pb-2 space-y-1">
         <div className="flex items-center justify-between text-xs text-gray-400">
@@ -66,7 +74,7 @@ export function CognitiveTestShell({
         </div>
         <Progress
           value={progressValue}
-          className="h-1.5 bg-gray-800 [&>div]:bg-[#20808D]"
+          className="h-1.5 bg-gray-800 [&>div]:bg-[#7069F4]"
         />
       </div>
 

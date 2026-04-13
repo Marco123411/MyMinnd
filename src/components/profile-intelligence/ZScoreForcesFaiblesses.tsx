@@ -35,7 +35,7 @@ export function ZScoreForcesFaiblesses({
           {forces.map((leaf) => (
             <div key={leaf.nodeId}>
               <div className="flex items-center justify-between mb-1 gap-2">
-                <span className="text-xs font-medium text-[#1A1A2E] truncate">{leaf.name}</span>
+                <span className="text-xs font-medium text-[#141325] truncate">{leaf.name}</span>
                 <span className="text-xs font-semibold text-green-700 shrink-0">
                   z=+{leaf.z.toFixed(2)}
                 </span>
@@ -63,7 +63,7 @@ export function ZScoreForcesFaiblesses({
           {axes.map((leaf) => (
             <div key={leaf.nodeId}>
               <div className="flex items-center justify-between mb-1 gap-2">
-                <span className="text-xs font-medium text-[#1A1A2E] truncate">{leaf.name}</span>
+                <span className="text-xs font-medium text-[#141325] truncate">{leaf.name}</span>
                 <span className="text-xs font-semibold text-orange-700 shrink-0">
                   z={leaf.z.toFixed(2)}
                 </span>

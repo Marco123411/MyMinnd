@@ -72,16 +72,16 @@ function TestRow({ test }: TestRowProps) {
     <li className="space-y-1 border-b py-3 text-sm last:border-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium text-[#1A1A2E] truncate">{test.definition_name}</span>
+          <span className="font-medium text-[#141325] truncate">{test.definition_name}</span>
           <Badge variant="outline" className="text-xs shrink-0">{test.level_slug}</Badge>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {test.status === 'completed' && test.score_global !== null && (
-            <span className="font-medium text-[#20808D]">{test.score_global}/10</span>
+            <span className="font-medium text-[#7069F4]">{test.score_global}/10</span>
           )}
           {test.profile_name && (
             <Badge
-              style={{ backgroundColor: test.profile_color ?? '#20808D', color: '#fff' }}
+              style={{ backgroundColor: test.profile_color ?? '#7069F4', color: '#fff' }}
               className="text-xs"
             >
               {test.profile_name}
@@ -133,7 +133,7 @@ function TestRow({ test }: TestRowProps) {
             <RefreshCw className={`h-3 w-3 ${regenLoading ? 'animate-spin' : ''}`} />
             {regenLoading ? '...' : 'Nouveau lien'}
           </Button>
-          {rowError && <span className="text-xs text-[#944454]">{rowError}</span>}
+          {rowError && <span className="text-xs text-[#3C3CD6]">{rowError}</span>}
         </div>
       )}
 
@@ -142,7 +142,7 @@ function TestRow({ test }: TestRowProps) {
         <div className="pt-1">
           <Link
             href={`/coach/tests/${test.id}/results`}
-            className="inline-flex items-center gap-1 text-xs text-[#20808D] hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-[#7069F4] hover:underline"
           >
             <ExternalLink className="h-3 w-3" />
             Voir les résultats

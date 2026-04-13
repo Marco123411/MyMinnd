@@ -7,7 +7,7 @@ export default async function HistoryPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Mon historique</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Mon historique</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Suivez votre progression dans le temps
         </p>

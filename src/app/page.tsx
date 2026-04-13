@@ -11,13 +11,13 @@ export default function Home() {
         </Badge>
         <h1 className="text-5xl font-bold tracking-tight">
           Bienvenue sur{' '}
-          <span className="text-teal">MINND</span>
+          <span className="text-[#7069F4]">MINND</span>
         </h1>
         <p className="text-xl text-muted-foreground">
           Plateforme de performance mentale pour coachs et athlètes.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <Button asChild size="lg" className="bg-teal hover:bg-teal-dark text-white min-w-40">
+          <Button asChild size="lg" className="bg-[#7069F4] hover:bg-[#5B54D6] text-white min-w-40">
             <Link href="/login">Connexion</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="min-w-40">

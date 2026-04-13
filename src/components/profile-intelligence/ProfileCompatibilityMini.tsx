@@ -11,7 +11,7 @@ interface ProfileCompatibilityMiniProps {
 
 // Couleur du score de compatibilité (1-10)
 function compatColor(score: number): string {
-  if (score >= 7) return 'bg-[#E8F4F5] text-[#20808D]'
+  if (score >= 7) return 'bg-[#F1F0FE] text-[#7069F4]'
   if (score >= 4) return 'bg-orange-100 text-orange-700'
   return 'bg-red-100 text-red-700'
 }
@@ -40,7 +40,7 @@ export function ProfileCompatibilityMini({ teammates }: ProfileCompatibilityMini
                     style={{ backgroundColor: teammate.profileColor }}>
                     {teammate.clientName.charAt(0)}
                   </div>
-                  <span className="text-sm font-medium text-[#1A1A2E]">{teammate.clientName}</span>
+                  <span className="text-sm font-medium text-[#141325]">{teammate.clientName}</span>
                   <Badge
                     variant="outline"
                     className="text-[10px] py-0"
@@ -55,15 +55,15 @@ export function ProfileCompatibilityMini({ teammates }: ProfileCompatibilityMini
               </button>
 
               {isOpen && (
-                <div className="border-t bg-gray-50 px-3 py-2.5 space-y-1.5 text-xs text-[#1A1A2E]">
+                <div className="border-t bg-gray-50 px-3 py-2.5 space-y-1.5 text-xs text-[#141325]">
                   {teammate.synergie && (
-                    <p><span className="font-semibold text-[#20808D]">Synergie : </span>{teammate.synergie}</p>
+                    <p><span className="font-semibold text-[#7069F4]">Synergie : </span>{teammate.synergie}</p>
                   )}
                   {teammate.friction && (
                     <p><span className="font-semibold text-orange-600">Friction : </span>{teammate.friction}</p>
                   )}
                   {teammate.conseil && (
-                    <p><span className="font-semibold text-[#1A1A2E]">Conseil : </span>{teammate.conseil}</p>
+                    <p><span className="font-semibold text-[#141325]">Conseil : </span>{teammate.conseil}</p>
                   )}
                 </div>
               )}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,6 +18,7 @@ interface CreateProgrammeDialogProps {
 }
 
 export function CreateProgrammeDialog({ clientId, onCreated }: CreateProgrammeDialogProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [nom, setNom] = useState('')
   const [description, setDescription] = useState('')
@@ -34,6 +36,7 @@ export function CreateProgrammeDialog({ clientId, onCreated }: CreateProgrammeDi
         setOpen(false)
         setNom('')
         setDescription('')
+        router.refresh()
         onCreated?.()
       }
     })
@@ -42,7 +45,7 @@ export function CreateProgrammeDialog({ clientId, onCreated }: CreateProgrammeDi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-[#20808D] hover:bg-[#1a6b77] text-white gap-2">
+        <Button size="sm" className="bg-[#7069F4] hover:bg-[#1a6b77] text-white gap-2">
           <Plus className="h-4 w-4" />
           Nouveau programme
         </Button>
@@ -77,7 +80,7 @@ export function CreateProgrammeDialog({ clientId, onCreated }: CreateProgrammeDi
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Annuler
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-[#20808D] hover:bg-[#1a6b77] text-white">
+            <Button type="submit" disabled={isPending} className="bg-[#7069F4] hover:bg-[#1a6b77] text-white">
               {isPending ? 'Création…' : 'Créer le programme'}
             </Button>
           </div>

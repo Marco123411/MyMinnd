@@ -60,7 +60,7 @@ export function FigureEvolutionDashboard({ results }: Props) {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8F4F5" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F0FE" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
               <Tooltip
@@ -128,7 +128,7 @@ export function FigureEvolutionDashboard({ results }: Props) {
                             {scores[f.key] ?? '—'}
                           </td>
                         ))}
-                        <td className="text-right pl-2 font-bold text-[#20808D]">
+                        <td className="text-right pl-2 font-bold text-[#7069F4]">
                           {avg.toFixed(1)}
                         </td>
                         <td className="pl-4">

@@ -30,7 +30,7 @@ export function TestStartButton({ testDefinitionId, levelSlug, testSlug }: TestS
 
   return (
     <div className="mt-4 space-y-2">
-      <Button onClick={handleStart} disabled={loading} className="w-full bg-[#20808D] hover:bg-[#186870]">
+      <Button onClick={handleStart} disabled={loading} className="w-full bg-[#7069F4] hover:bg-[#5B54D6]">
         {loading ? 'Chargement…' : 'Commencer'}
       </Button>
       {error && <p className="text-center text-sm text-red-500">{error}</p>}

@@ -75,13 +75,13 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
             </div>
             {globalPercentile > 0 && (
               <div className="text-center">
-                <p className="text-xl font-bold text-[#1A1A2E]">{globalPercentile}e</p>
+                <p className="text-xl font-bold text-[#141325]">{globalPercentile}e</p>
                 <p className="text-xs text-muted-foreground">percentile</p>
               </div>
             )}
           </div>
           {profile.description && (
-            <p className="text-sm text-[#1A1A2E] leading-relaxed">{profile.description}</p>
+            <p className="text-sm text-[#141325] leading-relaxed">{profile.description}</p>
           )}
         </CardContent>
       </Card>
@@ -123,7 +123,7 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
           <CardContent className="space-y-2">
             {forces.map((leaf) => (
               <div key={leaf.nodeId} className="flex items-center justify-between">
-                <span className="text-xs text-[#1A1A2E] truncate mr-2">{leaf.name}</span>
+                <span className="text-xs text-[#141325] truncate mr-2">{leaf.name}</span>
                 <span className="text-xs text-muted-foreground shrink-0">
                   {leaf.score.toFixed(1)}/10
                   {leaf.percentile !== null && (
@@ -139,12 +139,12 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-[#944454]">Axes de progression</CardTitle>
+            <CardTitle className="text-sm text-[#3C3CD6]">Axes de progression</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {axes.map((leaf) => (
               <div key={leaf.nodeId} className="flex items-center justify-between">
-                <span className="text-xs text-[#1A1A2E] truncate mr-2">{leaf.name}</span>
+                <span className="text-xs text-[#141325] truncate mr-2">{leaf.name}</span>
                 <span className="text-xs text-muted-foreground shrink-0">
                   {leaf.score.toFixed(1)}/10
                 </span>
@@ -170,16 +170,16 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
 
                 return (
                   <div key={level.level} className="flex items-center gap-3">
-                    <span className={`w-24 shrink-0 text-xs ${highlight ? 'font-semibold text-[#20808D]' : 'text-muted-foreground'}`}>
+                    <span className={`w-24 shrink-0 text-xs ${highlight ? 'font-semibold text-[#7069F4]' : 'text-muted-foreground'}`}>
                       {level.level}
                     </span>
                     <div className="flex-1 h-2 rounded-full bg-gray-100">
                       <div
-                        className={`h-2 rounded-full transition-all ${highlight ? 'bg-[#20808D]' : 'bg-gray-300'}`}
+                        className={`h-2 rounded-full transition-all ${highlight ? 'bg-[#7069F4]' : 'bg-gray-300'}`}
                         style={{ width: `${(level.score / 10) * 100}%` }}
                       />
                     </div>
-                    <span className={`text-xs shrink-0 ${highlight ? 'font-semibold text-[#20808D]' : 'text-muted-foreground'}`}>
+                    <span className={`text-xs shrink-0 ${highlight ? 'font-semibold text-[#7069F4]' : 'text-muted-foreground'}`}>
                       {level.score.toFixed(2)}
                     </span>
                     <span className="text-[10px] text-muted-foreground shrink-0">n={level.n}</span>
@@ -188,7 +188,7 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
               })}
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Votre score global : <span className="font-semibold text-[#20808D]">{globalScore.toFixed(2)}/10</span>
+              Votre score global : <span className="font-semibold text-[#7069F4]">{globalScore.toFixed(2)}/10</span>
             </p>
           </CardContent>
         </Card>
@@ -212,7 +212,7 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
       {/* Section 7 : Insights personnalisés */}
       {clientInsights.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-[#1A1A2E] mb-3">Insights personnalisés</h3>
+          <h3 className="text-sm font-semibold text-[#141325] mb-3">Insights personnalisés</h3>
           <div className="space-y-2">
             {clientInsights.map((insight) => (
               <ConditionalInsightCard key={insight.id} insight={insight} />
@@ -230,7 +230,7 @@ export function ClientProfileView({ data }: ClientProfileViewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-[#1A1A2E] leading-relaxed">{profile.recommendations}</p>
+            <p className="text-sm text-[#141325] leading-relaxed">{profile.recommendations}</p>
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { scoreSession } from '@/lib/cognitive/scoring'
+import { scoreSession, evaluateBenchmark } from '@/lib/cognitive/scoring'
+import type { CognitiveBenchmark } from '@/types'
 import { z } from 'zod'
 
 const uuidSchema = z.string().uuid()
@@ -41,7 +42,7 @@ export async function POST(
   const [{ data: defData }, { data: trialsData }] = await Promise.all([
     supabase
       .from('cognitive_test_definitions')
-      .select('slug')
+      .select('id, slug')
       .eq('id', session.cognitive_test_id)
       .single(),
     supabase
@@ -57,12 +58,36 @@ export async function POST(
 
   const metrics = scoreSession(defData.slug, trialsData)
 
+  // Évaluation des benchmarks (step 31) — une seule requête
+  let benchmarkResults: Array<{ metric: string; value: number; zone: 'elite' | 'average' | 'poor' }> | null = null
+  try {
+    const { data: benchmarks } = await supabase
+      .from('cognitive_benchmarks')
+      .select('*')
+      .eq('test_definition_id', defData.id)
+
+    if (benchmarks && benchmarks.length > 0) {
+      benchmarkResults = (benchmarks as CognitiveBenchmark[])
+        .filter((b) => metrics[b.metric] !== undefined)
+        .map((b) => ({
+          metric: b.metric,
+          value: metrics[b.metric] as number,
+          zone: evaluateBenchmark(metrics[b.metric] as number, b),
+        }))
+    }
+  } catch (err) {
+    console.error('[score] benchmark evaluation failed:', err)
+  }
+
   // computed_metrics est révoqué pour `authenticated` — on utilise le service_role
   // F1: scoper par user_id en plus de id pour limiter le blast radius du client admin
+  const updateData: Record<string, unknown> = { computed_metrics: metrics }
+  if (benchmarkResults !== null) updateData.benchmark_results = benchmarkResults
+
   const admin = createAdminClient()
   const { error: updateError } = await admin
     .from('cognitive_sessions')
-    .update({ computed_metrics: metrics })
+    .update(updateData)
     .eq('id', sessionId)
     .eq('user_id', session.user_id)
 
@@ -70,5 +95,5 @@ export async function POST(
     return NextResponse.json({ error: 'Erreur lors de la mise à jour des métriques' }, { status: 500 })
   }
 
-  return NextResponse.json({ metrics })
+  return NextResponse.json({ metrics, benchmark_results: benchmarkResults })
 }

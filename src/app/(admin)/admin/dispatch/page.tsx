@@ -34,9 +34,9 @@ const STATUS_LABELS: Record<DispatchStatus, string> = {
 }
 
 const STATUS_COLORS: Record<DispatchStatus, string> = {
-  nouveau: 'bg-[#20808D] text-white',
+  nouveau: 'bg-[#7069F4] text-white',
   en_cours: 'bg-blue-500 text-white',
-  dispatche: 'bg-[#FFC553] text-[#1A1A2E]',
+  dispatche: 'bg-[#FF9F40] text-[#141325]',
   accepte: 'bg-green-500 text-white',
   en_session: 'bg-purple-500 text-white',
   termine: 'bg-gray-400 text-white',
@@ -98,7 +98,7 @@ function DispatchTable({ dispatches }: { dispatches: DispatchWithDetails[] }) {
                 <td className="px-4 py-3">
                   <Link
                     href={`/admin/dispatch/${d.id}`}
-                    className="text-[#20808D] hover:underline text-xs font-medium"
+                    className="text-[#7069F4] hover:underline text-xs font-medium"
                   >
                     Voir →
                   </Link>
@@ -126,7 +126,7 @@ export default async function AdminDispatchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1A2E]">Dispatches Level 3</h1>
+        <h1 className="text-3xl font-bold text-[#141325]">Dispatches Level 3</h1>
         <p className="text-muted-foreground">Gestion des missions experts</p>
       </div>
 
@@ -135,7 +135,7 @@ export default async function AdminDispatchPage() {
           <TabsTrigger value="pending">
             En attente
             {pending.length > 0 && (
-              <span className="ml-2 rounded-full bg-[#20808D] text-white text-xs px-1.5 py-0.5">
+              <span className="ml-2 rounded-full bg-[#7069F4] text-white text-xs px-1.5 py-0.5">
                 {pending.length}
               </span>
             )}

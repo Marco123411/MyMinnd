@@ -36,7 +36,7 @@ export function ClientNav({ visibility }: ClientNavProps) {
               className={cn(
                 'flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors',
                 isActive
-                  ? 'text-[#20808D]'
+                  ? 'text-[#7069F4]'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >

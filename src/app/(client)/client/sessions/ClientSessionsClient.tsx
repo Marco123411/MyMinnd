@@ -139,8 +139,8 @@ function ExerciseDisplay({
       {isInteractive && interactiveType ? (
         <div className="space-y-3">
           {current.consignes && (
-            <div className="px-3 py-2 rounded-lg bg-[#E8F4F5] text-sm text-gray-700 border border-[#20808D]/20">
-              <span className="text-xs font-medium text-[#20808D] uppercase tracking-wide block mb-0.5">Consignes</span>
+            <div className="px-3 py-2 rounded-lg bg-[#F1F0FE] text-sm text-gray-700 border border-[#7069F4]/20">
+              <span className="text-xs font-medium text-[#7069F4] uppercase tracking-wide block mb-0.5">Consignes</span>
               {current.consignes}
             </div>
           )}
@@ -162,26 +162,26 @@ function ExerciseDisplay({
         </div>
       ) : (
         /* Exercice questionnaire ou sans questions */
-        <div className="p-4 border rounded-lg bg-[#E8F4F5] space-y-3">
-          <p className="font-semibold text-[#1A1A2E]">
+        <div className="p-4 border rounded-lg bg-[#F1F0FE] space-y-3">
+          <p className="font-semibold text-[#141325]">
             {exercise?.titre ?? `Exercice ${currentIndex + 1}`}
           </p>
           {exercise?.description && (
             <p className="text-sm text-gray-600">{exercise.description}</p>
           )}
           {current.consignes && (
-            <div className="border-t border-[#20808D]/20 pt-3">
-              <p className="text-xs font-medium text-[#20808D] uppercase tracking-wide mb-1">Consignes</p>
+            <div className="border-t border-[#7069F4]/20 pt-3">
+              <p className="text-xs font-medium text-[#7069F4] uppercase tracking-wide mb-1">Consignes</p>
               <p className="text-sm text-gray-700">{current.consignes}</p>
             </div>
           )}
           {hasQuestions && (
-            <div className="border-t border-[#20808D]/20 pt-3 space-y-4">
+            <div className="border-t border-[#7069F4]/20 pt-3 space-y-4">
               {questions.map((q) => {
                 const val = responses[q.id]?.value
                 if (q.type === 'open') return (
                   <div key={q.id} className="space-y-1.5">
-                    <Label className="text-sm font-medium text-[#1A1A2E]">{q.label}</Label>
+                    <Label className="text-sm font-medium text-[#141325]">{q.label}</Label>
                     <Textarea value={(val as string) ?? ''} onChange={(e) => handleResponseChange(q.id, 'open', e.target.value)} placeholder="Votre réponse..." rows={3} className="bg-white" />
                   </div>
                 )
@@ -190,21 +190,21 @@ function ExerciseDisplay({
                   return (
                     <div key={q.id} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium text-[#1A1A2E]">{q.label}</Label>
-                        <span className="text-sm font-bold text-[#20808D]">{num}</span>
+                        <Label className="text-sm font-medium text-[#141325]">{q.label}</Label>
+                        <span className="text-sm font-bold text-[#7069F4]">{num}</span>
                       </div>
-                      <input type="range" min={min} max={max} value={num} onChange={(e) => handleResponseChange(q.id, 'scale', parseInt(e.target.value, 10))} className="w-full accent-[#20808D]" />
+                      <input type="range" min={min} max={max} value={num} onChange={(e) => handleResponseChange(q.id, 'scale', parseInt(e.target.value, 10))} className="w-full accent-[#7069F4]" />
                       <div className="flex justify-between text-xs text-gray-400"><span>{min}</span><span>{max}</span></div>
                     </div>
                   )
                 }
                 if (q.type === 'mcq' && q.options) return (
                   <div key={q.id} className="space-y-2">
-                    <Label className="text-sm font-medium text-[#1A1A2E]">{q.label}</Label>
+                    <Label className="text-sm font-medium text-[#141325]">{q.label}</Label>
                     <div className="space-y-1.5">
                       {q.options.map((opt) => (
                         <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name={q.id} value={opt} checked={val === opt} onChange={() => handleResponseChange(q.id, 'mcq', opt)} className="accent-[#20808D]" />
+                          <input type="radio" name={q.id} value={opt} checked={val === opt} onChange={() => handleResponseChange(q.id, 'mcq', opt)} className="accent-[#7069F4]" />
                           <span className="text-sm text-gray-700">{opt}</span>
                         </label>
                       ))}
@@ -231,7 +231,7 @@ function ExerciseDisplay({
             </Button>
           )}
           {!isLastExercise && (
-            <Button size="sm" onClick={handleQuestionnaireNext} disabled={isPending} className="bg-[#20808D] hover:bg-[#1a6b78] text-white">
+            <Button size="sm" onClick={handleQuestionnaireNext} disabled={isPending} className="bg-[#7069F4] hover:bg-[#1a6b78] text-white">
               {isPending ? 'Enregistrement…' : hasQuestions ? 'Valider et continuer' : 'Exercice suivant'}
             </Button>
           )}
@@ -365,7 +365,7 @@ export function ClientSessionsClient({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Mes séances</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Mes séances</h1>
         <p className="text-gray-500 text-sm mt-0.5">Retrouvez vos séances en autonomie et vos routines</p>
       </div>
 
@@ -375,10 +375,10 @@ export function ClientSessionsClient({
 
       {/* Session active */}
       {activeSession && (
-        <Card className="border-[#20808D] border-2">
+        <Card className="border-[#7069F4] border-2">
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-base text-[#20808D]">
+              <CardTitle className="text-base text-[#7069F4]">
                 En cours — {activeSession.titre}
               </CardTitle>
               <Button
@@ -401,7 +401,7 @@ export function ClientSessionsClient({
       {/* Séances cabinet (coach-client) */}
       {cabinetSessions.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Séances avec votre coach</h2>
+          <h2 className="text-lg font-semibold text-[#141325]">Séances avec votre coach</h2>
           <div className="space-y-3">
             {cabinetSessions.map((s) => (
               <Card key={s.id}>
@@ -409,15 +409,15 @@ export function ClientSessionsClient({
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <UserCheck className="h-4 w-4 text-[#20808D] shrink-0" />
-                        <p className="font-medium text-[#1A1A2E] truncate">{s.objectif}</p>
+                        <UserCheck className="h-4 w-4 text-[#7069F4] shrink-0" />
+                        <p className="font-medium text-[#141325] truncate">{s.objectif}</p>
                       </div>
                       <p className="text-xs text-gray-400">{formatDate(s.date_seance)}</p>
                       {s.observations && (
                         <p className="text-sm text-gray-500 mt-2 line-clamp-2">{s.observations}</p>
                       )}
                       {s.prochaine_etape && (
-                        <p className="text-sm text-[#20808D] mt-1 italic line-clamp-1">
+                        <p className="text-sm text-[#7069F4] mt-1 italic line-clamp-1">
                           Prochaine étape : {s.prochaine_etape}
                         </p>
                       )}
@@ -433,7 +433,7 @@ export function ClientSessionsClient({
 
       {/* Séances en autonomie */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-[#1A1A2E]">Séances en autonomie</h2>
+        <h2 className="text-lg font-semibold text-[#141325]">Séances en autonomie</h2>
 
         {autonomousSessions.length === 0 ? (
           <p className="text-sm text-gray-400">Aucune séance assignée pour le moment.</p>
@@ -448,7 +448,7 @@ export function ClientSessionsClient({
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="font-medium text-[#1A1A2E] truncate">{s.titre}</p>
+                          <p className="font-medium text-[#141325] truncate">{s.titre}</p>
                           {isLate && (
                             <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
                               En retard
@@ -476,7 +476,7 @@ export function ClientSessionsClient({
                             size="sm"
                             onClick={() => handleCommencer(s.id)}
                             disabled={isPending}
-                            className="bg-[#20808D] hover:bg-[#1a6b78] text-white gap-1.5"
+                            className="bg-[#7069F4] hover:bg-[#1a6b78] text-white gap-1.5"
                           >
                             <Play className="h-3.5 w-3.5" />
                             Commencer
@@ -506,7 +506,7 @@ export function ClientSessionsClient({
 
       {/* Templates récurrents */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-[#1A1A2E]">Mes routines</h2>
+        <h2 className="text-lg font-semibold text-[#141325]">Mes routines</h2>
 
         {templates.length === 0 ? (
           <p className="text-sm text-gray-400">Aucune routine assignée pour le moment.</p>
@@ -521,9 +521,9 @@ export function ClientSessionsClient({
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="font-medium text-[#1A1A2E]">{t.titre}</p>
+                          <p className="font-medium text-[#141325]">{t.titre}</p>
                           {weekCount > 0 && (
-                            <Badge className="bg-[#E8F4F5] text-[#20808D] border-[#20808D]/20 text-xs">
+                            <Badge className="bg-[#F1F0FE] text-[#7069F4] border-[#7069F4]/20 text-xs">
                               {weekCount}× cette semaine
                             </Badge>
                           )}
@@ -560,7 +560,7 @@ export function ClientSessionsClient({
                         size="sm"
                         onClick={() => handleLancerTemplate(t.id)}
                         disabled={isPending && executingTemplateId === t.id}
-                        className="bg-[#FFC553] hover:bg-[#e6b04a] text-[#1A1A2E] gap-1.5"
+                        className="bg-[#FF9F40] hover:bg-[#e6b04a] text-[#141325] gap-1.5"
                       >
                         <RotateCcw className="h-3.5 w-3.5" />
                         {isPending && executingTemplateId === t.id ? 'Lancement…' : 'Lancer'}

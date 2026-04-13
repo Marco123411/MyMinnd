@@ -10,9 +10,9 @@ const TYPE_LABELS: Record<SessionHistoryItem['type'], string> = {
 }
 
 const TYPE_COLORS: Record<SessionHistoryItem['type'], string> = {
-  cabinet: 'bg-[#20808D] text-white',
-  autonomie: 'bg-[#944454] text-white',
-  recurrente: 'bg-[#FFC553] text-[#1A1A2E]',
+  cabinet: 'bg-[#7069F4] text-white',
+  autonomie: 'bg-[#3C3CD6] text-white',
+  recurrente: 'bg-[#FF9F40] text-[#141325]',
 }
 
 function formatDate(iso: string): string {
@@ -39,7 +39,7 @@ export function SessionTimeline({ items }: SessionTimelineProps) {
   return (
     <div className="relative">
       {/* Ligne verticale */}
-      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[#E8F4F5]" />
+      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[#F1F0FE]" />
 
       <div className="space-y-4">
         {items.map((item, index) => {
@@ -72,7 +72,7 @@ export function SessionTimeline({ items }: SessionTimelineProps) {
           return (
             <div key={key} className="relative flex gap-4 pl-10">
               {/* Point sur la timeline */}
-              <div className="absolute left-3 top-3 w-2.5 h-2.5 rounded-full bg-[#20808D] ring-2 ring-white" />
+              <div className="absolute left-3 top-3 w-2.5 h-2.5 rounded-full bg-[#7069F4] ring-2 ring-white" />
 
               <div className="flex-1 bg-white border border-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -89,11 +89,11 @@ export function SessionTimeline({ items }: SessionTimelineProps) {
 
                 <div className="mt-2">
                   {href ? (
-                    <Link href={href} className="font-medium text-[#1A1A2E] hover:text-[#20808D] transition-colors">
+                    <Link href={href} className="font-medium text-[#141325] hover:text-[#7069F4] transition-colors">
                       {title}
                     </Link>
                   ) : (
-                    <p className="font-medium text-[#1A1A2E]">{title}</p>
+                    <p className="font-medium text-[#141325]">{title}</p>
                   )}
                   {objectif && (
                     <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{objectif}</p>

@@ -10,7 +10,7 @@ interface CelebrityExamplesListProps {
   profileColor?: string
 }
 
-export function CelebrityExamplesList({ celebrities, profileColor = '#20808D' }: CelebrityExamplesListProps) {
+export function CelebrityExamplesList({ celebrities, profileColor = '#7069F4' }: CelebrityExamplesListProps) {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   if (celebrities.length === 0) return null
@@ -36,7 +36,7 @@ export function CelebrityExamplesList({ celebrities, profileColor = '#20808D' }:
                 >
                   {celebrity.name.charAt(0)}
                 </div>
-                <span className="text-sm font-medium text-[#1A1A2E]">{celebrity.name}</span>
+                <span className="text-sm font-medium text-[#141325]">{celebrity.name}</span>
                 <Badge variant="secondary" className="text-[10px] py-0">{celebrity.sport}</Badge>
               </div>
               {isOpen ? (

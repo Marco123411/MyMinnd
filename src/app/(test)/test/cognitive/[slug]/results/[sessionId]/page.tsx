@@ -5,7 +5,8 @@ import { getCognitiveSessionWithDefinitionAction } from '@/app/actions/cognitive
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import type { CognitiveTestResult } from '@/types'
+import { BenchmarkBadge } from '@/components/cognitive/BenchmarkBadge'
+import type { CognitiveTestResult, CognitiveSession } from '@/types'
 
 interface PageProps {
   params: Promise<{ slug: string; sessionId: string }>
@@ -16,16 +17,19 @@ function MetricCard({
   label,
   value,
   unit,
+  zone,
 }: {
   label: string
   value: number | undefined
   unit: string
+  zone?: 'elite' | 'average' | 'poor'
 }) {
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader className="pb-1 pt-4 px-4">
-        <CardTitle className="text-xs text-gray-500 font-normal uppercase tracking-wide">
+        <CardTitle className="text-xs text-gray-500 font-normal uppercase tracking-wide flex items-center justify-between">
           {label}
+          {zone && <BenchmarkBadge zone={zone} size="sm" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4">
@@ -38,6 +42,14 @@ function MetricCard({
       </CardContent>
     </Card>
   )
+}
+
+// Lookup zone depuis benchmark_results de la session
+function getZone(
+  session: CognitiveSession,
+  metric: string
+): 'elite' | 'average' | 'poor' | undefined {
+  return session.benchmark_results?.find((r) => r.metric === metric)?.zone
 }
 
 export default async function CognitiveResultsPage({ params }: PageProps) {
@@ -61,6 +73,7 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
   }
 
   const metrics = session.computed_metrics as CognitiveTestResult | null
+  const bm = (s: string) => getZone(session, s)
 
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-12">
@@ -83,7 +96,7 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
         {metrics === null ? (
           <Card className="bg-gray-900 border-gray-800">
             <CardContent className="py-10 text-center space-y-3">
-              <div className="w-8 h-8 border-2 border-[#20808D] border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-8 h-8 border-2 border-[#7069F4] border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-gray-400">Résultats en cours de calcul…</p>
               <p className="text-xs text-gray-600">
                 Les métriques seront disponibles dans quelques instants.
@@ -101,16 +114,28 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {metrics.median_rt !== undefined && (
-                    <MetricCard label="RT médian" value={metrics.median_rt} unit="ms" />
+                    <MetricCard label="RT médian" value={metrics.median_rt} unit="ms" zone={bm('median_rt')} />
                   )}
                   {metrics.mean_rt !== undefined && (
-                    <MetricCard label="RT moyen" value={metrics.mean_rt} unit="ms" />
+                    <MetricCard label="RT moyen" value={metrics.mean_rt} unit="ms" zone={bm('mean_rt')} />
                   )}
                   {metrics.global_accuracy !== undefined && (
-                    <MetricCard label="Précision" value={metrics.global_accuracy} unit="%" />
+                    <MetricCard label="Précision" value={metrics.global_accuracy} unit="%" zone={bm('global_accuracy')} />
                   )}
                   {metrics.cv !== undefined && (
-                    <MetricCard label="Variabilité (CV)" value={metrics.cv} unit="%" />
+                    <MetricCard label="Variabilité (CV)" value={metrics.cv} unit="%" zone={bm('cv')} />
+                  )}
+                  {metrics.accuracy !== undefined && (
+                    <MetricCard label="Précision" value={metrics.accuracy} unit="%" zone={bm('accuracy')} />
+                  )}
+                  {metrics.speed !== undefined && (
+                    <MetricCard label="Vitesse" value={metrics.speed} unit="" zone={bm('speed')} />
+                  )}
+                  {metrics.rcs !== undefined && (
+                    <MetricCard label="Consistance (RCS)" value={metrics.rcs * 100} unit="%" zone={bm('rcs')} />
+                  )}
+                  {metrics.variation !== undefined && (
+                    <MetricCard label="Variation (CV%)" value={metrics.variation} unit="%" zone={bm('variation')} />
                   )}
                 </div>
               </div>
@@ -141,24 +166,12 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
                   Contrôle inhibiteur
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard
-                    label="Effet Stroop"
-                    value={metrics.stroop_effect_rt}
-                    unit="ms"
-                  />
+                  <MetricCard label="Effet Stroop" value={metrics.stroop_effect_rt} unit="ms" zone={bm('stroop_effect_rt')} />
                   {metrics.mean_rt_congruent !== undefined && (
-                    <MetricCard
-                      label="RT congruent"
-                      value={metrics.mean_rt_congruent}
-                      unit="ms"
-                    />
+                    <MetricCard label="RT congruent" value={metrics.mean_rt_congruent} unit="ms" zone={bm('mean_rt_congruent')} />
                   )}
                   {metrics.mean_rt_incongruent !== undefined && (
-                    <MetricCard
-                      label="RT incongruent"
-                      value={metrics.mean_rt_incongruent}
-                      unit="ms"
-                    />
+                    <MetricCard label="RT incongruent" value={metrics.mean_rt_incongruent} unit="ms" zone={bm('mean_rt_incongruent')} />
                   )}
                 </div>
               </div>
@@ -171,20 +184,12 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
                   Interférence spatiale
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard label="Effet Simon" value={metrics.simon_effect_rt} unit="ms" />
+                  <MetricCard label="Effet Simon" value={metrics.simon_effect_rt} unit="ms" zone={bm('simon_effect_rt')} />
                   {metrics.mean_rt_congruent !== undefined && (
-                    <MetricCard
-                      label="RT congruent"
-                      value={metrics.mean_rt_congruent}
-                      unit="ms"
-                    />
+                    <MetricCard label="RT congruent" value={metrics.mean_rt_congruent} unit="ms" zone={bm('mean_rt_congruent')} />
                   )}
                   {metrics.mean_rt_incongruent !== undefined && (
-                    <MetricCard
-                      label="RT incongruent"
-                      value={metrics.mean_rt_incongruent}
-                      unit="ms"
-                    />
+                    <MetricCard label="RT incongruent" value={metrics.mean_rt_incongruent} unit="ms" zone={bm('mean_rt_incongruent')} />
                   )}
                 </div>
               </div>
@@ -199,14 +204,10 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     {metrics.span_forward !== undefined && (
-                      <MetricCard label="Empan avant" value={metrics.span_forward} unit="chiffres" />
+                      <MetricCard label="Empan avant" value={metrics.span_forward} unit="chiffres" zone={bm('span_forward')} />
                     )}
                     {metrics.span_backward !== undefined && (
-                      <MetricCard
-                        label="Empan arrière"
-                        value={metrics.span_backward}
-                        unit="chiffres"
-                      />
+                      <MetricCard label="Empan arrière" value={metrics.span_backward} unit="chiffres" zone={bm('span_backward')} />
                     )}
                   </div>
                 </div>
@@ -222,7 +223,7 @@ export default async function CognitiveResultsPage({ params }: PageProps) {
         <div className="flex flex-col gap-3">
           <Button
             asChild
-            className="w-full bg-[#20808D] hover:bg-[#186870] text-white font-semibold h-12 rounded-xl"
+            className="w-full bg-[#7069F4] hover:bg-[#5B54D6] text-white font-semibold h-12 rounded-xl"
           >
             <Link href="/client">Retour à l&apos;accueil</Link>
           </Button>

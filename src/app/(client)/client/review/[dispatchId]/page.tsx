@@ -32,7 +32,7 @@ export default function ReviewPage() {
   if (state.status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 rounded-full border-2 border-[#20808D] border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-[#7069F4] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -40,7 +40,7 @@ export default function ReviewPage() {
   if (state.status === 'error') {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <p className="text-lg font-medium text-[#1A1A2E] mb-2">Impossible d&apos;accéder à ce formulaire</p>
+        <p className="text-lg font-medium text-[#141325] mb-2">Impossible d&apos;accéder à ce formulaire</p>
         <p className="text-muted-foreground mb-6">{state.message}</p>
         <Button asChild variant="outline">
           <Link href="/client">Retour à mon espace</Link>
@@ -53,9 +53,9 @@ export default function ReviewPage() {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <div className="flex justify-center mb-4">
-          <CheckCircle className="h-16 w-16 text-[#20808D]" />
+          <CheckCircle className="h-16 w-16 text-[#7069F4]" />
         </div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E] mb-2">Merci pour votre avis !</h1>
+        <h1 className="text-2xl font-bold text-[#141325] mb-2">Merci pour votre avis !</h1>
         <p className="text-muted-foreground mb-8">
           Votre retour aide {state.expertName} et la communauté MINND.
         </p>
@@ -76,7 +76,7 @@ export default function ReviewPage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-[#1A1A2E] mb-2">
+        <h1 className="text-2xl font-bold text-[#141325] mb-2">
           Votre avis sur {state.expertName}
         </h1>
         {completedDate && (

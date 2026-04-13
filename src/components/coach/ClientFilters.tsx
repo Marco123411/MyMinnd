@@ -119,7 +119,7 @@ export function ClientFilters({ onFilterChange, availableTags = [] }: ClientFilt
             >
               <Badge
                 variant={filters.tag === tag ? 'default' : 'outline'}
-                className={filters.tag === tag ? 'bg-[#20808D]' : ''}
+                className={filters.tag === tag ? 'bg-[#7069F4]' : ''}
               >
                 {tag}
               </Badge>

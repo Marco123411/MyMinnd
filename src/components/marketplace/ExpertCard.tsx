@@ -34,16 +34,16 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                   className="h-16 w-16 rounded-full object-cover"
                 />
               ) : (
-                <div className="h-16 w-16 rounded-full bg-[#E8F4F5] flex items-center justify-center">
-                  <span className="text-lg font-semibold text-[#20808D]">{initials}</span>
+                <div className="h-16 w-16 rounded-full bg-[#F1F0FE] flex items-center justify-center">
+                  <span className="text-lg font-semibold text-[#7069F4]">{initials}</span>
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-[#1A1A2E] truncate">{displayName}</h3>
+                <h3 className="font-semibold text-[#141325] truncate">{displayName}</h3>
                 {expert.badge_certifie && (
-                  <Badge variant="default" className="text-xs bg-[#20808D] text-white shrink-0">
+                  <Badge variant="default" className="text-xs bg-[#7069F4] text-white shrink-0">
                     Certifié MINND
                   </Badge>
                 )}
@@ -88,7 +88,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
             </div>
             <div className="text-right">
               {expert.tarif_seance != null ? (
-                <span className="text-sm font-medium text-[#1A1A2E]">
+                <span className="text-sm font-medium text-[#141325]">
                   Dès {expert.tarif_seance}€
                 </span>
               ) : (

@@ -80,10 +80,10 @@ export function CoachAnnotationPanel({
               ? 'Résultats publiés — annotations en lecture seule.'
               : 'Ajoutez un commentaire sur cette compétence…'
           }
-          className={`w-full resize-none rounded-md border px-3 py-2 text-sm outline-none transition-colors focus:border-[#20808D] focus:ring-1 focus:ring-[#20808D] ${
+          className={`w-full resize-none rounded-md border px-3 py-2 text-sm outline-none transition-colors focus:border-[#7069F4] focus:ring-1 focus:ring-[#7069F4] ${
             disabled
               ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
-              : 'border-gray-200 bg-white text-[#1A1A2E] hover:border-gray-300'
+              : 'border-gray-200 bg-white text-[#141325] hover:border-gray-300'
           }`}
         />
       </div>
@@ -95,7 +95,7 @@ export function CoachAnnotationPanel({
             status === 'saving'
               ? 'text-gray-400'
               : status === 'saved'
-              ? 'text-[#20808D]'
+              ? 'text-[#7069F4]'
               : 'text-red-500'
           }`}
         >

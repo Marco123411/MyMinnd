@@ -8,11 +8,11 @@ interface SubcompetenceBarProps {
 }
 
 function getPercentileColor(percentile: number | null): string {
-  if (percentile === null) return 'bg-[#FFC553]'
+  if (percentile === null) return 'bg-[#FF9F40]'
   if (percentile < 25) return 'bg-red-500'
   if (percentile < 50) return 'bg-orange-400'
   if (percentile < 75) return 'bg-green-500'
-  return 'bg-[#20808D]'
+  return 'bg-[#7069F4]'
 }
 
 export function SubcompetenceBar({ name, score, percentile, className }: SubcompetenceBarProps) {

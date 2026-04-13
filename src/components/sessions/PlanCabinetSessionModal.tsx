@@ -89,7 +89,7 @@ export function PlanCabinetSessionModal({ clients, exercises }: PlanCabinetSessi
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-[#20808D] hover:bg-[#1a6b78] text-white gap-2">
+        <Button className="bg-[#7069F4] hover:bg-[#1a6b78] text-white gap-2">
           <CalendarPlus className="h-4 w-4" />
           Planifier une séance
         </Button>
@@ -159,7 +159,7 @@ export function PlanCabinetSessionModal({ clients, exercises }: PlanCabinetSessi
                       variant={selectedExercices.includes(ex.id) ? 'default' : 'outline'}
                       className={`cursor-pointer transition-colors ${
                         selectedExercices.includes(ex.id)
-                          ? 'bg-[#20808D] hover:bg-[#1a6b78] text-white'
+                          ? 'bg-[#7069F4] hover:bg-[#1a6b78] text-white'
                           : 'hover:bg-gray-100'
                       }`}
                     >
@@ -197,7 +197,7 @@ export function PlanCabinetSessionModal({ clients, exercises }: PlanCabinetSessi
             <Button
               type="submit"
               disabled={isPending || !selectedClientId || !dateSeance || !objectif}
-              className="bg-[#20808D] hover:bg-[#1a6b78] text-white"
+              className="bg-[#7069F4] hover:bg-[#1a6b78] text-white"
             >
               {isPending ? 'Enregistrement…' : 'Planifier'}
             </Button>

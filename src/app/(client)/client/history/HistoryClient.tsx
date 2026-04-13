@@ -46,7 +46,7 @@ export function HistoryClient({ data }: HistoryClientProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-[#20808D] text-[#20808D] text-xs"
+                  className="border-[#7069F4] text-[#7069F4] text-xs"
                   onClick={() => setOpenComparisonId(group.definitionId)}
                 >
                   Comparer T1 / T2

@@ -75,8 +75,8 @@ function MCQQuestionInput({ question, value, onChange }: MCQQuestionInputProps) 
             className={[
               'px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors',
               value === option
-                ? 'border-[#20808D] bg-[#20808D] text-white'
-                : 'border-border bg-background text-foreground hover:border-[#20808D] hover:text-[#20808D]',
+                ? 'border-[#7069F4] bg-[#7069F4] text-white'
+                : 'border-border bg-background text-foreground hover:border-[#7069F4] hover:text-[#7069F4]',
             ].join(' ')}
           >
             {option}
@@ -162,7 +162,7 @@ export function ExerciseResponseForm({ exercise, redirectPath = '/client/exercis
     return (
       <div className="text-center py-12 space-y-3">
         <div className="text-4xl">✅</div>
-        <p className="font-semibold text-[#1A1A2E]">Réponses enregistrées !</p>
+        <p className="font-semibold text-[#141325]">Réponses enregistrées !</p>
         <p className="text-sm text-muted-foreground">Vous allez être redirigé vers vos exercices.</p>
       </div>
     )
@@ -172,7 +172,7 @@ export function ExerciseResponseForm({ exercise, redirectPath = '/client/exercis
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* En-tête exercice */}
       <div>
-        <h1 className="text-xl font-bold text-[#1A1A2E]">{exercise.titre}</h1>
+        <h1 className="text-xl font-bold text-[#141325]">{exercise.titre}</h1>
         {exercise.description && (
           <p className="text-sm text-muted-foreground mt-1">{exercise.description}</p>
         )}
@@ -217,7 +217,7 @@ export function ExerciseResponseForm({ exercise, redirectPath = '/client/exercis
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+        className="w-full bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
       >
         {isLoading ? 'Enregistrement...' : 'Valider mes réponses'}
       </Button>

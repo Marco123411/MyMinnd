@@ -14,7 +14,7 @@ export default async function RapportsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Rapports</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Rapports</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Vue transversale sur tous vos clients et leurs résultats
         </p>

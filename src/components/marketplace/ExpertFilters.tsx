@@ -119,8 +119,8 @@ export function ExpertFilters({ filters, onFilterChange }: ExpertFiltersProps) {
             className={cn(
               'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
               filters.public_cible === p.value
-                ? 'bg-[#20808D] text-white border-[#20808D]'
-                : 'bg-background text-muted-foreground border-border hover:border-[#20808D]'
+                ? 'bg-[#7069F4] text-white border-[#7069F4]'
+                : 'bg-background text-muted-foreground border-border hover:border-[#7069F4]'
             )}
           >
             {p.label}

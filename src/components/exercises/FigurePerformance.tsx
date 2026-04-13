@@ -63,7 +63,7 @@ function RadarSVG({ scores }: { scores: FigureScores }) {
             key={pct}
             points={gridPts}
             fill="none"
-            stroke="#E8F4F5"
+            stroke="#F1F0FE"
             strokeWidth={pct === 1 ? 1.5 : 1}
           />
         )
@@ -77,7 +77,7 @@ function RadarSVG({ scores }: { scores: FigureScores }) {
             key={f.key}
             x1={cx} y1={cy}
             x2={tip.x} y2={tip.y}
-            stroke="#E8F4F5"
+            stroke="#F1F0FE"
             strokeWidth={1}
           />
         )
@@ -122,7 +122,7 @@ function RadarSVG({ scores }: { scores: FigureScores }) {
       })}
 
       {/* Centre */}
-      <circle cx={cx} cy={cy} r={3} fill="#1A1A2E" />
+      <circle cx={cx} cy={cy} r={3} fill="#141325" />
     </svg>
   )
 }
@@ -159,7 +159,7 @@ export function FigurePerformance({ onSave, isPending }: Props) {
           <RadarSVG scores={scores} />
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Score moyen</p>
-            <p className="text-3xl font-bold text-[#20808D]">
+            <p className="text-3xl font-bold text-[#7069F4]">
               {globalScore.toFixed(1)}
               <span className="text-lg text-muted-foreground"> %</span>
             </p>
@@ -201,7 +201,7 @@ export function FigurePerformance({ onSave, isPending }: Props) {
                   onChange={e => handleNote(key, e.target.value)}
                   placeholder="Observations..."
                   rows={2}
-                  className="w-full text-xs rounded border border-input bg-background px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-[#20808D]"
+                  className="w-full text-xs rounded border border-input bg-background px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-[#7069F4]"
                 />
               </div>
             )
@@ -214,7 +214,7 @@ export function FigurePerformance({ onSave, isPending }: Props) {
           <Button
             onClick={handleSave}
             disabled={isPending}
-            className="bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+            className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
           >
             {isPending ? 'Enregistrement...' : 'Valider la Figure'}
           </Button>

@@ -44,7 +44,7 @@ function CustomDot({ cx, cy, payload, onClick }: CustomDotProps) {
       cx={cx}
       cy={cy}
       r={5}
-      fill="#20808D"
+      fill="#7069F4"
       stroke="#fff"
       strokeWidth={2}
       className="cursor-pointer"
@@ -53,7 +53,7 @@ function CustomDot({ cx, cy, payload, onClick }: CustomDotProps) {
   )
 }
 
-export function LineChart({ data, color = '#20808D' }: LineChartProps) {
+export function LineChart({ data, color = '#7069F4' }: LineChartProps) {
   const router = useRouter()
 
   const chartData = data.map((d) => ({

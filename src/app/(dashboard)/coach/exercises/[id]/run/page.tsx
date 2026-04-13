@@ -45,7 +45,7 @@ export default async function RunExercisePage({ params, searchParams }: Props) {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">{ex.titre}</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">{ex.titre}</h1>
           {ex.description && (
             <p className="text-muted-foreground text-sm">{ex.description}</p>
           )}

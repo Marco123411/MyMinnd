@@ -5,8 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Brain, CheckCircle2 } from 'lucide-react'
 import { CognitiveEvolutionChart } from '@/components/cognitive/CognitiveEvolutionChart'
+import { BenchmarkBadge } from '@/components/cognitive/BenchmarkBadge'
 import type { CognitiveTestResult } from '@/types'
 import type { CognitiveSessionWithDefinition } from '@/app/actions/cognitive-results'
+
+// Helper : récupère la zone benchmark d'une métrique depuis la session la plus récente
+function getBenchmarkZone(
+  session: CognitiveSessionWithDefinition,
+  metric: string
+): 'elite' | 'average' | 'poor' | null {
+  return session.benchmark_results?.find((r) => r.metric === metric)?.zone ?? null
+}
 
 // ── Badge de preset ───────────────────────────────────────────────────────────
 
@@ -37,7 +46,7 @@ function interpretPVT(metrics: CognitiveTestResult): { label: string; color: str
   let color = 'bg-gray-100 text-gray-700'
 
   if (rt !== undefined) {
-    if (rt < 250) { label = 'Excellente vigilance'; color = 'bg-[#E8F4F5] text-[#20808D]' }
+    if (rt < 250) { label = 'Excellente vigilance'; color = 'bg-[#F1F0FE] text-[#7069F4]' }
     else if (rt < 350) { label = 'Vigilance normale'; color = 'bg-amber-100 text-amber-700' }
     else if (rt < 500) { label = 'Vigilance réduite'; color = 'bg-orange-100 text-orange-700' }
     else { label = 'Fatigue importante détectée'; color = 'bg-red-100 text-red-700' }
@@ -55,7 +64,7 @@ function interpretPVT(metrics: CognitiveTestResult): { label: string; color: str
 function interpretStroop(metrics: CognitiveTestResult): { label: string; color: string } {
   const v = metrics.stroop_effect_rt
   if (v === undefined) return { label: '—', color: 'bg-gray-100 text-gray-700' }
-  if (v < 50) return { label: 'Contrôle inhibiteur excellent', color: 'bg-[#E8F4F5] text-[#20808D]' }
+  if (v < 50) return { label: 'Contrôle inhibiteur excellent', color: 'bg-[#F1F0FE] text-[#7069F4]' }
   if (v < 100) return { label: 'Contrôle inhibiteur normal', color: 'bg-amber-100 text-amber-700' }
   if (v < 150) return { label: 'Interférence modérée', color: 'bg-orange-100 text-orange-700' }
   return { label: 'Difficulté de contrôle inhibiteur', color: 'bg-red-100 text-red-700' }
@@ -64,7 +73,7 @@ function interpretStroop(metrics: CognitiveTestResult): { label: string; color: 
 function interpretSimon(metrics: CognitiveTestResult): { label: string; color: string } {
   const v = metrics.simon_effect_rt
   if (v === undefined) return { label: '—', color: 'bg-gray-100 text-gray-700' }
-  if (v < 30) return { label: 'Traitement spatial excellent', color: 'bg-[#E8F4F5] text-[#20808D]' }
+  if (v < 30) return { label: 'Traitement spatial excellent', color: 'bg-[#F1F0FE] text-[#7069F4]' }
   if (v < 60) return { label: 'Traitement spatial normal', color: 'bg-amber-100 text-amber-700' }
   if (v < 100) return { label: 'Interférence spatiale modérée', color: 'bg-orange-100 text-orange-700' }
   return { label: 'Interférence spatiale élevée', color: 'bg-red-100 text-red-700' }
@@ -73,7 +82,7 @@ function interpretSimon(metrics: CognitiveTestResult): { label: string; color: s
 function interpretSpan(metrics: CognitiveTestResult): { label: string; color: string } {
   const v = metrics.total_span
   if (v === undefined) return { label: '—', color: 'bg-gray-100 text-gray-700' }
-  if (v >= 14) return { label: 'Mémoire de travail excellente', color: 'bg-[#E8F4F5] text-[#20808D]' }
+  if (v >= 14) return { label: 'Mémoire de travail excellente', color: 'bg-[#F1F0FE] text-[#7069F4]' }
   if (v >= 10) return { label: 'Mémoire de travail dans la norme', color: 'bg-amber-100 text-amber-700' }
   if (v >= 7) return { label: 'Mémoire de travail à renforcer', color: 'bg-orange-100 text-orange-700' }
   return { label: 'Mémoire de travail faible', color: 'bg-red-100 text-red-700' }
@@ -97,9 +106,14 @@ function PVTCard({ sessions }: { sessions: CognitiveSessionWithDefinition[] }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-3xl font-bold font-mono text-[#20808D]">
-          {metrics.median_rt !== undefined ? `${Math.round(metrics.median_rt)} ms` : '—'}
-          <span className="text-sm font-normal text-muted-foreground ml-2">RT médian</span>
+        <div className="flex items-center gap-2">
+          <div className="text-3xl font-bold font-mono text-[#7069F4]">
+            {metrics.median_rt !== undefined ? `${Math.round(metrics.median_rt)} ms` : '—'}
+            <span className="text-sm font-normal text-muted-foreground ml-2">RT médian</span>
+          </div>
+          {getBenchmarkZone(last, 'median_rt') && (
+            <BenchmarkBadge zone={getBenchmarkZone(last, 'median_rt')!} size="sm" />
+          )}
         </div>
         <p className="text-xs text-muted-foreground">{interp.detail}</p>
         <PresetBadge presetName={last.preset_name} isValidated={last.is_preset_validated} />
@@ -133,9 +147,14 @@ function StroopCard({ sessions }: { sessions: CognitiveSessionWithDefinition[] }
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-3xl font-bold font-mono text-[#20808D]">
-          {metrics.stroop_effect_rt !== undefined ? `${Math.round(metrics.stroop_effect_rt)} ms` : '—'}
-          <span className="text-sm font-normal text-muted-foreground ml-2">Effet Stroop</span>
+        <div className="flex items-center gap-2">
+          <div className="text-3xl font-bold font-mono text-[#7069F4]">
+            {metrics.stroop_effect_rt !== undefined ? `${Math.round(metrics.stroop_effect_rt)} ms` : '—'}
+            <span className="text-sm font-normal text-muted-foreground ml-2">Effet Stroop</span>
+          </div>
+          {getBenchmarkZone(last, 'stroop_effect_rt') && (
+            <BenchmarkBadge zone={getBenchmarkZone(last, 'stroop_effect_rt')!} size="sm" />
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
           Différence de RT entre conditions incongruentes et congruentes
@@ -171,9 +190,14 @@ function SimonCard({ sessions }: { sessions: CognitiveSessionWithDefinition[] })
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-3xl font-bold font-mono text-[#20808D]">
-          {metrics.simon_effect_rt !== undefined ? `${Math.round(metrics.simon_effect_rt)} ms` : '—'}
-          <span className="text-sm font-normal text-muted-foreground ml-2">Effet Simon</span>
+        <div className="flex items-center gap-2">
+          <div className="text-3xl font-bold font-mono text-[#7069F4]">
+            {metrics.simon_effect_rt !== undefined ? `${Math.round(metrics.simon_effect_rt)} ms` : '—'}
+            <span className="text-sm font-normal text-muted-foreground ml-2">Effet Simon</span>
+          </div>
+          {getBenchmarkZone(last, 'simon_effect_rt') && (
+            <BenchmarkBadge zone={getBenchmarkZone(last, 'simon_effect_rt')!} size="sm" />
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
           Différence de RT entre positions incongruentes et congruentes
@@ -209,9 +233,14 @@ function DigitalSpanCard({ sessions }: { sessions: CognitiveSessionWithDefinitio
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-3xl font-bold font-mono text-[#20808D]">
-          {metrics.total_span !== undefined ? `${metrics.total_span} chiffres` : '—'}
-          <span className="text-sm font-normal text-muted-foreground ml-2">Span total</span>
+        <div className="flex items-center gap-2">
+          <div className="text-3xl font-bold font-mono text-[#7069F4]">
+            {metrics.total_span !== undefined ? `${metrics.total_span} chiffres` : '—'}
+            <span className="text-sm font-normal text-muted-foreground ml-2">Span total</span>
+          </div>
+          {getBenchmarkZone(last, 'total_span') && (
+            <BenchmarkBadge zone={getBenchmarkZone(last, 'total_span')!} size="sm" />
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
@@ -263,8 +292,8 @@ export default async function ClientCognitivePage() {
   return (
     <div className="space-y-6 pb-24">
       <div className="flex items-center gap-2">
-        <Brain className="h-5 w-5 text-[#20808D]" />
-        <h1 className="text-xl font-bold text-[#1A1A2E]">Mes résultats cognitifs</h1>
+        <Brain className="h-5 w-5 text-[#7069F4]" />
+        <h1 className="text-xl font-bold text-[#141325]">Mes résultats cognitifs</h1>
       </div>
 
       {/* Tests assignés par le coach, non encore complétés */}
@@ -275,15 +304,15 @@ export default async function ClientCognitivePage() {
           </h2>
           {(pendingSessions ?? []).map((s) => (
             <Link key={s.id} href={`/test/cognitive/${s.test_slug}`}>
-              <Card className="border-[#20808D]/40 hover:border-[#20808D] hover:bg-[#E8F4F5]/30 transition-colors cursor-pointer">
+              <Card className="border-[#7069F4]/40 hover:border-[#7069F4] hover:bg-[#F1F0FE]/30 transition-colors cursor-pointer">
                 <CardContent className="pt-4 pb-3 flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-sm text-[#1A1A2E]">{s.test_name}</p>
+                    <p className="font-medium text-sm text-[#141325]">{s.test_name}</p>
                     {s.preset_name && (
                       <p className="text-xs text-muted-foreground mt-0.5">{s.preset_name}</p>
                     )}
                   </div>
-                  <Badge className="bg-[#20808D] text-white shrink-0">
+                  <Badge className="bg-[#7069F4] text-white shrink-0">
                     {s.status === 'in_progress' ? 'Continuer' : 'Commencer'}
                   </Badge>
                 </CardContent>
@@ -296,8 +325,8 @@ export default async function ClientCognitivePage() {
       {!hasSessions ? (
         <Card>
           <CardContent className="py-12 text-center space-y-3">
-            <Brain className="h-12 w-12 text-[#20808D] mx-auto opacity-40" />
-            <p className="font-medium text-[#1A1A2E]">Aucun test cognitif passé</p>
+            <Brain className="h-12 w-12 text-[#7069F4] mx-auto opacity-40" />
+            <p className="font-medium text-[#141325]">Aucun test cognitif passé</p>
             <p className="text-sm text-muted-foreground max-w-xs mx-auto">
               Votre coach vous enverra un lien pour commencer vos évaluations cognitives.
             </p>

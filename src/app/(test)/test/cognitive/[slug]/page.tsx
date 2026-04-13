@@ -32,7 +32,7 @@ export default async function CognitiveLandingPage({ params }: PageProps) {
 
         {/* En-tête */}
         <div className="text-center space-y-3">
-          <Badge className="bg-[#20808D]/20 text-[#20808D] border-[#20808D]/30">
+          <Badge className="bg-[#7069F4]/20 text-[#7069F4] border-[#7069F4]/30">
             Test cognitif
           </Badge>
           <h1 className="text-3xl font-bold text-white font-display">

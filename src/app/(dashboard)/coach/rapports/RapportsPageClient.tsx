@@ -41,7 +41,7 @@ const NIVEAU_LABELS: Record<'discovery' | 'complete' | 'expert', string> = {
 
 const NIVEAU_COLORS: Record<'discovery' | 'complete' | 'expert', string> = {
   discovery: 'bg-gray-100 text-gray-700',
-  complete: 'bg-[#E8F4F5] text-[#20808D]',
+  complete: 'bg-[#F1F0FE] text-[#7069F4]',
   expert: 'bg-amber-50 text-amber-700',
 }
 
@@ -302,7 +302,7 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
                         {r.clientId ? (
                           <Link
                             href={`/coach/clients/${r.clientId}`}
-                            className="font-medium hover:underline text-[#20808D]"
+                            className="font-medium hover:underline text-[#7069F4]"
                           >
                             {r.clientNom} {r.clientPrenom}
                           </Link>
@@ -443,7 +443,7 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
                         {t.clientId ? (
                           <Link
                             href={`/coach/clients/${t.clientId}`}
-                            className="font-medium hover:underline text-[#20808D]"
+                            className="font-medium hover:underline text-[#7069F4]"
                           >
                             {t.clientNom} {t.clientPrenom}
                           </Link>
@@ -551,9 +551,9 @@ const ALERT_STYLES: Record<AlertCardProps['color'], { border: string; bg: string
       text: 'text-amber-700',
     },
     info: {
-      border: 'border-[#20808D]/20',
-      bg: 'bg-[#E8F4F5]',
-      text: 'text-[#20808D]',
+      border: 'border-[#7069F4]/20',
+      bg: 'bg-[#F1F0FE]',
+      text: 'text-[#7069F4]',
     },
   }
 

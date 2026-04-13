@@ -45,8 +45,8 @@ export default async function AdminCognitivePresetsPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-2">
-        <Brain className="h-5 w-5 text-[#20808D]" />
-        <h1 className="text-xl font-bold text-[#1A1A2E]">Presets de tests cognitifs</h1>
+        <Brain className="h-5 w-5 text-[#7069F4]" />
+        <h1 className="text-xl font-bold text-[#141325]">Presets de tests cognitifs</h1>
       </div>
       <p className="text-sm text-muted-foreground">
         Presets globaux disponibles pour tous les coachs. Les presets validés scientifiquement
@@ -78,7 +78,7 @@ export default async function AdminCognitivePresetsPage() {
                         {preset.coach_id ? (
                           <Badge variant="outline" className="text-xs">Personnel</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-xs bg-[#E8F4F5] text-[#20808D]">Global</Badge>
+                          <Badge variant="outline" className="text-xs bg-[#F1F0FE] text-[#7069F4]">Global</Badge>
                         )}
                         {!preset.is_active && (
                           <Badge variant="outline" className="text-xs text-muted-foreground">Inactif</Badge>

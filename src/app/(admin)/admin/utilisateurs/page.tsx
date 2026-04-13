@@ -7,7 +7,7 @@ export default async function AdminUtilisateursPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1A2E]">Utilisateurs</h1>
+        <h1 className="text-3xl font-bold text-[#141325]">Utilisateurs</h1>
         <p className="text-muted-foreground">
           Gestion des coachs, clients et administrateurs de la plateforme
         </p>

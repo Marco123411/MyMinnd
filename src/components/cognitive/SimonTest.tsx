@@ -6,11 +6,14 @@ import { CognitiveTestShell } from './CognitiveTestShell'
 import { useTrialRecorder } from '@/hooks/useTrialRecorder'
 import { completeCognitiveSessionAction } from '@/app/actions/cognitive'
 import { shuffle } from '@/lib/cognitive/shuffle'
+import { interpolate, computeTrialCount } from '@/lib/cognitive/intensity-interpolation'
 import type { SimonConfig } from '@/types'
 
 interface SimonTestProps {
   sessionId: string
   config: SimonConfig
+  durationSec?: number
+  intensityPercent?: number
 }
 
 type Phase = 'fixation' | 'stimulus' | 'feedback' | 'complete'
@@ -28,33 +31,60 @@ interface SimonTrial {
 // Règle Simon : rouge → gauche, bleu → droite
 const CORRECT_SIDE: Record<Color, Side> = { rouge: 'left', bleu: 'right' }
 
-function generateTrials(trialsPerCondition: number): SimonTrial[] {
+function generateTrials(totalCount: number, congruentRatio: number): SimonTrial[] {
   const trials: SimonTrial[] = []
   const colors: Color[] = ['rouge', 'bleu']
+  const congruentCount = Math.round(totalCount * congruentRatio)
+  const incongruentCount = totalCount - congruentCount
 
-  for (let i = 0; i < trialsPerCondition; i++) {
-    for (const color of colors) {
-      const correctSide = CORRECT_SIDE[color]
-      // Congruent : position = côté correct
-      trials.push({ color, position: correctSide, correctSide, condition: 'congruent' })
-      // Incongruent : position = côté opposé
-      const opposite: Side = correctSide === 'left' ? 'right' : 'left'
-      trials.push({ color, position: opposite, correctSide, condition: 'incongruent' })
-    }
+  for (let i = 0; i < congruentCount; i++) {
+    const color = colors[i % colors.length]
+    const correctSide = CORRECT_SIDE[color]
+    trials.push({ color, position: correctSide, correctSide, condition: 'congruent' })
+  }
+
+  for (let i = 0; i < incongruentCount; i++) {
+    const color = colors[i % colors.length]
+    const correctSide = CORRECT_SIDE[color]
+    const opposite: Side = correctSide === 'left' ? 'right' : 'left'
+    trials.push({ color, position: opposite, correctSide, condition: 'incongruent' })
   }
 
   return shuffle(trials)
 }
 
-export function SimonTest({ sessionId, config }: SimonTestProps) {
+export function SimonTest({ sessionId, config, durationSec, intensityPercent }: SimonTestProps) {
   const router = useRouter()
   const { recordTrial, flush } = useTrialRecorder(sessionId)
 
-  const trials = useMemo(
-    () => generateTrials(Math.floor((config.trials_per_condition ?? 30) / 2)),
-    [config.trials_per_condition]
+  const resolvedIsiMs = useMemo(
+    () => intensityPercent !== undefined
+      ? interpolate(intensityPercent, [2500, 1000])
+      : (config.fixation_duration_ms ?? 500),
+    [intensityPercent, config.fixation_duration_ms]
   )
+  const resolvedCongruentRatio = useMemo(
+    () => intensityPercent !== undefined
+      ? interpolate(intensityPercent, [70, 30]) / 100
+      : 0.5,
+    [intensityPercent]
+  )
+  const resolvedDurationSec = useMemo(
+    () => durationSec ?? (config.trials_per_condition ?? 30) * 2,
+    [durationSec, config.trials_per_condition]
+  )
+  const maxDurationMs = useMemo(() => resolvedDurationSec * 1000, [resolvedDurationSec])
+
+  const trials = useMemo(() => {
+    if (intensityPercent !== undefined || durationSec !== undefined) {
+      const count = computeTrialCount(resolvedDurationSec, resolvedIsiMs)
+      return generateTrials(Math.max(count, 4), resolvedCongruentRatio)
+    }
+    return generateTrials(config.trials_per_condition ?? 30, 0.5)
+  }, [intensityPercent, durationSec, resolvedDurationSec, resolvedIsiMs, resolvedCongruentRatio, config.trials_per_condition])
+
   const totalTrials = trials.length
+  const testStartRef = useRef<number>(0)
 
   const [phase, setPhase] = useState<Phase>('fixation')
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -69,9 +99,13 @@ export function SimonTest({ sessionId, config }: SimonTestProps) {
   const isCompletingRef = useRef(false)
   const isRespondingRef = useRef(false)
 
-  const fixationDuration = config.fixation_duration_ms ?? 500
-  const timeoutMs = config.timeout_ms ?? 3000
+  const fixationDuration = useMemo(() => config.fixation_duration_ms ?? 500, [config.fixation_duration_ms])
+  const timeoutMs = useMemo(() => config.timeout_ms ?? 3000, [config.timeout_ms])
   const feedbackDuration = 300
+  const isiDuration = useMemo(
+    () => durationSec !== undefined ? resolvedIsiMs : fixationDuration,
+    [durationSec, resolvedIsiMs, fixationDuration]
+  )
 
   const completeSession = useCallback(async () => {
     if (isCompletingRef.current) return
@@ -88,8 +122,14 @@ export function SimonTest({ sessionId, config }: SimonTestProps) {
       const phase = phaseRef.current
       const elapsed = timestamp - phaseStartRef.current
 
+      // Arrêt par durée maximale (mode programme)
+      if (durationSec !== undefined && (timestamp - testStartRef.current) >= maxDurationMs) {
+        completeSession()
+        return
+      }
+
       if (phase === 'fixation') {
-        if (elapsed >= fixationDuration) {
+        if (elapsed >= isiDuration) {
           phaseRef.current = 'stimulus'
           setPhase('stimulus')
           stimulusShownAtRef.current = performance.now()
@@ -132,12 +172,13 @@ export function SimonTest({ sessionId, config }: SimonTestProps) {
 
       rafIdRef.current = requestAnimationFrame(rafLoop)
     },
-    [fixationDuration, timeoutMs, feedbackDuration, totalTrials, trials, recordTrial, completeSession]
+    [durationSec, maxDurationMs, isiDuration, timeoutMs, feedbackDuration, totalTrials, trials, recordTrial, completeSession]
   )
 
   useEffect(() => {
     phaseRef.current = 'fixation'
     phaseStartRef.current = performance.now()
+    testStartRef.current = performance.now()
     rafIdRef.current = requestAnimationFrame(rafLoop)
     return () => cancelAnimationFrame(rafIdRef.current)
   }, [rafLoop])
@@ -206,6 +247,7 @@ export function SimonTest({ sessionId, config }: SimonTestProps) {
       progressValue={progressValue}
       progressLabel={`Trial ${currentIndex + 1} / ${totalTrials}`}
       onAbandon={handleAbandon}
+      durationSec={durationSec}
     >
       <div className="relative w-full h-full flex flex-col">
         {/* Zone stimulus (plein écran divisé pour le mobile) */}

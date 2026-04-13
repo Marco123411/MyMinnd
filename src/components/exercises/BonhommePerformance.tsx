@@ -7,8 +7,8 @@ import type { BonhommeScores } from '@/types'
 // Couleurs par groupe de dimension
 const GROUP_COLORS = {
   cerveau: '#3C3CD6',  // mental, strategique, tactique
-  corps: '#20808D',    // physique, hygiene, technique
-  coeur: '#944454',    // relationnel
+  corps: '#7069F4',    // physique, hygiene, technique
+  coeur: '#3C3CD6',    // relationnel
 } as const
 
 const DIMENSIONS: {
@@ -94,39 +94,39 @@ function BonhommeSVG({ scores }: { scores: BonhommeScores }) {
       aria-label="Bonhomme de Performance"
     >
       {/* Jambes */}
-      <line x1={headCx} y1={legTop} x2={leftLegEnd.x}  y2={leftLegEnd.y}  stroke="#1A1A2E" strokeWidth={limbW} strokeLinecap="round" />
-      <line x1={headCx} y1={legTop} x2={rightLegEnd.x} y2={rightLegEnd.y} stroke="#1A1A2E" strokeWidth={limbW} strokeLinecap="round" />
+      <line x1={headCx} y1={legTop} x2={leftLegEnd.x}  y2={leftLegEnd.y}  stroke="#141325" strokeWidth={limbW} strokeLinecap="round" />
+      <line x1={headCx} y1={legTop} x2={rightLegEnd.x} y2={rightLegEnd.y} stroke="#141325" strokeWidth={limbW} strokeLinecap="round" />
 
       {/* Corps */}
       <rect
         x={torsoX} y={torsoY}
         width={torsoW} height={torsoH}
         rx={torsoW * 0.3}
-        fill="#20808D"
+        fill="#7069F4"
         opacity={0.85}
       />
 
       {/* Coeur */}
-      <path d={heartPath(heartCx, heartCy, heartR)} fill="#944454" opacity={0.9} />
+      <path d={heartPath(heartCx, heartCy, heartR)} fill="#3C3CD6" opacity={0.9} />
 
       {/* Bras */}
       <line
         x1={leftArmStart.x}  y1={leftArmStart.y}
         x2={leftArmEnd.x}    y2={leftArmEnd.y}
-        stroke="#1A1A2E" strokeWidth={limbW} strokeLinecap="round"
+        stroke="#141325" strokeWidth={limbW} strokeLinecap="round"
       />
       <line
         x1={rightArmStart.x} y1={rightArmStart.y}
         x2={rightArmEnd.x}   y2={rightArmEnd.y}
-        stroke="#1A1A2E" strokeWidth={limbW} strokeLinecap="round"
+        stroke="#141325" strokeWidth={limbW} strokeLinecap="round"
       />
 
       {/* Tête */}
-      <circle cx={headCx} cy={headCy} r={headR} fill="#FFC553" opacity={0.9} />
+      <circle cx={headCx} cy={headCy} r={headR} fill="#FF9F40" opacity={0.9} />
 
       {/* Yeux */}
-      <circle cx={headCx - headR * 0.25} cy={headCy - headR * 0.05} r={headR * 0.09} fill="#1A1A2E" />
-      <circle cx={headCx + headR * 0.25} cy={headCy - headR * 0.05} r={headR * 0.09} fill="#1A1A2E" />
+      <circle cx={headCx - headR * 0.25} cy={headCy - headR * 0.05} r={headR * 0.09} fill="#141325" />
+      <circle cx={headCx + headR * 0.25} cy={headCy - headR * 0.05} r={headR * 0.09} fill="#141325" />
     </svg>
   )
 }
@@ -157,7 +157,7 @@ export function BonhommePerformance({ onSave, isPending }: Props) {
           <BonhommeSVG scores={scores} />
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Score global</p>
-            <p className="text-3xl font-bold text-[#20808D]">
+            <p className="text-3xl font-bold text-[#7069F4]">
               {globalScore.toFixed(1)}
               <span className="text-lg text-muted-foreground"> / 100</span>
             </p>
@@ -201,7 +201,7 @@ export function BonhommePerformance({ onSave, isPending }: Props) {
           <Button
             onClick={handleSave}
             disabled={isPending}
-            className="bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+            className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
           >
             {isPending ? 'Enregistrement...' : 'Valider l\'exercice'}
           </Button>

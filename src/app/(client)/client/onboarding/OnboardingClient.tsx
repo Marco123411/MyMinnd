@@ -68,7 +68,7 @@ export function OnboardingClient({ prenom }: OnboardingClientProps) {
       <div className="space-y-6 text-center">
         <div className="space-y-2">
           <div className="text-5xl">✅</div>
-          <h2 className="text-2xl font-bold text-[#1A1A2E]">
+          <h2 className="text-2xl font-bold text-[#141325]">
             Bienvenue {prenom} !
           </h2>
           <p className="text-muted-foreground">
@@ -78,7 +78,7 @@ export function OnboardingClient({ prenom }: OnboardingClientProps) {
 
         <div className="pt-2">
           <Button
-            className="w-full bg-[#20808D] hover:bg-[#1a6b77] text-white h-12 text-base font-semibold"
+            className="w-full bg-[#7069F4] hover:bg-[#1a6b77] text-white h-12 text-base font-semibold"
             onClick={() => { window.location.href = '/client' }}
           >
             Accéder à mon espace
@@ -93,7 +93,7 @@ export function OnboardingClient({ prenom }: OnboardingClientProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-1 text-center">
         <p className="text-xs text-muted-foreground uppercase tracking-widest">Étape 1 sur 2</p>
-        <h2 className="text-2xl font-bold text-[#1A1A2E]">
+        <h2 className="text-2xl font-bold text-[#141325]">
           Bonjour {prenom} !
         </h2>
         <p className="text-muted-foreground text-sm">
@@ -106,9 +106,9 @@ export function OnboardingClient({ prenom }: OnboardingClientProps) {
         {CONTEXT_OPTIONS.map((option) => (
           <Card
             key={option.value}
-            className={`cursor-pointer transition-all border-2 hover:border-[#20808D] ${
+            className={`cursor-pointer transition-all border-2 hover:border-[#7069F4] ${
               selectedContext === option.value
-                ? 'border-[#20808D] bg-[#E8F4F5]'
+                ? 'border-[#7069F4] bg-[#F1F0FE]'
                 : 'border-border'
             }`}
             onClick={() => {
@@ -118,7 +118,7 @@ export function OnboardingClient({ prenom }: OnboardingClientProps) {
           >
             <CardContent className="p-4 space-y-1">
               <div className="text-2xl">{option.emoji}</div>
-              <p className="font-semibold text-[#1A1A2E] text-sm leading-tight">{option.label}</p>
+              <p className="font-semibold text-[#141325] text-sm leading-tight">{option.label}</p>
               <p className="text-xs text-muted-foreground">{option.description}</p>
             </CardContent>
           </Card>
@@ -157,7 +157,7 @@ export function OnboardingClient({ prenom }: OnboardingClientProps) {
 
       <Button
         type="submit"
-        className="w-full bg-[#20808D] hover:bg-[#1a6b77] text-white h-12 text-base"
+        className="w-full bg-[#7069F4] hover:bg-[#1a6b77] text-white h-12 text-base"
         disabled={isPending || !selectedContext}
       >
         {isPending ? 'Enregistrement…' : 'Continuer →'}

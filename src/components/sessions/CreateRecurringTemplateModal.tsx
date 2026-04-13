@@ -133,7 +133,7 @@ export function CreateRecurringTemplateModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-[#FFC553] hover:bg-[#e6b04a] text-[#1A1A2E] gap-2">
+        <Button className="bg-[#FF9F40] hover:bg-[#e6b04a] text-[#141325] gap-2">
           <RotateCcw className="h-4 w-4" />
           Créer un template
         </Button>
@@ -231,7 +231,7 @@ export function CreateRecurringTemplateModal({
                   >
                     <Badge
                       variant="outline"
-                      className="cursor-pointer hover:bg-[#E8F4F5] gap-1"
+                      className="cursor-pointer hover:bg-[#F1F0FE] gap-1"
                     >
                       <Plus className="h-3 w-3" />
                       {ex.titre}
@@ -309,7 +309,7 @@ export function CreateRecurringTemplateModal({
             <Button
               type="submit"
               disabled={isPending || !selectedClientId || !titre}
-              className="bg-[#FFC553] hover:bg-[#e6b04a] text-[#1A1A2E]"
+              className="bg-[#FF9F40] hover:bg-[#e6b04a] text-[#141325]"
             >
               {isPending ? 'Création…' : 'Créer le template'}
             </Button>

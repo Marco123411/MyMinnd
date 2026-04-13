@@ -65,7 +65,7 @@ export default async function TestLandingPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="mb-10 text-center">
-        <h1 className="text-3xl font-bold text-[#1A1A2E]">{definition.name}</h1>
+        <h1 className="text-3xl font-bold text-[#141325]">{definition.name}</h1>
         {definition.description && (
           <p className="mt-3 text-lg text-muted-foreground">{definition.description}</p>
         )}
@@ -83,8 +83,8 @@ export default async function TestLandingPage({ params }: PageProps) {
               className="flex flex-col rounded-xl border-2 border-gray-200 p-6 transition-shadow hover:shadow-md"
             >
               <div className="mb-4 flex-1">
-                <h2 className="text-xl font-bold text-[#1A1A2E]">{config.name}</h2>
-                <p className="mt-1 text-2xl font-bold text-[#20808D]">{priceLabel}</p>
+                <h2 className="text-xl font-bold text-[#141325]">{config.name}</h2>
+                <p className="mt-1 text-2xl font-bold text-[#7069F4]">{priceLabel}</p>
                 <p className="mt-3 text-sm text-muted-foreground">
                   {questionCount} questions • ~{Math.round(questionCount * 0.5)} min
                 </p>

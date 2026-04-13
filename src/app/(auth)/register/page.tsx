@@ -63,7 +63,7 @@ export default function RegisterPage() {
             Un lien de confirmation a été envoyé à <strong>{formData.email}</strong>.
             Cliquez dessus pour activer votre compte.
           </p>
-          <Link href="/login" className="text-teal hover:underline text-sm">
+          <Link href="/login" className="text-[#7069F4] hover:underline text-sm">
             Retour à la connexion
           </Link>
         </CardContent>
@@ -135,14 +135,14 @@ export default function RegisterPage() {
             <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2">{error}</p>
           )}
 
-          <Button type="submit" className="w-full bg-teal text-white hover:bg-teal/90" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-[#7069F4] text-white hover:bg-[#5B54D6]" disabled={isLoading}>
             {isLoading ? 'Création du compte…' : 'Créer mon compte Coach'}
           </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Déjà un compte ?{' '}
-          <Link href="/login" className="text-teal hover:underline font-medium">
+          <Link href="/login" className="text-[#7069F4] hover:underline font-medium">
             Se connecter
           </Link>
         </p>

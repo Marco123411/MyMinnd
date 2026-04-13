@@ -157,14 +157,14 @@ export function DispatchAdminClient({ dispatch, experts }: Props) {
                 <div key={step} className="flex items-center gap-1 flex-1 min-w-0">
                   <div
                     className={`flex-1 h-1 rounded ${
-                      i <= currentStepIndex ? 'bg-[#20808D]' : 'bg-gray-200'
+                      i <= currentStepIndex ? 'bg-[#7069F4]' : 'bg-gray-200'
                     }`}
                   />
                   <div className="flex flex-col items-center">
                     <div
                       className={`w-3 h-3 rounded-full border-2 ${
                         i <= currentStepIndex
-                          ? 'bg-[#20808D] border-[#20808D]'
+                          ? 'bg-[#7069F4] border-[#7069F4]'
                           : 'bg-white border-gray-300'
                       }`}
                     />
@@ -235,7 +235,7 @@ export function DispatchAdminClient({ dispatch, experts }: Props) {
             <Button
               onClick={handleAssignExpert}
               disabled={!selectedExpertId || isPending}
-              className="bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+              className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
             >
               Dispatcher vers cet expert
             </Button>
@@ -278,7 +278,7 @@ export function DispatchAdminClient({ dispatch, experts }: Props) {
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes internes (non visibles par le client ni l'expert)..."
             rows={4}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#20808D]"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#7069F4]"
           />
           <Button size="sm" variant="outline" onClick={handleSaveNotes} disabled={isPending}>
             Enregistrer les notes

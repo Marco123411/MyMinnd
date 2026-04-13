@@ -12,9 +12,9 @@ interface ScoreDisplayProps {
 function getScoreColor(score: number, max: number): string {
   if (max <= 0) return 'text-muted-foreground'
   const ratio = score / max
-  if (ratio >= 0.75) return 'text-teal'
-  if (ratio >= 0.5) return 'text-gold'
-  return 'text-mauve'
+  if (ratio >= 0.75) return 'text-[#7069F4]'
+  if (ratio >= 0.5) return 'text-[#FF9F40]'
+  return 'text-[#3C3CD6]'
 }
 
 export function ScoreDisplay({

@@ -237,8 +237,8 @@ export function ExpertProfileForm({ profile, onSuccess }: ExpertProfileFormProps
               className={cn(
                 'px-3 py-1.5 rounded-full text-sm border transition-colors',
                 contextes.includes(c.value)
-                  ? 'bg-[#20808D] text-white border-[#20808D]'
-                  : 'bg-background text-muted-foreground border-border hover:border-[#20808D]'
+                  ? 'bg-[#7069F4] text-white border-[#7069F4]'
+                  : 'bg-background text-muted-foreground border-border hover:border-[#7069F4]'
               )}
             >
               {c.label}
@@ -259,8 +259,8 @@ export function ExpertProfileForm({ profile, onSuccess }: ExpertProfileFormProps
               className={cn(
                 'px-3 py-1.5 rounded-full text-sm border transition-colors',
                 publicCible.includes(p.value)
-                  ? 'bg-[#20808D] text-white border-[#20808D]'
-                  : 'bg-background text-muted-foreground border-border hover:border-[#20808D]'
+                  ? 'bg-[#7069F4] text-white border-[#7069F4]'
+                  : 'bg-background text-muted-foreground border-border hover:border-[#7069F4]'
               )}
             >
               {p.label}
@@ -271,13 +271,13 @@ export function ExpertProfileForm({ profile, onSuccess }: ExpertProfileFormProps
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       {success && (
-        <p className="text-sm text-[#20808D] font-medium">Profil sauvegardé avec succès !</p>
+        <p className="text-sm text-[#7069F4] font-medium">Profil sauvegardé avec succès !</p>
       )}
 
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full bg-[#20808D] hover:bg-[#20808D]/90"
+        className="w-full bg-[#7069F4] hover:bg-[#7069F4]/90"
       >
         {isPending ? 'Sauvegarde...' : profile ? 'Mettre à jour le profil' : 'Créer mon profil expert'}
       </Button>

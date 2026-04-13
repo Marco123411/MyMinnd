@@ -5,7 +5,7 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-screen flex-col bg-white">
       <header className="flex h-14 shrink-0 items-center border-b px-4">
         <Link href="/client">
-          <span className="text-lg font-bold text-[#20808D]">MINND</span>
+          <span className="text-lg font-bold text-[#7069F4]">MINND</span>
         </Link>
       </header>
       <main className="flex-1">{children}</main>

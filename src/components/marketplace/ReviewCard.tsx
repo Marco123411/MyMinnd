@@ -19,7 +19,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
       <div className="flex items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <StarRating rating={review.rating} size="sm" />
-          <span className="text-sm font-medium text-[#1A1A2E]">
+          <span className="text-sm font-medium text-[#141325]">
             {review.reviewer_display_name ?? 'Anonyme'}
           </span>
         </div>
@@ -33,8 +33,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
       )}
 
       {review.expert_response && (
-        <div className="mt-3 rounded-md bg-[#E8F4F5] px-4 py-3">
-          <p className="text-xs font-semibold text-[#20808D] mb-1">Réponse de l&apos;expert</p>
+        <div className="mt-3 rounded-md bg-[#F1F0FE] px-4 py-3">
+          <p className="text-xs font-semibold text-[#7069F4] mb-1">Réponse de l&apos;expert</p>
           <p className="text-sm text-foreground leading-relaxed">{review.expert_response}</p>
         </div>
       )}

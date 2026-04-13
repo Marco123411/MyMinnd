@@ -100,7 +100,7 @@ export function DispatchCoachClient({ dispatch, clientEmail }: Props) {
               <Button
                 onClick={handleAccept}
                 disabled={isPending}
-                className="bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+                className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
               >
                 Accepter la mission
               </Button>
@@ -124,9 +124,9 @@ export function DispatchCoachClient({ dispatch, clientEmail }: Props) {
           </CardHeader>
           <CardContent className="space-y-3">
             {clientEmail && (
-              <div className="rounded-lg bg-[#E8F4F5] px-4 py-3">
-                <p className="text-sm font-medium text-[#20808D]">Contactez le client sous 24h</p>
-                <p className="text-sm text-[#1A1A2E] mt-1">
+              <div className="rounded-lg bg-[#F1F0FE] px-4 py-3">
+                <p className="text-sm font-medium text-[#7069F4]">Contactez le client sous 24h</p>
+                <p className="text-sm text-[#141325] mt-1">
                   Email :{' '}
                   <a
                     href={`mailto:${clientEmail}`}

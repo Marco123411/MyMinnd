@@ -242,7 +242,7 @@ function ProfilesTab({ initialProfiles }: { initialProfiles: AdminProfile[] }) {
       )}
       {Object.entries(grouped).map(([testName, testProfiles]) => (
         <div key={testName} className="space-y-3">
-          <h3 className="font-semibold text-[#1A1A2E] text-base border-b pb-2">{testName}</h3>
+          <h3 className="font-semibold text-[#141325] text-base border-b pb-2">{testName}</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {testProfiles.map((profile) => (
               <Card key={profile.id}>
@@ -524,7 +524,7 @@ function CognitiveConfigTab({
               <CardTitle className="text-sm font-medium">{test.name}</CardTitle>
               <Badge
                 variant="outline"
-                className={test.is_active ? 'bg-[#E8F4F5] text-[#20808D] border-0' : 'bg-gray-100 text-gray-500 border-0'}
+                className={test.is_active ? 'bg-[#F1F0FE] text-[#7069F4] border-0' : 'bg-gray-100 text-gray-500 border-0'}
               >
                 {test.is_active ? 'Actif' : 'Inactif'}
               </Badge>

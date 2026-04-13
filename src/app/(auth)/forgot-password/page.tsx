@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
             Vérifiez votre boîte mail. Si un compte existe pour <strong>{email}</strong>,
             vous recevrez un lien de réinitialisation.
           </p>
-          <Link href="/login" className="text-teal hover:underline text-sm">
+          <Link href="/login" className="text-[#7069F4] hover:underline text-sm">
             Retour à la connexion
           </Link>
         </CardContent>
@@ -86,13 +86,13 @@ export default function ForgotPasswordPage() {
             <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2">{error}</p>
           )}
 
-          <Button type="submit" className="w-full bg-teal text-white hover:bg-teal/90" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-[#7069F4] text-white hover:bg-[#5B54D6]" disabled={isLoading}>
             {isLoading ? 'Envoi…' : 'Envoyer le lien'}
           </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="text-teal hover:underline">
+          <Link href="/login" className="text-[#7069F4] hover:underline">
             ← Retour à la connexion
           </Link>
         </p>

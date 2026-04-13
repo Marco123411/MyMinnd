@@ -28,6 +28,14 @@ export type ClientStatus = 'actif' | 'en_pause' | 'archive'
 export type ClientNiveau = 'amateur' | 'semi-pro' | 'professionnel' | 'elite'
 export type InvitationStatus = 'none' | 'pending' | 'accepted'
 
+export interface ClientDocument {
+  name: string
+  path: string  // chemin storage Supabase (pas une URL signée — générée à la volée côté serveur)
+  type: 'inscription' | 'contrat' | 'autre'
+  uploaded_at: string
+  uploaded_by: string
+}
+
 export interface Client {
   id: string
   coach_id: string
@@ -47,6 +55,9 @@ export interface Client {
   photo: string | null
   invitation_status: InvitationStatus
   invited_at: string | null
+  documents: ClientDocument[]
+  manually_validated_at: string | null
+  manually_validated_by: string | null
   created_at: string
   updated_at: string
 }
@@ -606,6 +617,19 @@ export interface CognitiveTestDefinition {
   instructions_fr: string | null
   config: Record<string, unknown> | null
   created_at: string
+  // Step 28 — champs dynamiques (optionnels : NULL possible sur rows antérieures à la migration)
+  phase_tags?: ('pre' | 'in' | 'post')[]
+  cognitive_category?: 'attention' | 'inhibition' | 'memory' | 'decision' | 'wellbeing' | null
+  configurable_durations?: number[]
+  default_duration_sec?: number
+  intensity_configurable?: boolean
+  default_intensity_percent?: number
+  intensity_params?: Record<string, unknown> | null
+  base_cognitive_load?: number
+  available_metrics?: ('rt' | 'accuracy' | 'speed' | 'variation' | 'rcs' | 'ssrt')[]
+  // Validation scientifique (optionnel — défini statiquement par slug, pas en BDD)
+  validated_duration_sec?: number | null
+  scientific_reference?: string | null
 }
 
 export type CognitiveSessionStatus = 'pending' | 'in_progress' | 'completed' | 'abandoned'
@@ -629,6 +653,18 @@ export interface CognitiveSession {
   updated_at: string
   preset_id: string | null
   config_used: Record<string, unknown> | null
+  // Step 28 — paramètres de session configurés par le coach
+  configured_duration_sec: number | null
+  configured_intensity_percent: number | null
+  phase_context: 'pre' | 'in' | 'post' | null
+  // Step 29 — score de charge cognitive calculé après la session
+  cognitive_load_score: number | null
+  // Step 31 — résultats de benchmarking calculés à la completion
+  benchmark_results?: Array<{
+    metric: string
+    value: number
+    zone: 'elite' | 'average' | 'poor'
+  }> | null
 }
 
 // Preset d'un test cognitif (admin global ou coach personnel)
@@ -670,6 +706,23 @@ export interface CognitiveNormativeStat {
   std_dev: number
   sample_size: number
   updated_at: string
+}
+
+// Seuil normatif Elite/Average/Poor par drill et par métrique (step 28)
+export interface CognitiveBenchmark {
+  id: string
+  test_definition_id: string
+  metric: string
+  elite_max: number | null
+  average_min: number | null
+  average_max: number | null
+  poor_min: number | null
+  unit: string | null
+  direction: 'lower_is_better' | 'higher_is_better'
+  source: string | null
+  population: string
+  notes: string | null
+  created_at: string
 }
 
 // ============================================================
@@ -831,7 +884,7 @@ export interface DigitalSpanConfig {
 export type CognitiveTestConfig = PVTConfig | StroopConfig | SimonConfig | DigitalSpanConfig
 
 // Métriques calculées après la passation (stockées dans cognitive_sessions.computed_metrics)
-// Nommage selon spec étape 19
+// Nommage selon spec étape 19 + step 28
 export interface CognitiveTestResult {
   // PVT
   median_rt?: number
@@ -853,12 +906,36 @@ export interface CognitiveTestResult {
   // Simon
   simon_effect_rt?: number
   simon_effect_accuracy?: number
-  // Digital Span
+  // Digital Span & Spatial Span
   span_forward?: number
   span_backward?: number
   total_span?: number
   longest_sequence?: number
   global_accuracy?: number
+  max_span?: number
+  // Flanker
+  flanker_effect_rt?: number
+  // Stop Signal
+  ssrt?: number
+  // Stop Signal (suite)
+  mean_ssd?: number            // délai de stop moyen (ms)
+  // N-Back
+  d_prime?: number             // sensibilité signal/bruit (théorie détection du signal)
+  // Mackworth
+  vigilance_decrement?: number // baisse de vigilance Q1 vs Q4 (%)
+  // Métriques communes step 28 (tous les drills temps-réaction)
+  accuracy?: number
+  rcs?: number
+  variation?: number
+  speed?: number
+}
+
+// Paramètres résolus pour l'exécution d'un test cognitif depuis un programme
+export interface ResolvedTestParams {
+  durationSec: number
+  intensityPercent: number
+  phaseContext: 'pre' | 'in' | 'post' | null
+  programExerciseId: string | null
 }
 
 // ============================================================
@@ -978,7 +1055,7 @@ export type CoachNotesMap = Record<string, string>
 
 export type ProgrammeStatut = 'actif' | 'archive'
 
-export type TypeSeance = 'cabinet' | 'autonomie' | 'recurrente'
+export type TypeSeance = 'cabinet' | 'autonomie' | 'recurrente' | 'cognitif'
 
 export interface Programme {
   id: string
@@ -996,9 +1073,11 @@ export interface ProgrammeEtape {
   programme_id: string
   ordre: number
   type_seance: TypeSeance
+  titre: string | null
   cabinet_session_id: string | null
   autonomous_session_id: string | null
   recurring_template_id: string | null
+  cognitive_session_id: string | null
   created_at: string
 }
 
@@ -1007,9 +1086,20 @@ export interface ProgrammeEtapeEnrichie extends ProgrammeEtape {
   cabinet?: CabinetSession
   autonomous?: AutonomousSession
   template?: RecurringTemplate
+  // Session cognitive programmée (type 'cognitif' uniquement)
+  cognitive_session?: {
+    id: string
+    status: string
+    completed_at: string | null
+    computed_metrics: Record<string, unknown> | null
+    test_name: string
+    test_slug: string
+  } | null
   // Statut de complétion calculé
   est_complete: boolean
   titre_display: string
+  // Drills cognitifs Pre/In/Post liés à cette étape
+  program_exercises: ProgramExercise[]
 }
 
 // Programme enrichi avec ses étapes et les données brutes des séances
@@ -1023,4 +1113,27 @@ export interface ProgrammeStats {
   total_etapes: number
   etapes_completes: number
   taux_completion: number
+}
+
+// Exercice cognitif ou bibliothèque dans un microcycle (drill Pre/In/Post)
+export interface ProgramExercise {
+  id: string
+  programme_etape_id: string
+  cognitive_test_id: string | null
+  exercise_id: string | null
+  phase: 'pre' | 'in' | 'post' | null
+  configured_duration_sec: number | null
+  configured_intensity_percent: number | null
+  cognitive_load_score: number | null
+  display_order: number
+  created_at: string
+  completed_at: string | null
+  // Jointures optionnelles — une seule sera non-null
+  cognitive_test_definitions?: CognitiveTestDefinition | null
+  exercises?: {
+    id: string
+    titre: string
+    format: string
+    description: string | null
+  } | null
 }

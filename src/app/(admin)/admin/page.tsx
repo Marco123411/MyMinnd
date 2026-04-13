@@ -27,9 +27,9 @@ const STATUS_LABELS: Record<DispatchStatus, string> = {
 }
 
 const STATUS_VARIANTS: Record<DispatchStatus, string> = {
-  nouveau: 'bg-[#20808D] text-white',
+  nouveau: 'bg-[#7069F4] text-white',
   en_cours: 'bg-blue-500 text-white',
-  dispatche: 'bg-[#FFC553] text-[#1A1A2E]',
+  dispatche: 'bg-[#FF9F40] text-[#141325]',
   accepte: 'bg-green-500 text-white',
   en_session: 'bg-purple-500 text-white',
   termine: 'bg-gray-400 text-white',
@@ -54,7 +54,7 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1A2E]">Dashboard Admin</h1>
+        <h1 className="text-3xl font-bold text-[#141325]">Dashboard Admin</h1>
         <p className="text-muted-foreground">Vue d&apos;ensemble de la plateforme MINND</p>
       </div>
 
@@ -67,7 +67,7 @@ export default async function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-[#20808D]">
+            <p className="text-3xl font-bold text-[#7069F4]">
               {(stats?.tests_today_profilage ?? 0) + (stats?.tests_today_cognitif ?? 0)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -83,7 +83,7 @@ export default async function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-[#FFC553]">{mrrEur} €</p>
+            <p className="text-3xl font-bold text-[#FF9F40]">{mrrEur} €</p>
             <p className="text-xs text-muted-foreground mt-1">abonnements actifs</p>
           </CardContent>
         </Card>
@@ -95,7 +95,7 @@ export default async function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-[#1A1A2E]">
+            <p className="text-3xl font-bold text-[#141325]">
               {stats?.signups_this_week ?? 0}
             </p>
             <p className="text-xs text-muted-foreground mt-1">nouveaux utilisateurs</p>
@@ -120,12 +120,12 @@ export default async function AdminPage() {
       {/* Alertes */}
       {stats && (stats.alert_pending_2h > 0 || stats.alert_expert_4h > 0) && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Alertes</h2>
+          <h2 className="text-lg font-semibold text-[#141325]">Alertes</h2>
 
           {stats.alert_pending_2h > 0 && (
-            <div className="flex items-center justify-between rounded-lg border border-[#FFC553] bg-[#FFC553]/10 px-4 py-3">
+            <div className="flex items-center justify-between rounded-lg border border-[#FF9F40] bg-[#FF9F40]/10 px-4 py-3">
               <div>
-                <p className="font-medium text-[#1A1A2E]">
+                <p className="font-medium text-[#141325]">
                   {stats.alert_pending_2h} dispatch{stats.alert_pending_2h > 1 ? 'es' : ''} en attente depuis plus de 2h
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -159,7 +159,7 @@ export default async function AdminPage() {
       {/* Graphiques */}
       {charts && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Graphiques</h2>
+          <h2 className="text-lg font-semibold text-[#141325]">Graphiques</h2>
           <AdminDashboardCharts charts={charts} />
         </div>
       )}
@@ -167,7 +167,7 @@ export default async function AdminPage() {
       {/* Dernières activités */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Dernières activités</h2>
+          <h2 className="text-lg font-semibold text-[#141325]">Dernières activités</h2>
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/dispatch">Voir tout</Link>
           </Button>

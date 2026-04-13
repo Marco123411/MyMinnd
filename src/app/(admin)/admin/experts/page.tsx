@@ -7,7 +7,7 @@ export default async function AdminExpertsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#1A1A2E]">Pool d&apos;experts</h1>
+        <h1 className="text-3xl font-bold text-[#141325]">Pool d&apos;experts</h1>
         <p className="text-muted-foreground">
           Gestion des experts certifiés MINND — badges, visibilité et onboarding
         </p>

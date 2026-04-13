@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation'
 import { CognitiveTestShell } from './CognitiveTestShell'
 import { useTrialRecorder } from '@/hooks/useTrialRecorder'
 import { completeCognitiveSessionAction } from '@/app/actions/cognitive'
+import { interpolate } from '@/lib/cognitive/intensity-interpolation'
 import type { DigitalSpanConfig } from '@/types'
 
 interface DigitalSpanTestProps {
   sessionId: string
   config: DigitalSpanConfig
+  durationSec?: number
+  intensityPercent?: number
 }
 
 type Phase = 'intro' | 'displaying' | 'responding' | 'feedback' | 'complete'
@@ -28,14 +31,21 @@ function generateSequence(length: number): number[] {
   return seq
 }
 
-export function DigitalSpanTest({ sessionId, config }: DigitalSpanTestProps) {
+export function DigitalSpanTest({ sessionId, config, durationSec, intensityPercent }: DigitalSpanTestProps) {
   const router = useRouter()
   const { recordTrial, flush } = useTrialRecorder(sessionId)
 
-  const minSpan = config.min_span ?? 3
+  // Interpolation selon intensité si fournie par le programme
+  const minSpan = intensityPercent !== undefined
+    ? interpolate(intensityPercent, [3, 6])
+    : (config.min_span ?? 3)
   const maxSpan = config.max_span ?? 12
-  const digitDisplayMs = config.digit_display_ms ?? 1000
+  const digitDisplayMs = intensityPercent !== undefined
+    ? interpolate(intensityPercent, [1200, 700])
+    : (config.digit_display_ms ?? 1000)
   const interDigitMs = config.inter_digit_ms ?? 300
+  const testStartRef = useRef<number>(0)
+  const maxDurationMs = (durationSec ?? 0) * 1000
 
   const [phase, setPhase] = useState<Phase>('intro')
   const [mode, setMode] = useState<Mode>('forward')
@@ -141,6 +151,7 @@ export function DigitalSpanTest({ sessionId, config }: DigitalSpanTestProps) {
 
   // Premier trial au montage
   useEffect(() => {
+    testStartRef.current = performance.now()
     const seq = generateSequence(minSpan)
     sequenceRef.current = seq
     setSequence(seq)
@@ -177,6 +188,11 @@ export function DigitalSpanTest({ sessionId, config }: DigitalSpanTestProps) {
 
     // Après le feedback, décider de la suite
     feedbackTimeoutRef.current = setTimeout(() => {
+      // Arrêt par durée maximale (mode programme)
+      if (durationSec !== undefined && maxDurationMs > 0 && (performance.now() - testStartRef.current) >= maxDurationMs) {
+        completeSession()
+        return
+      }
       if (isCorrect) {
         const reachedMax = currentSpanRef.current >= maxSpan
         if (reachedMax && modeRef.current === 'backward') {
@@ -280,6 +296,7 @@ export function DigitalSpanTest({ sessionId, config }: DigitalSpanTestProps) {
       progressValue={progressValue}
       progressLabel={`Longueur ${currentSpan} · Essai ${attempt}/2`}
       onAbandon={handleAbandon}
+      durationSec={durationSec}
     >
       <div className="flex flex-col items-center w-full h-full px-4">
 
@@ -364,7 +381,7 @@ export function DigitalSpanTest({ sessionId, config }: DigitalSpanTestProps) {
                 <button
                   onClick={handleValidate}
                   disabled={userInput.length !== sequence.length}
-                  className="h-14 rounded-lg bg-[#20808D] hover:bg-[#1a6b77] disabled:opacity-30 text-white text-sm font-semibold active:scale-95 transition-transform"
+                  className="h-14 rounded-lg bg-[#7069F4] hover:bg-[#1a6b77] disabled:opacity-30 text-white text-sm font-semibold active:scale-95 transition-transform"
                 >
                   OK ✓
                 </button>

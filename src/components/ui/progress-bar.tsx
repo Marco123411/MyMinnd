@@ -32,7 +32,7 @@ export function ProgressBar({
         value={percentage}
         className={cn(
           'h-2',
-          color === 'teal' && '[&>div]:bg-teal',
+          color === 'teal' && '[&>div]:bg-[#7069F4]',
           color === 'mauve' && '[&>div]:bg-mauve',
           color === 'gold' && '[&>div]:bg-gold',
         )}

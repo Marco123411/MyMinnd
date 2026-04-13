@@ -32,7 +32,7 @@ export function CreateExerciseDialog({ isExpert }: CreateExerciseDialogProps) {
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+        className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
       >
         <Plus className="h-4 w-4 mr-2" />
         Créer un exercice

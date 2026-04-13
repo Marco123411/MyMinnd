@@ -24,8 +24,8 @@ interface ExerciseFormData {
 }
 
 const QUESTION_BADGE: Record<ExerciseQuestionType, { label: string; className: string }> = {
-  open:  { label: '✏️ Question ouverte',  className: 'bg-[#E8F4F5] text-[#20808D] border-[#20808D]' },
-  scale: { label: '📊 Notation 1-10',    className: 'bg-purple-50 text-[#944454] border-[#944454]' },
+  open:  { label: '✏️ Question ouverte',  className: 'bg-[#F1F0FE] text-[#7069F4] border-[#7069F4]' },
+  scale: { label: '📊 Notation 1-10',    className: 'bg-purple-50 text-[#3C3CD6] border-[#3C3CD6]' },
   mcq:   { label: '☑️ Choix multiples',  className: 'bg-amber-50 text-amber-700 border-amber-400' },
 }
 
@@ -269,7 +269,7 @@ export function ExerciseFormBuilder({ onSuccess, onCancel }: ExerciseFormBuilder
             variant="outline"
             size="sm"
             onClick={() => addQuestion('open')}
-            className="text-[#20808D] border-[#20808D] hover:bg-[#E8F4F5]"
+            className="text-[#7069F4] border-[#7069F4] hover:bg-[#F1F0FE]"
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             Question ouverte
@@ -279,7 +279,7 @@ export function ExerciseFormBuilder({ onSuccess, onCancel }: ExerciseFormBuilder
             variant="outline"
             size="sm"
             onClick={() => addQuestion('scale')}
-            className="text-[#944454] border-[#944454] hover:bg-purple-50"
+            className="text-[#3C3CD6] border-[#3C3CD6] hover:bg-purple-50"
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             Notation 1-10
@@ -312,7 +312,7 @@ export function ExerciseFormBuilder({ onSuccess, onCancel }: ExerciseFormBuilder
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+          className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
         >
           {isLoading ? 'Création...' : 'Créer l\'exercice'}
         </Button>

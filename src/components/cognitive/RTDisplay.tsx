@@ -7,8 +7,8 @@ interface RTDisplayProps {
 
 function getRTColor(rt: number): string {
   if (rt < 200) return '#22c55e' // vert — excellent
-  if (rt < 350) return '#20808D' // teal MINND — bon
-  if (rt < 500) return '#FFC553' // gold MINND — moyen
+  if (rt < 350) return '#7069F4' // teal MINND — bon
+  if (rt < 500) return '#FF9F40' // gold MINND — moyen
   return '#ef4444'               // rouge — lapse
 }
 

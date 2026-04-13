@@ -9,10 +9,10 @@ import {
 import type { MentalProfile } from '@/types'
 
 // ── MINND design tokens ───────────────────────────────────────
-const TEAL = '#20808D'
-const MAUVE = '#944454'
-const DARK = '#1A1A2E'
-const LIGHT_TEAL = '#E8F4F5'
+const TEAL = '#7069F4'
+const MAUVE = '#3C3CD6'
+const DARK = '#141325'
+const LIGHT_TEAL = '#F1F0FE'
 const GRAY = '#64748b'
 const BORDER = '#e2e8f0'
 

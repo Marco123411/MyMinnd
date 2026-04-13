@@ -119,7 +119,7 @@ export default function AcceptInvitePage() {
             <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2">{error}</p>
           )}
 
-          <Button type="submit" className="w-full bg-teal text-white hover:bg-teal/90" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-[#7069F4] text-white hover:bg-[#5B54D6]" disabled={isLoading}>
             {isLoading ? 'Activation…' : 'Activer mon compte'}
           </Button>
         </form>

@@ -29,7 +29,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
     <div className="space-y-6">
       {/* Titre */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">{labels.profileLabel}</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">{labels.profileLabel}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Vos résultats MINND</p>
       </div>
 
@@ -46,8 +46,8 @@ export default async function ProfilePage({ searchParams }: PageProps) {
                 variant={data.selectedTest?.id === t.id ? 'default' : 'outline'}
                 className={
                   data.selectedTest?.id === t.id
-                    ? 'bg-[#20808D] cursor-default'
-                    : 'cursor-pointer hover:border-[#20808D]'
+                    ? 'bg-[#7069F4] cursor-default'
+                    : 'cursor-pointer hover:border-[#7069F4]'
                 }
               >
                 {t.definition_name} — {formatDate(t.completed_at)}

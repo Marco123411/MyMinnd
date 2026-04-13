@@ -27,7 +27,7 @@ export default async function ClientHomePage() {
     <div className="space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Bonjour, {prenom}</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Bonjour, {prenom}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{labels.title}</p>
       </div>
 
@@ -39,15 +39,15 @@ export default async function ClientHomePage() {
           </h2>
           <div className="space-y-2">
             {data.pendingTests.map((test) => (
-              <Card key={test.id} className="border-[#20808D]/40 bg-[#E8F4F5]/50">
+              <Card key={test.id} className="border-[#7069F4]/40 bg-[#F1F0FE]/50">
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm font-medium text-[#1A1A2E]">{test.definition_name}</p>
+                      <p className="text-sm font-medium text-[#141325]">{test.definition_name}</p>
                       <Badge variant="outline" className="mt-1 text-xs capitalize">{test.level_slug}</Badge>
                     </div>
                     <Link href={test.inviteUrl}>
-                      <Button size="sm" className="shrink-0 bg-[#20808D] hover:bg-[#186870]">
+                      <Button size="sm" className="shrink-0 bg-[#7069F4] hover:bg-[#5B54D6]">
                         <PlayCircle className="mr-1.5 h-4 w-4" />
                         Commencer
                       </Button>
@@ -131,7 +131,7 @@ export default async function ClientHomePage() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
               <ClipboardList className="h-7 w-7 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-bold text-[#1A1A2E]">Bienvenue sur MINND</h2>
+            <h2 className="text-lg font-bold text-[#141325]">Bienvenue sur MINND</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Votre coach va bientôt vous envoyer vos premiers contenus.
             </p>
@@ -146,12 +146,12 @@ export default async function ClientHomePage() {
             Prochaine séance
           </h2>
           <Link href="/client/sessions">
-            <Card className="border-[#20808D]/30 hover:border-[#20808D] transition-colors cursor-pointer">
+            <Card className="border-[#7069F4]/30 hover:border-[#7069F4] transition-colors cursor-pointer">
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start gap-3">
-                  <UserCheck className="h-4 w-4 text-[#20808D] shrink-0 mt-0.5" />
+                  <UserCheck className="h-4 w-4 text-[#7069F4] shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1A1A2E] truncate">
+                    <p className="text-sm font-medium text-[#141325] truncate">
                       {data.nextCabinetSession.objectif}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">

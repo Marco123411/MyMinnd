@@ -51,10 +51,10 @@ function ResponseItemDisplay({
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
         <div className="flex items-center gap-3">
-          <span className="text-lg font-bold text-[#20808D] w-6 shrink-0">{val}</span>
-          <div className="flex-1 h-2 bg-[#E8F4F5] rounded-full overflow-hidden">
+          <span className="text-lg font-bold text-[#7069F4] w-6 shrink-0">{val}</span>
+          <div className="flex-1 h-2 bg-[#F1F0FE] rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#20808D] rounded-full"
+              className="h-full bg-[#7069F4] rounded-full"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -68,7 +68,7 @@ function ResponseItemDisplay({
     return (
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
-        <Badge className="bg-[#20808D] text-white border-0">{item.value}</Badge>
+        <Badge className="bg-[#7069F4] text-white border-0">{item.value}</Badge>
       </div>
     )
   }
@@ -102,9 +102,9 @@ function ScaleEvolutionChart({ question, dataPoints }: ScaleEvolutionChartProps)
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#20808D"
+            stroke="#7069F4"
             strokeWidth={2}
-            dot={{ fill: '#20808D', r: 3 }}
+            dot={{ fill: '#7069F4', r: 3 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -207,7 +207,7 @@ export function ExerciseResponsesViewer({ data, error }: Props) {
                     <p className="text-xs font-medium text-muted-foreground">
                       {formatDate(response.completed_at)}
                     </p>
-                    <div className="pl-3 border-l-2 border-[#E8F4F5] space-y-3">
+                    <div className="pl-3 border-l-2 border-[#F1F0FE] space-y-3">
                       {response.responses.map(item => {
                         const q = questions.find(q => q.id === item.question_id)
                         return (

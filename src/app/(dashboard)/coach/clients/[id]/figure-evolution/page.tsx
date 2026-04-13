@@ -43,12 +43,12 @@ export default async function FigureEvolutionPage({ params }: Props) {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Figure de Performance</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Figure de Performance</h1>
           <p className="text-muted-foreground">Évolution — {clientName}</p>
         </div>
 
         <div className="ml-auto">
-          <Button asChild className="bg-[#20808D] hover:bg-[#20808D]/90 text-white">
+          <Button asChild className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white">
             <Link href={`/coach/exercises?clientId=${id}`}>
               Lancer un exercice
             </Link>

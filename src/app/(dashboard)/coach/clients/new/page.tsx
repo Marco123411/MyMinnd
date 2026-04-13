@@ -90,7 +90,7 @@ export default function NewClientPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-[#1A1A2E]">Nouveau client</h1>
+        <h1 className="text-2xl font-semibold text-[#141325]">Nouveau client</h1>
         <p className="mt-1 text-sm text-muted-foreground">Renseignez les informations de base.</p>
       </div>
 
@@ -267,7 +267,7 @@ export default function NewClientPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-[#20808D] text-white hover:bg-[#20808D]/90"
+                className="bg-[#7069F4] text-white hover:bg-[#7069F4]/90"
               >
                 {isLoading ? 'Création…' : 'Créer le client'}
               </Button>

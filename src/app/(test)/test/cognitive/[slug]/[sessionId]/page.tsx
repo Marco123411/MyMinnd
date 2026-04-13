@@ -6,6 +6,7 @@ import type { PVTConfig, StroopConfig, SimonConfig, DigitalSpanConfig } from '@/
 
 interface PageProps {
   params: Promise<{ slug: string; sessionId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 // Configs par défaut si absentes de la BDD
@@ -34,8 +35,10 @@ const DEFAULT_DIGITAL_SPAN_CONFIG: DigitalSpanConfig = {
   inter_digit_ms: 300,
 }
 
-export default async function CognitiveTestPage({ params }: PageProps) {
+export default async function CognitiveTestPage({ params, searchParams }: PageProps) {
   const { slug, sessionId } = await params
+  const sp = await searchParams
+  const programExerciseId = typeof sp.exId === 'string' ? sp.exId : undefined
 
   // Vérifier que l'utilisateur est connecté
   const supabase = await createClient()
@@ -51,7 +54,7 @@ export default async function CognitiveTestPage({ params }: PageProps) {
 
   // Canonicaliser l'URL si le slug ne correspond pas à la définition réelle
   if (slug !== definition.slug) {
-    redirect(`/test/cognitive/${definition.slug}/${sessionId}`)
+    redirect(`/test/cognitive/${definition.slug}/${sessionId}${programExerciseId ? `?exId=${programExerciseId}` : ''}`)
   }
 
   // Rediriger si la session n'est pas active
@@ -63,7 +66,6 @@ export default async function CognitiveTestPage({ params }: PageProps) {
   }
 
   // Fusionner config résolue (preset > définition > défauts)
-  // config_used est stocké au moment de la création de la session (immuable)
   const dbConfig = (session.config_used ?? definition.config ?? {}) as Record<string, unknown>
 
   const configMap: Record<string, PVTConfig | StroopConfig | SimonConfig | DigitalSpanConfig> = {
@@ -73,13 +75,21 @@ export default async function CognitiveTestPage({ params }: PageProps) {
     digital_span: { ...DEFAULT_DIGITAL_SPAN_CONFIG, ...dbConfig } as DigitalSpanConfig,
   }
 
-  if (!configMap[definition.slug]) notFound()
+  // Paramètres dynamiques depuis la session (définis si lancé depuis programme)
+  const durationSec = (session.configured_duration_sec as number | null) ?? undefined
+  const intensityPercent = (session.configured_intensity_percent as number | null) ?? undefined
+
+  // Config par défaut pour les slugs inconnus (nouveaux drills sans config fixe)
+  const config = configMap[definition.slug] ?? DEFAULT_STROOP_CONFIG
 
   return (
     <CognitiveTestRunner
       slug={definition.slug}
       sessionId={sessionId}
-      config={configMap[definition.slug]}
+      config={config}
+      durationSec={durationSec}
+      intensityPercent={intensityPercent}
+      programExerciseId={programExerciseId}
     />
   )
 }

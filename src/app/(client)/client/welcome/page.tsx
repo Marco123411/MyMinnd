@@ -11,9 +11,9 @@ export default async function WelcomePage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center space-y-4">
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Bienvenue sur MINND !</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Bienvenue sur MINND !</h1>
         <p className="text-muted-foreground">Votre compte est activé.</p>
-        <Link href="/client/dashboard" className="text-[#20808D] underline">
+        <Link href="/client/dashboard" className="text-[#7069F4] underline">
           Accéder à mon espace
         </Link>
       </div>

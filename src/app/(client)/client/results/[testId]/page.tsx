@@ -79,7 +79,7 @@ export default async function ClientResultsPage({ params }: PageProps) {
       {/* En-tête */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Résultats détaillés</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Résultats détaillés</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {test.definition_name} — {formatDate(test.completed_at)}
           </p>
@@ -92,8 +92,8 @@ export default async function ClientResultsPage({ params }: PageProps) {
       {/* Score global */}
       {globalScore != null && (
         <div className="flex flex-col items-center py-4">
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#E8F4F5]">
-            <span className="text-4xl font-bold text-[#20808D]">
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#F1F0FE]">
+            <span className="text-4xl font-bold text-[#7069F4]">
               {globalScore.toFixed(1)}
             </span>
           </div>
@@ -123,7 +123,7 @@ export default async function ClientResultsPage({ params }: PageProps) {
       {/* Détail par compétence — Complete / Expert uniquement */}
       {!isDiscovery && domainNodes.length > 0 && (
         <div className="space-y-8">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Détail par compétence</h2>
+          <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
           {domainNodes.map((domain) => {
             const leaves = nodes
               .filter((n) => n.is_leaf && n.parent_id === domain.id)
@@ -132,16 +132,16 @@ export default async function ClientResultsPage({ params }: PageProps) {
             return (
               <div key={domain.id}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold text-[#1A1A2E]">{domain.name}</h3>
-                  <span className="text-sm font-medium text-[#20808D]">
+                  <h3 className="font-semibold text-[#141325]">{domain.name}</h3>
+                  <span className="text-sm font-medium text-[#7069F4]">
                     {getScore(domain.id).toFixed(1)}/10
                   </span>
                 </div>
                 {/* Note du coach sur le domaine */}
                 {notesMap[domain.id] && (
-                  <div className="mb-3 rounded-md bg-[#E8F4F5] px-3 py-2">
-                    <p className="text-xs font-semibold text-[#20808D] mb-0.5">Note de votre coach</p>
-                    <p className="text-sm text-[#1A1A2E]">{notesMap[domain.id]}</p>
+                  <div className="mb-3 rounded-md bg-[#F1F0FE] px-3 py-2">
+                    <p className="text-xs font-semibold text-[#7069F4] mb-0.5">Note de votre coach</p>
+                    <p className="text-sm text-[#141325]">{notesMap[domain.id]}</p>
                   </div>
                 )}
                 <div className="space-y-3 pl-2">
@@ -154,9 +154,9 @@ export default async function ClientResultsPage({ params }: PageProps) {
                       />
                       {/* Note du coach sur la sous-compétence */}
                       {notesMap[leaf.id] && (
-                        <div className="mt-1 ml-2 rounded-md bg-[#E8F4F5] px-3 py-2">
-                          <p className="text-xs font-semibold text-[#20808D] mb-0.5">Note de votre coach</p>
-                          <p className="text-sm text-[#1A1A2E]">{notesMap[leaf.id]}</p>
+                        <div className="mt-1 ml-2 rounded-md bg-[#F1F0FE] px-3 py-2">
+                          <p className="text-xs font-semibold text-[#7069F4] mb-0.5">Note de votre coach</p>
+                          <p className="text-sm text-[#141325]">{notesMap[leaf.id]}</p>
                         </div>
                       )}
                     </div>
@@ -172,14 +172,14 @@ export default async function ClientResultsPage({ params }: PageProps) {
       {leafScores.length >= 5 && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-[#20808D] uppercase tracking-wide mb-3">
+            <h3 className="text-sm font-semibold text-[#7069F4] uppercase tracking-wide mb-3">
               Forces
             </h3>
             <ul className="space-y-2">
               {top5.map((l) => (
                 <li key={l.name} className="flex justify-between text-sm">
                   <span className="truncate text-foreground">{l.name}</span>
-                  <span className="ml-2 shrink-0 font-medium text-[#20808D]">
+                  <span className="ml-2 shrink-0 font-medium text-[#7069F4]">
                     {l.score.toFixed(1)}
                   </span>
                 </li>
@@ -187,14 +187,14 @@ export default async function ClientResultsPage({ params }: PageProps) {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[#944454] uppercase tracking-wide mb-3">
+            <h3 className="text-sm font-semibold text-[#3C3CD6] uppercase tracking-wide mb-3">
               À développer
             </h3>
             <ul className="space-y-2">
               {bottom5.map((l) => (
                 <li key={l.name} className="flex justify-between text-sm">
                   <span className="truncate text-foreground">{l.name}</span>
-                  <span className="ml-2 shrink-0 font-medium text-[#944454]">
+                  <span className="ml-2 shrink-0 font-medium text-[#3C3CD6]">
                     {l.score.toFixed(1)}
                   </span>
                 </li>
@@ -207,7 +207,7 @@ export default async function ClientResultsPage({ params }: PageProps) {
       {/* Vue intelligence profil (Complete / Expert uniquement) */}
       {intelligenceData && !isDiscovery && (
         <div>
-          <h2 className="text-lg font-semibold text-[#1A1A2E] mb-4">Analyse de profil détaillée</h2>
+          <h2 className="text-lg font-semibold text-[#141325] mb-4">Analyse de profil détaillée</h2>
           <ClientProfileView data={intelligenceData} />
         </div>
       )}
@@ -222,7 +222,7 @@ export default async function ClientResultsPage({ params }: PageProps) {
         </div>
         {test.report_url?.startsWith('https://') ? (
           <a href={test.report_url} target="_blank" rel="noreferrer">
-            <Button size="sm" className="bg-[#20808D] hover:bg-[#186870] gap-2">
+            <Button size="sm" className="bg-[#7069F4] hover:bg-[#5B54D6] gap-2">
               <FileDown className="h-4 w-4" />
               Télécharger
             </Button>

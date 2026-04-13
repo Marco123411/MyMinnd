@@ -2,8 +2,9 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { scoreSession } from '@/lib/cognitive/scoring'
-import type { TrialInput, CognitiveTestDefinition, CognitiveSession } from '@/types'
+import { scoreSession, evaluateBenchmark } from '@/lib/cognitive/scoring'
+import { computeCognitiveLoad } from '@/lib/cognitive/load'
+import type { TrialInput, CognitiveTestDefinition, CognitiveSession, CognitiveBenchmark } from '@/types'
 
 // Schémas de validation Zod
 const slugSchema = z.object({ slug: z.string().min(1).max(50) })
@@ -60,7 +61,8 @@ export async function getCognitiveTestDefinitionBySlugAction(
 // Crée une session cognitive pour l'utilisateur connecté
 export async function createCognitiveSessionAction(
   slug: string,
-  deviceInfo: Record<string, unknown>
+  deviceInfo: Record<string, unknown>,
+  programExerciseId?: string
 ): Promise<{ data: { sessionId: string; definition: CognitiveTestDefinition } | null; error: string | null }> {
   const parsedSlug = slugSchema.safeParse({ slug })
   if (!parsedSlug.success) return { data: null, error: parsedSlug.error.issues[0].message }
@@ -84,29 +86,52 @@ export async function createCognitiveSessionAction(
 
   if (defError || !definition) return { data: null, error: defError?.message ?? 'Test introuvable' }
 
-  // Réutiliser une session active existante si elle existe déjà
-  const { data: existing } = await supabase
-    .from('cognitive_sessions')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('cognitive_test_id', definition.id)
-    .in('status', ['pending', 'in_progress'])
-    .single()
+  // Réutiliser une session active existante uniquement en mode autonome (sans programme)
+  // En mode programme, chaque exercice doit avoir sa propre session distincte
+  if (!programExerciseId) {
+    const { data: existing } = await supabase
+      .from('cognitive_sessions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('cognitive_test_id', definition.id)
+      .is('program_exercise_id', null)
+      .in('status', ['pending', 'in_progress'])
+      .single()
 
-  if (existing) {
-    return { data: { sessionId: existing.id, definition: definition as CognitiveTestDefinition }, error: null }
+    if (existing) {
+      return { data: { sessionId: existing.id, definition: definition as CognitiveTestDefinition }, error: null }
+    }
   }
 
   // Créer une nouvelle session
+  const sessionData: Record<string, unknown> = {
+    user_id: user.id,
+    cognitive_test_id: definition.id,
+    status: 'in_progress',
+    started_at: new Date().toISOString(),
+    device_info: parsedDevice.data,
+  }
+  if (programExerciseId) {
+    const parsedExId = z.string().uuid().safeParse(programExerciseId)
+    if (parsedExId.success) {
+      // Vérifier que l'exercice appartient bien à l'utilisateur authentifié
+      const admin = createAdminClient()
+      const { data: exData } = await admin
+        .from('program_exercises')
+        .select('id, programme_etapes!inner(programmes!inner(client_id))')
+        .eq('id', parsedExId.data)
+        .single()
+      const etape = exData?.programme_etapes as unknown as { programmes: { client_id: string } } | null
+      const clientId = etape?.programmes?.client_id
+      if (clientId === user.id) {
+        sessionData.program_exercise_id = parsedExId.data
+      }
+    }
+  }
+
   const { data: session, error: sessionError } = await supabase
     .from('cognitive_sessions')
-    .insert({
-      user_id: user.id,
-      cognitive_test_id: definition.id,
-      status: 'in_progress',
-      started_at: new Date().toISOString(),
-      device_info: parsedDevice.data,
-    })
+    .insert(sessionData)
     .select('id')
     .single()
 
@@ -233,29 +258,127 @@ export async function completeCognitiveSessionAction(
 
   if (error) return { data: null, error: error.message }
 
-  // Calculer les métriques depuis les trials bruts
-  const { data: trialsData } = await supabase
-    .from('cognitive_trials')
-    .select('stimulus_type, stimulus_data, response_data, reaction_time_ms, is_correct, is_anticipation, is_lapse')
-    .eq('session_id', parsed.data.sessionId)
+  type DefRow = {
+    configured_duration_sec: number | null
+    configured_intensity_percent: number | null
+    cognitive_test_definitions: {
+      id: string
+      slug: string
+      base_cognitive_load: number | null
+      default_duration_sec: number | null
+      default_intensity_percent: number | null
+      intensity_configurable: boolean | null
+    } | {
+      id: string
+      slug: string
+      base_cognitive_load: number | null
+      default_duration_sec: number | null
+      default_intensity_percent: number | null
+      intensity_configurable: boolean | null
+    }[] | null
+  }
 
-  const { data: defData } = await supabase
-    .from('cognitive_sessions')
-    .select('cognitive_test_definitions(slug)')
-    .eq('id', parsed.data.sessionId)
-    .single()
+  // Récupérer trials et définition en parallèle (requêtes indépendantes)
+  const [{ data: trialsData }, { data: defData }] = await Promise.all([
+    supabase
+      .from('cognitive_trials')
+      .select('stimulus_type, stimulus_data, response_data, reaction_time_ms, is_correct, is_anticipation, is_lapse')
+      .eq('session_id', parsed.data.sessionId),
+    supabase
+      .from('cognitive_sessions')
+      .select(`
+        configured_duration_sec,
+        configured_intensity_percent,
+        cognitive_test_definitions (
+          id,
+          slug,
+          base_cognitive_load,
+          default_duration_sec,
+          default_intensity_percent,
+          intensity_configurable
+        )
+      `)
+      .eq('id', parsed.data.sessionId)
+      .single(),
+  ])
 
   if (trialsData && defData) {
-    const rawDef = (defData as { cognitive_test_definitions: { slug: string } | { slug: string }[] | null })
-      .cognitive_test_definitions
-    const slug = (Array.isArray(rawDef) ? rawDef[0]?.slug : rawDef?.slug) ?? ''
-    // computed_metrics est révoqué pour `authenticated` — on utilise le service_role
-    const metrics = scoreSession(slug, trialsData)
-    const admin = createAdminClient()
-    await admin
-      .from('cognitive_sessions')
-      .update({ computed_metrics: metrics })
-      .eq('id', parsed.data.sessionId)
+    const typedDef = defData as DefRow
+    const rawDef = typedDef.cognitive_test_definitions
+    const def = Array.isArray(rawDef) ? rawDef[0] : rawDef
+    const slug = def?.slug ?? ''
+
+    // Scoring (computed_metrics révoqué pour authenticated → service_role)
+    // Dégrade gracieusement si slug non géré ou trials vides
+    let metrics: Record<string, unknown> | null = null
+    try {
+      metrics = scoreSession(slug, trialsData) as Record<string, unknown>
+    } catch (err) {
+      console.error(`[cognitive] scoring failed for slug="${slug}":`, err)
+    }
+
+    // Calcul CLS (cognitive_load_score révoqué pour authenticated → service_role)
+    // base_cognitive_load != null permet la valeur 0 (pas de charge, CLS=1 clampé)
+    let cls: number | null = null
+    if (def?.base_cognitive_load != null) {
+      try {
+        const durationSec = typedDef.configured_duration_sec ?? def.default_duration_sec ?? 300
+        const intensityPercent = typedDef.configured_intensity_percent ?? def.default_intensity_percent ?? 100
+        cls = computeCognitiveLoad({
+          baseCognitiveLoad:    def.base_cognitive_load,
+          durationSec,
+          intensityPercent,
+          intensityConfigurable: def.intensity_configurable ?? false,
+        })
+      } catch (err) {
+        console.error('[cognitive] CLS computation failed:', err)
+      }
+    }
+
+    // Évaluation des benchmarks Elite/Average/Poor (step 31)
+    // Une seule requête pour tous les benchmarks du test — pas de N+1
+    let benchmarkResults: Array<{ metric: string; value: number; zone: 'elite' | 'average' | 'poor' }> | null = null
+    if (metrics !== null && def?.id) {
+      try {
+        // Admin client : cognitive_benchmarks est une table de référence, pas soumise aux RLS utilisateur
+        const adminForBenchmarks = createAdminClient()
+        const { data: benchmarks } = await adminForBenchmarks
+          .from('cognitive_benchmarks')
+          .select('*')
+          .eq('test_definition_id', def.id)
+
+        if (benchmarks && benchmarks.length > 0) {
+          benchmarkResults = (benchmarks as CognitiveBenchmark[])
+            .filter((b) => metrics![b.metric] !== undefined)
+            .map((b) => ({
+              metric: b.metric,
+              value: metrics![b.metric] as number,
+              zone: evaluateBenchmark(metrics![b.metric] as number, b),
+            }))
+        }
+      } catch (err) {
+        console.error('[cognitive] benchmark evaluation failed:', err)
+      }
+    }
+
+    // Un seul appel admin pour mettre à jour les champs protégés — défense en profondeur : user_id filter
+    if (metrics !== null || cls !== null || benchmarkResults !== null) {
+      try {
+        const updates: Record<string, unknown> = {}
+        if (metrics !== null) updates.computed_metrics = metrics
+        if (cls !== null) updates.cognitive_load_score = cls
+        if (benchmarkResults !== null) updates.benchmark_results = benchmarkResults
+
+        const admin = createAdminClient()
+        await admin
+          .from('cognitive_sessions')
+          .update(updates)
+          .eq('id', parsed.data.sessionId)
+          .eq('user_id', user.id)
+      } catch (err) {
+        console.error('[cognitive] admin update failed:', err)
+      }
+    }
   }
 
   return { data: { sessionId: parsed.data.sessionId }, error: null }

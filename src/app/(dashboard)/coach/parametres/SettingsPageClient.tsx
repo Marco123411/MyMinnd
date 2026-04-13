@@ -61,7 +61,7 @@ export function SettingsPageClient({ nom, prenom, email }: SettingsPageClientPro
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4 text-[#20808D]" />
+            <User className="h-4 w-4 text-[#7069F4]" />
             Informations personnelles
           </CardTitle>
         </CardHeader>
@@ -111,7 +111,7 @@ export function SettingsPageClient({ nom, prenom, email }: SettingsPageClientPro
             <Button
               type="submit"
               disabled={isPendingProfile}
-              className="bg-[#20808D] hover:bg-[#1a6b77] text-white"
+              className="bg-[#7069F4] hover:bg-[#1a6b77] text-white"
             >
               {isPendingProfile ? 'Sauvegarde…' : 'Sauvegarder'}
             </Button>
@@ -123,7 +123,7 @@ export function SettingsPageClient({ nom, prenom, email }: SettingsPageClientPro
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Lock className="h-4 w-4 text-[#20808D]" />
+            <Lock className="h-4 w-4 text-[#7069F4]" />
             Mot de passe
           </CardTitle>
         </CardHeader>
@@ -162,7 +162,7 @@ export function SettingsPageClient({ nom, prenom, email }: SettingsPageClientPro
             <Button
               type="submit"
               disabled={isPendingPassword || !password || !confirmPassword}
-              className="bg-[#20808D] hover:bg-[#1a6b77] text-white"
+              className="bg-[#7069F4] hover:bg-[#1a6b77] text-white"
             >
               {isPendingPassword ? 'Modification…' : 'Modifier le mot de passe'}
             </Button>

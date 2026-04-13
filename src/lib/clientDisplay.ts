@@ -1,10 +1,10 @@
 import type { ClientContext } from '@/types'
 
 export const CONTEXT_COLORS: Record<ClientContext, string> = {
-  sport: 'bg-[#E8F4F5] text-[#20808D]',
-  corporate: 'bg-purple-100 text-[#944454]',
-  wellbeing: 'bg-amber-100 text-[#FFC553]',
-  coaching: 'bg-orange-100 text-[#A84B2F]',
+  sport: 'bg-[#F1F0FE] text-[#7069F4]',
+  corporate: 'bg-purple-100 text-[#3C3CD6]',
+  wellbeing: 'bg-amber-100 text-[#FF9F40]',
+  coaching: 'bg-orange-100 text-[#EC638B]',
 }
 
 export function getClientSubtitle(client: {

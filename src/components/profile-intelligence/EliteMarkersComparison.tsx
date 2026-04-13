@@ -52,11 +52,11 @@ export function EliteMarkersComparison({
           return (
             <div key={marker.sub_slug}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-[#1A1A2E]">{marker.label}</span>
+                <span className="text-xs font-medium text-[#141325]">{marker.label}</span>
                 {clientScore !== null && (
                   <span
                     className={`text-xs font-semibold ${
-                      isAboveIntl ? 'text-[#20808D]' : isBelowDep ? 'text-orange-600' : 'text-[#1A1A2E]'
+                      isAboveIntl ? 'text-[#7069F4]' : isBelowDep ? 'text-orange-600' : 'text-[#141325]'
                     }`}
                   >
                     {clientScore.toFixed(1)}/10
@@ -68,7 +68,7 @@ export function EliteMarkersComparison({
               <div className="relative h-3 w-full rounded-full bg-gray-100">
                 {/* Zone Dép → Int (fond coloré) */}
                 <div
-                  className="absolute h-3 rounded-full bg-[#E8F4F5]"
+                  className="absolute h-3 rounded-full bg-[#F1F0FE]"
                   style={{
                     left: `${depPct}%`,
                     width: `${intlPct - depPct}%`,
@@ -84,7 +84,7 @@ export function EliteMarkersComparison({
 
                 {/* Repère International */}
                 <div
-                  className="absolute top-0 h-3 w-0.5 bg-[#20808D]"
+                  className="absolute top-0 h-3 w-0.5 bg-[#7069F4]"
                   style={{ left: `${intlPct}%` }}
                   title={`Moy. Int.: ${intl}`}
                 />
@@ -94,10 +94,10 @@ export function EliteMarkersComparison({
                   <div
                     className={`absolute top-0.5 h-2 w-2 rounded-full -translate-x-1/2 ${
                       isAboveIntl
-                        ? 'bg-[#20808D]'
+                        ? 'bg-[#7069F4]'
                         : isBelowDep
                         ? 'bg-orange-500'
-                        : 'bg-[#FFC553]'
+                        : 'bg-[#FF9F40]'
                     }`}
                     style={{ left: `${clientPct}%` }}
                   />

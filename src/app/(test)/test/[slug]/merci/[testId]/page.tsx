@@ -49,9 +49,9 @@ export default async function MerciPage({ params }: PageProps) {
       <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-sm">
         {/* Icône de confirmation */}
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F4F5]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F1F0FE]">
             <svg
-              className="h-8 w-8 text-[#20808D]"
+              className="h-8 w-8 text-[#7069F4]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -67,7 +67,7 @@ export default async function MerciPage({ params }: PageProps) {
         </div>
 
         {/* Titre */}
-        <h1 className="mb-2 text-center text-2xl font-bold text-[#1A1A2E]">
+        <h1 className="mb-2 text-center text-2xl font-bold text-[#141325]">
           Merci&nbsp;! Votre test a bien été enregistré.
         </h1>
         <p className="mb-8 text-center text-muted-foreground">
@@ -81,37 +81,37 @@ export default async function MerciPage({ params }: PageProps) {
           <div className="flex items-center justify-between">
             {/* Étape 1 — Test complété */}
             <div className="flex flex-col items-center gap-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#20808D] text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7069F4] text-white">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="text-center text-xs font-medium text-[#20808D]">Test<br />complété</span>
+              <span className="text-center text-xs font-medium text-[#7069F4]">Test<br />complété</span>
             </div>
 
             {/* Ligne 1 */}
-            <div className="mb-4 flex-1 border-t-2 border-[#20808D] mx-2" />
+            <div className="mb-4 flex-1 border-t-2 border-[#7069F4] mx-2" />
 
             {/* Étape 2 — Coach notifié */}
             <div className="flex flex-col items-center gap-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#20808D] text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7069F4] text-white">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="text-center text-xs font-medium text-[#20808D]">Coach<br />notifié</span>
+              <span className="text-center text-xs font-medium text-[#7069F4]">Coach<br />notifié</span>
             </div>
 
             {/* Ligne 2 */}
             <div
-              className={`mb-4 flex-1 border-t-2 mx-2 ${isReleased ? 'border-[#20808D]' : 'border-gray-200'}`}
+              className={`mb-4 flex-1 border-t-2 mx-2 ${isReleased ? 'border-[#7069F4]' : 'border-gray-200'}`}
             />
 
             {/* Étape 3 — Résultats */}
             <div className="flex flex-col items-center gap-1">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  isReleased ? 'bg-[#20808D] text-white' : 'bg-gray-100 text-gray-400'
+                  isReleased ? 'bg-[#7069F4] text-white' : 'bg-gray-100 text-gray-400'
                 }`}
               >
                 {isReleased ? (
@@ -126,7 +126,7 @@ export default async function MerciPage({ params }: PageProps) {
               </div>
               <span
                 className={`text-center text-xs font-medium ${
-                  isReleased ? 'text-[#20808D]' : 'text-gray-400'
+                  isReleased ? 'text-[#7069F4]' : 'text-gray-400'
                 }`}
               >
                 {isReleased ? (
@@ -143,7 +143,7 @@ export default async function MerciPage({ params }: PageProps) {
         {isReleased ? (
           <div className="mb-6 text-center">
             <Link href={`/client/results/${testId}`}>
-              <Button className="w-full bg-[#20808D] hover:bg-[#186870]">
+              <Button className="w-full bg-[#7069F4] hover:bg-[#5B54D6]">
                 Voir mes résultats
               </Button>
             </Link>

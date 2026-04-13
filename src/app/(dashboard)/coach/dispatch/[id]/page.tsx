@@ -54,12 +54,12 @@ export default async function CoachDispatchPage({ params }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Mission Expert</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Mission Expert</h1>
           <p className="text-muted-foreground">Demande Level 3</p>
         </div>
         <Badge
           className="text-sm"
-          style={{ backgroundColor: '#20808D', color: 'white' }}
+          style={{ backgroundColor: '#7069F4', color: 'white' }}
         >
           {STATUS_LABELS[dispatch.status]}
         </Badge>
@@ -87,7 +87,7 @@ export default async function CoachDispatchPage({ params }: Props) {
               {dispatch.test_score_global !== null && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Score global</p>
-                  <p className="text-4xl font-bold text-[#20808D]">
+                  <p className="text-4xl font-bold text-[#7069F4]">
                     {dispatch.test_score_global.toFixed(1)}
                     <span className="text-lg text-muted-foreground"> / 10</span>
                   </p>
@@ -98,7 +98,7 @@ export default async function CoachDispatchPage({ params }: Props) {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: dispatch.test_profile_color ?? '#20808D' }}
+                    style={{ backgroundColor: dispatch.test_profile_color ?? '#7069F4' }}
                   />
                   <span className="font-medium">{dispatch.test_profile_name}</span>
                 </div>
@@ -121,13 +121,13 @@ export default async function CoachDispatchPage({ params }: Props) {
                     <div key={i} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{node.name}</span>
-                        <span className="font-medium text-[#20808D]">
+                        <span className="font-medium text-[#7069F4]">
                           {score.toFixed(1)}
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-[#E8F4F5]">
+                      <div className="h-2 rounded-full bg-[#F1F0FE]">
                         <div
-                          className="h-full rounded-full bg-[#20808D]"
+                          className="h-full rounded-full bg-[#7069F4]"
                           style={{ width: `${((score - 1) / 9) * 100}%` }}
                         />
                       </div>

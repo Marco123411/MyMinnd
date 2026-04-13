@@ -10,7 +10,7 @@ export default async function ClientExercisesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-[#1A1A2E]">Mes exercices</h1>
+        <h1 className="text-xl font-bold text-[#141325]">Mes exercices</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Répondez aux questionnaires assignés par votre coach
         </p>
@@ -36,10 +36,10 @@ export default async function ClientExercisesPage() {
             const questionCount = exercise.questions.length
             return (
               <Link key={exercise.id} href={`/client/exercises/${exercise.id}`}>
-                <Card className="hover:border-[#20808D] transition-colors cursor-pointer">
+                <Card className="hover:border-[#7069F4] transition-colors cursor-pointer">
                   <CardContent className="flex items-center justify-between gap-4 py-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-[#1A1A2E] truncate">
+                      <p className="font-medium text-sm text-[#141325] truncate">
                         {exercise.titre}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -47,7 +47,7 @@ export default async function ClientExercisesPage() {
                         <span className="text-xs text-muted-foreground">·</span>
                         <Badge
                           variant="outline"
-                          className="text-xs text-[#20808D] border-[#20808D]"
+                          className="text-xs text-[#7069F4] border-[#7069F4]"
                         >
                           {questionCount} question{questionCount > 1 ? 's' : ''}
                         </Badge>

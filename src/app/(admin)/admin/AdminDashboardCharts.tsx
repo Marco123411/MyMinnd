@@ -20,8 +20,8 @@ import type { DashboardChartData } from '@/types'
 
 const TIER_COLORS: Record<string, string> = {
   Gratuit: '#94a3b8',
-  Pro: '#20808D',
-  Expert: '#FFC553',
+  Pro: '#7069F4',
+  Expert: '#FF9F40',
 }
 
 interface Props {
@@ -48,9 +48,9 @@ export function AdminDashboardCharts({ charts }: Props) {
               <Line
                 type="monotone"
                 dataKey="mrr"
-                stroke="#20808D"
+                stroke="#7069F4"
                 strokeWidth={2}
-                dot={{ r: 4, fill: '#20808D' }}
+                dot={{ r: 4, fill: '#7069F4' }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -106,8 +106,8 @@ export function AdminDashboardCharts({ charts }: Props) {
               <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip />
               <Legend iconType="square" iconSize={10} />
-              <Bar dataKey="profilage" name="Profilage" stackId="a" fill="#20808D" />
-              <Bar dataKey="cognitif" name="Cognitif" stackId="a" fill="#944454" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="profilage" name="Profilage" stackId="a" fill="#7069F4" />
+              <Bar dataKey="cognitif" name="Cognitif" stackId="a" fill="#3C3CD6" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

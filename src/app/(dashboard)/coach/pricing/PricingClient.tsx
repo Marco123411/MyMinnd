@@ -157,8 +157,8 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
       {/* En-tête */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-[#1A1A2E]">Abonnements</h1>
-          <Badge className="bg-[#E8F4F5] text-[#20808D] border-0">
+          <h1 className="text-3xl font-bold text-[#141325]">Abonnements</h1>
+          <Badge className="bg-[#F1F0FE] text-[#7069F4] border-0">
             {TIER_LABELS[currentTier]}
             {isSubscribed && ' · Actif'}
           </Badge>
@@ -179,11 +179,11 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
 
       {/* Toggle mensuel / annuel */}
       <div className="flex items-center gap-3">
-        <span className={`text-sm font-medium ${!isAnnual ? 'text-[#1A1A2E]' : 'text-gray-400'}`}>Mensuel</span>
+        <span className={`text-sm font-medium ${!isAnnual ? 'text-[#141325]' : 'text-gray-400'}`}>Mensuel</span>
         <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
-        <span className={`text-sm font-medium ${isAnnual ? 'text-[#1A1A2E]' : 'text-gray-400'}`}>
+        <span className={`text-sm font-medium ${isAnnual ? 'text-[#141325]' : 'text-gray-400'}`}>
           Annuel
-          <span className="ml-2 inline-flex items-center rounded-full bg-[#FFC553]/20 px-2 py-0.5 text-xs font-semibold text-amber-700">
+          <span className="ml-2 inline-flex items-center rounded-full bg-[#FF9F40]/20 px-2 py-0.5 text-xs font-semibold text-amber-700">
             −26 %
           </span>
         </span>
@@ -200,26 +200,26 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
               key={tier.id}
               className={`relative flex flex-col ${
                 tier.recommended
-                  ? 'border-2 border-[#FFC553] shadow-lg'
+                  ? 'border-2 border-[#FF9F40] shadow-lg'
                   : 'border border-gray-200'
-              } ${isCurrent ? 'ring-2 ring-[#20808D]' : ''}`}
+              } ${isCurrent ? 'ring-2 ring-[#7069F4]' : ''}`}
             >
               {tier.recommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-[#FFC553] px-3 py-1 text-xs font-bold text-[#1A1A2E]">
+                  <span className="rounded-full bg-[#FF9F40] px-3 py-1 text-xs font-bold text-[#141325]">
                     Recommandé
                   </span>
                 </div>
               )}
 
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-[#1A1A2E]">{tier.name}</CardTitle>
+                <CardTitle className="text-lg text-[#141325]">{tier.name}</CardTitle>
                 <div className="mt-2">
                   {tier.monthlyPrice === 0 ? (
-                    <span className="text-3xl font-bold text-[#1A1A2E]">Gratuit</span>
+                    <span className="text-3xl font-bold text-[#141325]">Gratuit</span>
                   ) : (
                     <div>
-                      <span className="text-3xl font-bold text-[#1A1A2E]">{price} €</span>
+                      <span className="text-3xl font-bold text-[#141325]">{price} €</span>
                       <span className="text-sm text-gray-500"> /mois</span>
                       {isAnnual && (
                         <p className="text-xs text-gray-400 mt-1">Soit {tier.annualTotal} €/an</p>
@@ -233,7 +233,7 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
                 <ul className="space-y-2 flex-1">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-sm text-gray-600">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#20808D]" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#7069F4]" />
                       {feature}
                     </li>
                   ))}
@@ -245,7 +245,7 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
                       onClick={handleManageSubscription}
                       disabled={portalLoading}
                       variant="outline"
-                      className="w-full border-[#20808D] text-[#20808D] hover:bg-[#E8F4F5]"
+                      className="w-full border-[#7069F4] text-[#7069F4] hover:bg-[#F1F0FE]"
                     >
                       {portalLoading ? 'Chargement...' : 'Gérer mon abonnement'}
                     </Button>
@@ -269,8 +269,8 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
                     disabled={loadingTier !== null}
                     className={`w-full ${
                       tier.recommended
-                        ? 'bg-[#20808D] hover:bg-[#1a6b78] text-white'
-                        : 'bg-[#1A1A2E] hover:bg-[#2a2a4e] text-white'
+                        ? 'bg-[#7069F4] hover:bg-[#1a6b78] text-white'
+                        : 'bg-[#141325] hover:bg-[#2a2a4e] text-white'
                     }`}
                   >
                     {loadingTier === tier.id ? 'Chargement...' : "S'abonner"}

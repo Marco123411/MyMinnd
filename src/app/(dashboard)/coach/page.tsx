@@ -173,10 +173,10 @@ export default async function CoachPage() {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#1A1A2E]">Bonjour, {displayName}</h1>
+          <h1 className="text-2xl font-semibold text-[#141325]">Bonjour, {displayName}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Bienvenue dans votre espace coach MINND.</p>
         </div>
-        <Button asChild className="bg-[#20808D] text-white hover:bg-[#20808D]/90">
+        <Button asChild className="bg-[#7069F4] text-white hover:bg-[#7069F4]/90">
           <Link href="/coach/clients/new">
             <UserPlus className="mr-2 h-4 w-4" />
             Ajouter un client
@@ -196,7 +196,7 @@ export default async function CoachPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="h-4 w-4 text-[#20808D]" />
+              <Brain className="h-4 w-4 text-[#7069F4]" />
               Tests cognitifs
               <Badge variant="secondary" className="ml-auto text-xs">
                 {cognitiveStats.count} ce mois
@@ -259,7 +259,7 @@ export default async function CoachPage() {
                       <span className="font-medium">{client?.nom ?? '—'}</span>
                       <span className="text-muted-foreground">{(definition as { name: string } | null)?.name ?? '—'}</span>
                       {test.score_global !== null && (
-                        <span className="font-semibold text-[#20808D]">{test.score_global}/10</span>
+                        <span className="font-semibold text-[#7069F4]">{test.score_global}/10</span>
                       )}
                       {profile && (
                         <Badge

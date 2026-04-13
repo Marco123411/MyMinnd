@@ -135,7 +135,7 @@ export function SendTestModal({
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#20808D] hover:bg-[#186870]">
+        <Button className="bg-[#7069F4] hover:bg-[#5B54D6]">
           <Send className="mr-2 h-4 w-4" />
           Envoyer un test
         </Button>
@@ -145,7 +145,7 @@ export function SendTestModal({
         <DialogHeader>
           <DialogTitle>
             {step === 'select' ? 'Envoyer un test à ' : 'Lien d\'invitation — '}
-            <span className="text-[#20808D]">{clientName}</span>
+            <span className="text-[#7069F4]">{clientName}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -153,12 +153,12 @@ export function SendTestModal({
           <div className="space-y-5 py-2">
             {/* Choix du test */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1A1A2E]">Test</label>
+              <label className="text-sm font-medium text-[#141325]">Test</label>
               <div className="relative">
                 <select
                   value={selectedDefinitionId}
                   onChange={(e) => setSelectedDefinitionId(e.target.value)}
-                  className="w-full appearance-none rounded-md border border-input bg-background py-2 pl-3 pr-8 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#20808D]"
+                  className="w-full appearance-none rounded-md border border-input bg-background py-2 pl-3 pr-8 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7069F4]"
                 >
                   {sortedDefinitions.map((def) => (
                     <option key={def.id} value={def.id}>
@@ -172,7 +172,7 @@ export function SendTestModal({
 
             {/* Choix du niveau */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1A1A2E]">Niveau</label>
+              <label className="text-sm font-medium text-[#141325]">Niveau</label>
               <div className="grid grid-cols-3 gap-2">
                 {(selectedDef?.levels ?? []).map((level) => {
                   const isUnlocked = level.slug === 'discovery' || coachTier === 'expert'
@@ -188,13 +188,13 @@ export function SendTestModal({
                         !isUnlocked
                           ? 'cursor-not-allowed border-dashed opacity-50'
                           : isSelected
-                          ? 'cursor-pointer border-[#20808D] bg-[#E8F4F5]'
-                          : 'cursor-pointer border-gray-200 hover:border-[#20808D]/60'
+                          ? 'cursor-pointer border-[#7069F4] bg-[#F1F0FE]'
+                          : 'cursor-pointer border-gray-200 hover:border-[#7069F4]/60'
                       }`}
                     >
-                      <p className="text-xs font-semibold text-[#1A1A2E]">{level.name}</p>
+                      <p className="text-xs font-semibold text-[#141325]">{level.name}</p>
                       {isUnlocked ? (
-                        <p className="mt-1 text-xs text-[#20808D]">{priceLabel}</p>
+                        <p className="mt-1 text-xs text-[#7069F4]">{priceLabel}</p>
                       ) : (
                         <Badge variant="outline" className="mt-1 text-[10px] text-muted-foreground">
                           Bientôt disponible
@@ -206,10 +206,10 @@ export function SendTestModal({
               </div>
             </div>
 
-            {error && <p className="text-sm text-[#944454]">{error}</p>}
+            {error && <p className="text-sm text-[#3C3CD6]">{error}</p>}
 
             <Button
-              className="w-full bg-[#20808D] hover:bg-[#186870]"
+              className="w-full bg-[#7069F4] hover:bg-[#5B54D6]"
               onClick={handleGenerate}
               disabled={!selectedDefinitionId || isLoading}
             >
@@ -226,7 +226,7 @@ export function SendTestModal({
 
             {/* URL d'invitation */}
             <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3">
-              <code className="flex-1 truncate text-xs text-[#20808D]">{inviteUrl}</code>
+              <code className="flex-1 truncate text-xs text-[#7069F4]">{inviteUrl}</code>
             </div>
 
             {/* Actions */}
@@ -251,14 +251,14 @@ export function SendTestModal({
                 ) : (
                   <>
                     <Button
-                      className="w-full bg-[#20808D] hover:bg-[#186870]"
+                      className="w-full bg-[#7069F4] hover:bg-[#5B54D6]"
                       onClick={handleSendEmail}
                       disabled={emailLoading}
                     >
                       <Send className="mr-2 h-4 w-4" />
                       {emailLoading ? 'Envoi...' : 'Envoyer par email'}
                     </Button>
-                    {emailError && <p className="text-sm text-[#944454]">{emailError}</p>}
+                    {emailError && <p className="text-sm text-[#3C3CD6]">{emailError}</p>}
                   </>
                 )
               ) : (

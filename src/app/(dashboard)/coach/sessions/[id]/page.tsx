@@ -28,12 +28,12 @@ export default async function SessionDetailPage({ params }: SessionDetailPagePro
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link href="/coach/sessions" className="hover:text-[#20808D] flex items-center gap-1">
+        <Link href="/coach/sessions" className="hover:text-[#7069F4] flex items-center gap-1">
           <ChevronLeft className="h-4 w-4" />
           Séances
         </Link>
         <span>/</span>
-        <span className="text-[#1A1A2E] font-medium">
+        <span className="text-[#141325] font-medium">
           Compte-rendu —{' '}
           {new Date(session.date_seance).toLocaleDateString('fr-FR', {
             day: 'numeric',

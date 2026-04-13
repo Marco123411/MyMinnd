@@ -18,11 +18,11 @@ interface SubcompetenceDetailListProps {
 
 // Couleur de la barre selon le percentile (même logique que SubcompetenceBar)
 function getPercentileColor(percentile: number | null): string {
-  if (percentile === null) return 'bg-[#FFC553]'
+  if (percentile === null) return 'bg-[#FF9F40]'
   if (percentile < 25) return 'bg-red-500'
   if (percentile < 50) return 'bg-orange-500'
   if (percentile < 75) return 'bg-green-500'
-  return 'bg-[#20808D]'
+  return 'bg-[#7069F4]'
 }
 
 export function SubcompetenceDetailList({
@@ -45,8 +45,8 @@ export function SubcompetenceDetailList({
       {groups.map((group) => (
         <div key={group.id}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[#1A1A2E]">{group.name}</h3>
-            <span className="text-sm font-medium text-[#20808D]">
+            <h3 className="text-sm font-semibold text-[#141325]">{group.name}</h3>
+            <span className="text-sm font-medium text-[#7069F4]">
               {group.domainScore.toFixed(1)}/10
             </span>
           </div>
@@ -61,7 +61,7 @@ export function SubcompetenceDetailList({
                 <div key={leaf.nodeId}>
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs text-[#1A1A2E] truncate">{leaf.name}</span>
+                      <span className="text-xs text-[#141325] truncate">{leaf.name}</span>
                       {isNonDiscriminant && (
                         <Badge
                           variant="secondary"
@@ -72,7 +72,7 @@ export function SubcompetenceDetailList({
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-medium text-[#1A1A2E]">
+                      <span className="text-xs font-medium text-[#141325]">
                         {leaf.score.toFixed(1)}/10
                       </span>
                       {leaf.percentile !== null && (

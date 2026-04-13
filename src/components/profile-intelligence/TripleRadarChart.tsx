@@ -59,7 +59,7 @@ export function TripleRadarChart({
         <PolarGrid stroke="#e2e8f0" />
         <PolarAngleAxis
           dataKey="subject"
-          tick={{ fill: '#1A1A2E', fontSize: 12 }}
+          tick={{ fill: '#141325', fontSize: 12 }}
         />
         <PolarRadiusAxis
           angle={30}

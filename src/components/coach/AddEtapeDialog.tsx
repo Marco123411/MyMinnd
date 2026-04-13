@@ -1,135 +1,350 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import type React from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { Plus } from 'lucide-react'
-import { addEtapeAction } from '@/app/actions/programmes'
-import type { CabinetSession, AutonomousSession, RecurringTemplate, TypeSeance } from '@/types'
+import { Plus, UserCheck, Clock, RefreshCw, Brain, ChevronLeft } from 'lucide-react'
+import { createAndAddEtapeAction } from '@/app/actions/programmes'
+import type { TypeSeance, CognitiveTestDefinition } from '@/types'
 
 interface AddEtapeDialogProps {
   programmeId: string
-  cabinetSessions: CabinetSession[]
-  autonomousSessions: AutonomousSession[]
-  recurringTemplates: RecurringTemplate[]
+  cognitiveTests: CognitiveTestDefinition[]
   onAdded?: () => void
 }
 
-export function AddEtapeDialog({
-  programmeId,
-  cabinetSessions,
-  autonomousSessions,
-  recurringTemplates,
-  onAdded,
-}: AddEtapeDialogProps) {
+const TYPE_CARDS = [
+  {
+    type: 'cabinet' as TypeSeance,
+    label: 'Cabinet',
+    sub: 'Séance avec le coach',
+    Icon: UserCheck,
+    color: '#7069F4',
+    borderClass: 'border-[#7069F4]',
+    bgClass: 'bg-[#F1F0FE]',
+  },
+  {
+    type: 'autonomie' as TypeSeance,
+    label: 'Autonome',
+    sub: 'Travail du client seul',
+    Icon: Clock,
+    color: '#3C3CD6',
+    borderClass: 'border-[#3C3CD6]',
+    bgClass: 'bg-[#EDEDFC]',
+  },
+  {
+    type: 'recurrente' as TypeSeance,
+    label: 'Routine',
+    sub: 'Habitude récurrente',
+    Icon: RefreshCw,
+    color: '#FF9F40',
+    borderClass: 'border-amber-400',
+    bgClass: 'bg-amber-50',
+  },
+  {
+    type: 'cognitif' as TypeSeance,
+    label: 'Cognitif',
+    sub: 'Test cognitif programmé',
+    Icon: Brain,
+    color: '#20808D',
+    borderClass: 'border-[#20808D]',
+    bgClass: 'bg-[#E8F4F5]',
+  },
+]
+
+function CabinetForm({
+  data,
+  onChange,
+}: {
+  data: Record<string, string>
+  onChange: (k: string, v: string) => void
+}) {
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label htmlFor="objectif">
+          Objectif <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="objectif"
+          value={data.objectif ?? ''}
+          onChange={(e) => onChange('objectif', e.target.value)}
+          placeholder="Ex : Améliorer la concentration..."
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="date_seance">
+          Date <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="date_seance"
+          type="date"
+          value={data.date_seance ?? ''}
+          onChange={(e) => onChange('date_seance', e.target.value)}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="contenu">
+          Contenu <span className="text-xs text-muted-foreground">(optionnel)</span>
+        </Label>
+        <Textarea
+          id="contenu"
+          value={data.contenu ?? ''}
+          onChange={(e) => onChange('contenu', e.target.value)}
+          placeholder="Déroulé de la séance..."
+          rows={3}
+        />
+      </div>
+    </>
+  )
+}
+
+function AutonomeForm({
+  data,
+  onChange,
+}: {
+  data: Record<string, string>
+  onChange: (k: string, v: string) => void
+}) {
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label htmlFor="titre">
+          Titre <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="titre"
+          value={data.titre ?? ''}
+          onChange={(e) => onChange('titre', e.target.value)}
+          placeholder="Ex : Session cardio..."
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="objectif">
+          Objectif <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="objectif"
+          value={data.objectif ?? ''}
+          onChange={(e) => onChange('objectif', e.target.value)}
+          placeholder="Ex : Endurance fondamentale..."
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="date_cible">
+          Date cible <span className="text-xs text-muted-foreground">(optionnel)</span>
+        </Label>
+        <Input
+          id="date_cible"
+          type="date"
+          value={data.date_cible ?? ''}
+          onChange={(e) => onChange('date_cible', e.target.value)}
+        />
+      </div>
+    </>
+  )
+}
+
+function RecurrenteForm({
+  data,
+  onChange,
+}: {
+  data: Record<string, string>
+  onChange: (k: string, v: string) => void
+}) {
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label htmlFor="titre">
+          Titre <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="titre"
+          value={data.titre ?? ''}
+          onChange={(e) => onChange('titre', e.target.value)}
+          placeholder="Ex : Méditation quotidienne..."
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="description">
+          Description <span className="text-xs text-muted-foreground">(optionnel)</span>
+        </Label>
+        <Textarea
+          id="description"
+          value={data.description ?? ''}
+          onChange={(e) => onChange('description', e.target.value)}
+          placeholder="Instructions, fréquence..."
+          rows={3}
+        />
+      </div>
+    </>
+  )
+}
+
+function CognitifForm({
+  data,
+  onChange,
+}: {
+  data: Record<string, string>
+  onChange: (k: string, v: string) => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="titre-cognitif">
+        Nom de la séance <span className="text-red-500">*</span>
+      </Label>
+      <Input
+        id="titre-cognitif"
+        value={data.titre ?? ''}
+        onChange={(e) => onChange('titre', e.target.value)}
+        placeholder="Ex : Séance focus — semaine 3"
+        required
+      />
+      <p className="text-xs text-muted-foreground">
+        Vous ajouterez les drills cognitifs (Pré/In/Post) après la création.
+      </p>
+    </div>
+  )
+}
+
+export function AddEtapeDialog({ programmeId, cognitiveTests, onAdded }: AddEtapeDialogProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [typeSeance, setTypeSeance] = useState<TypeSeance | ''>('')
-  const [selectedId, setSelectedId] = useState('')
+  const [step, setStep] = useState<1 | 2>(1)
+  const [selectedType, setSelectedType] = useState<TypeSeance | null>(null)
+  const [formData, setFormData] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  function reset() {
+    setStep(1)
+    setSelectedType(null)
+    setFormData({})
+    setError(null)
+  }
+
+  function handleOpenChange(v: boolean) {
+    setOpen(v)
+    if (!v) reset()
+  }
+
+  function handleSelectType(type: TypeSeance) {
+    setSelectedType(type)
+    setFormData({})
+    setError(null)
+    setStep(2)
+  }
+
+  function handleFieldChange(key: string, value: string) {
+    setFormData((prev) => ({ ...prev, [key]: value }))
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!typeSeance || !selectedId) return
+    if (!selectedType) return
     setError(null)
 
     startTransition(async () => {
-      const result = await addEtapeAction({
-        programme_id:          programmeId,
-        type_seance:           typeSeance,
-        cabinet_session_id:    typeSeance === 'cabinet'    ? selectedId : null,
-        autonomous_session_id: typeSeance === 'autonomie'  ? selectedId : null,
-        recurring_template_id: typeSeance === 'recurrente' ? selectedId : null,
+      const result = await createAndAddEtapeAction(selectedType, {
+        programme_id: programmeId,
+        ...formData,
       })
 
       if (result.error) {
         setError(result.error)
       } else {
         setOpen(false)
-        setTypeSeance('')
-        setSelectedId('')
+        reset()
+        router.refresh()
         onAdded?.()
       }
     })
   }
 
-  // Options de séances selon le type sélectionné
-  const options = typeSeance === 'cabinet'
-    ? cabinetSessions.map((s) => ({ id: s.id, label: `${s.objectif} — ${new Date(s.date_seance).toLocaleDateString('fr-FR')}` }))
-    : typeSeance === 'autonomie'
-    ? autonomousSessions.map((s) => ({ id: s.id, label: s.titre }))
-    : typeSeance === 'recurrente'
-    ? recurringTemplates.map((t) => ({ id: t.id, label: t.titre }))
-    : []
+  const selectedCard = TYPE_CARDS.find((c) => c.type === selectedType)
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 text-[#20808D] border-[#20808D]">
+        <Button variant="outline" size="sm" className="gap-1.5 text-[#7069F4] border-[#7069F4]">
           <Plus className="h-3.5 w-3.5" />
           Ajouter une étape
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ajouter une étape au programme</DialogTitle>
+          <DialogTitle>
+            {step === 1 ? (
+              'Ajouter une étape'
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Retour au choix du type"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span style={{ color: selectedCard?.color }}>{selectedCard?.label}</span>
+              </div>
+            )}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div className="space-y-1.5">
-            <Label>Type de séance</Label>
-            <Select value={typeSeance} onValueChange={(v) => { setTypeSeance(v as TypeSeance); setSelectedId('') }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir un type…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cabinet">Séance cabinet</SelectItem>
-                <SelectItem value="autonomie">Séance autonome</SelectItem>
-                <SelectItem value="recurrente">Routine récurrente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          {typeSeance && (
-            <div className="space-y-1.5">
-              <Label>Séance à ajouter</Label>
-              {options.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Aucune séance de ce type disponible pour ce client.
-                </p>
-              ) : (
-                <Select value={selectedId} onValueChange={setSelectedId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une séance…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {options.map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+        {step === 1 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            {TYPE_CARDS.map(({ type, label, sub, Icon, color, borderClass, bgClass }) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => handleSelectType(type)}
+                className={`rounded-lg border-2 p-4 text-center transition-all hover:shadow-md focus:outline-none ${borderClass} ${bgClass}`}
+              >
+                <Icon className="h-6 w-6 mx-auto mb-2" style={{ color }} />
+                <p className="font-medium text-sm" style={{ color }}>{label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            {selectedType === 'cabinet' && (
+              <CabinetForm data={formData} onChange={handleFieldChange} />
+            )}
+            {selectedType === 'autonomie' && (
+              <AutonomeForm data={formData} onChange={handleFieldChange} />
+            )}
+            {selectedType === 'recurrente' && (
+              <RecurrenteForm data={formData} onChange={handleFieldChange} />
+            )}
+            {selectedType === 'cognitif' && (
+              <CognitifForm data={formData} onChange={handleFieldChange} />
+            )}
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending || (selectedType === 'cognitif' && !formData.titre?.trim())}
+                className="bg-[#7069F4] hover:bg-[#5a54e0] text-white"
+              >
+                {isPending ? 'Création…' : 'Créer et ajouter au programme'}
+              </Button>
             </div>
-          )}
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button
-              type="submit"
-              disabled={isPending || !typeSeance || !selectedId}
-              className="bg-[#20808D] hover:bg-[#1a6b77] text-white"
-            >
-              {isPending ? 'Ajout…' : "Ajouter l'étape"}
-            </Button>
-          </div>
-        </form>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   )

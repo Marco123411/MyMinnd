@@ -60,16 +60,16 @@ export default async function ExpertProfilePage({ params }: PageProps) {
                   className="h-24 w-24 rounded-full object-cover"
                 />
               ) : (
-                <div className="h-24 w-24 rounded-full bg-[#E8F4F5] flex items-center justify-center">
-                  <span className="text-2xl font-bold text-[#20808D]">{initials}</span>
+                <div className="h-24 w-24 rounded-full bg-[#F1F0FE] flex items-center justify-center">
+                  <span className="text-2xl font-bold text-[#7069F4]">{initials}</span>
                 </div>
               )}
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold text-[#1A1A2E]">{displayName}</h1>
+                <h1 className="text-2xl font-bold text-[#141325]">{displayName}</h1>
                 {expert.badge_certifie && (
-                  <Badge className="bg-[#20808D] text-white">Certifié MINND</Badge>
+                  <Badge className="bg-[#7069F4] text-white">Certifié MINND</Badge>
                 )}
               </div>
               <p className="text-muted-foreground mb-3">{expert.titre}</p>
@@ -88,7 +88,7 @@ export default async function ExpertProfilePage({ params }: PageProps) {
 
           {/* Bio */}
           <section>
-            <h2 className="text-lg font-semibold text-[#1A1A2E] mb-3">À propos</h2>
+            <h2 className="text-lg font-semibold text-[#141325] mb-3">À propos</h2>
             <p className="text-foreground leading-relaxed whitespace-pre-line">{expert.bio}</p>
           </section>
 
@@ -134,7 +134,7 @@ export default async function ExpertProfilePage({ params }: PageProps) {
 
           {/* Avis */}
           <section>
-            <h2 className="text-lg font-semibold text-[#1A1A2E] mb-4">
+            <h2 className="text-lg font-semibold text-[#141325] mb-4">
               Avis clients
               {expert.nb_avis > 0 && (
                 <span className="text-base font-normal text-muted-foreground ml-2">
@@ -158,11 +158,11 @@ export default async function ExpertProfilePage({ params }: PageProps) {
         <div className="space-y-5">
           {/* Signaux de confiance */}
           <div className="rounded-xl border bg-white p-5 space-y-4">
-            <h2 className="font-semibold text-[#1A1A2E]">Signaux de confiance</h2>
+            <h2 className="font-semibold text-[#141325]">Signaux de confiance</h2>
 
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-[#E8F4F5] flex items-center justify-center shrink-0">
-                <Star className="h-4 w-4 text-[#20808D]" />
+              <div className="h-9 w-9 rounded-full bg-[#F1F0FE] flex items-center justify-center shrink-0">
+                <Star className="h-4 w-4 text-[#7069F4]" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -178,8 +178,8 @@ export default async function ExpertProfilePage({ params }: PageProps) {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-[#E8F4F5] flex items-center justify-center shrink-0">
-                <Users className="h-4 w-4 text-[#20808D]" />
+              <div className="h-9 w-9 rounded-full bg-[#F1F0FE] flex items-center justify-center shrink-0">
+                <Users className="h-4 w-4 text-[#7069F4]" />
               </div>
               <div>
                 <p className="text-sm font-medium">{expert.nb_profils_analyses}</p>
@@ -191,8 +191,8 @@ export default async function ExpertProfilePage({ params }: PageProps) {
 
             {expert.taux_reponse > 0 && (
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-[#E8F4F5] flex items-center justify-center shrink-0">
-                  <TrendingUp className="h-4 w-4 text-[#20808D]" />
+                <div className="h-9 w-9 rounded-full bg-[#F1F0FE] flex items-center justify-center shrink-0">
+                  <TrendingUp className="h-4 w-4 text-[#7069F4]" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">{Math.round(expert.taux_reponse)}%</p>
@@ -202,8 +202,8 @@ export default async function ExpertProfilePage({ params }: PageProps) {
             )}
 
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-[#E8F4F5] flex items-center justify-center shrink-0">
-                <Clock className="h-4 w-4 text-[#20808D]" />
+              <div className="h-9 w-9 rounded-full bg-[#F1F0FE] flex items-center justify-center shrink-0">
+                <Clock className="h-4 w-4 text-[#7069F4]" />
               </div>
               <div>
                 <p className="text-sm font-medium">
@@ -215,13 +215,13 @@ export default async function ExpertProfilePage({ params }: PageProps) {
           </div>
 
           {/* CTA */}
-          <div className="rounded-xl border bg-[#1A1A2E] p-5 text-white space-y-3">
+          <div className="rounded-xl border bg-[#141325] p-5 text-white space-y-3">
             <h3 className="font-semibold">Demander une analyse Expert</h3>
             <p className="text-sm text-white/70">
               Séance de 30 à 45 min avec {expert.prenom ?? displayName} après votre test MINND Expert.
             </p>
             <Button
-              className="w-full bg-[#20808D] hover:bg-[#20808D]/90 text-white"
+              className="w-full bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
               asChild
             >
               <Link href={`/register?redirect=/test/pma&level=expert&expert=${expertId}`}>

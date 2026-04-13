@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ROLE_COLORS: Record<string, string> = {
   client: 'bg-blue-50 text-blue-700',
-  coach: 'bg-[#E8F4F5] text-[#20808D]',
+  coach: 'bg-[#F1F0FE] text-[#7069F4]',
   admin: 'bg-red-50 text-red-700',
 }
 
@@ -43,8 +43,8 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_COLORS: Record<string, string> = {
   free: 'bg-gray-100 text-gray-600',
-  pro: 'bg-[#E8F4F5] text-[#20808D]',
-  expert: 'bg-[#FFC553]/20 text-[#A84B2F]',
+  pro: 'bg-[#F1F0FE] text-[#7069F4]',
+  expert: 'bg-[#FF9F40]/20 text-[#EC638B]',
 }
 
 function formatDate(iso: string | null): string {

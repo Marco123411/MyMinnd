@@ -58,8 +58,18 @@ const COGNITIVE_TESTS = [
   { slug: 'stroop', name: 'Stroop — Contrôle inhibiteur', hasRT: true },
   { slug: 'simon', name: 'Simon — Interférence spatiale', hasRT: true },
   { slug: 'digital_span', name: 'Digital Span — Mémoire de travail', hasRT: false },
-  { slug: 'questionnaire_cognitif', name: 'Questionnaire cognitif', hasRT: false },
+  { slug: 'go-nogo-visual', name: 'Go/No-Go Visuel — Inhibition', hasRT: true },
+  { slug: 'flanker', name: 'Flanker — Attention sélective', hasRT: true },
+  { slug: 'stop-signal', name: 'Stop Signal — Contrôle inhibiteur', hasRT: true },
+  { slug: 'mackworth-clock', name: 'Mackworth Clock — Vigilance soutenue', hasRT: true },
+  { slug: 'spatial-span', name: 'Spatial Span — Mémoire visuospatiale', hasRT: false },
+  { slug: 'n-back-2', name: '2-Back — Mémoire de travail', hasRT: true },
+  { slug: 'visual-choice-4', name: 'Choix Visuel 4 — Temps de réaction', hasRT: true },
+  { slug: 'visual-search', name: 'Recherche Visuelle — Attention', hasRT: true },
 ]
+
+// Slugs pour lesquels une valeur élevée est un meilleur résultat
+const HIGHER_IS_BETTER_SLUGS = ['digital_span', 'go-nogo-visual', 'mackworth-clock', 'spatial-span', 'n-back-2']
 
 // Métrique clé à afficher par test dans le tableau récapitulatif
 function getKeyMetric(
@@ -68,16 +78,19 @@ function getKeyMetric(
 ): { label: string; value: number | undefined; unit: string } {
   if (!metrics) return { label: '—', value: undefined, unit: '' }
   switch (slug) {
-    case 'pvt':
-      return { label: 'RT médian', value: metrics.median_rt, unit: 'ms' }
-    case 'stroop':
-      return { label: 'Effet Stroop', value: metrics.stroop_effect_rt, unit: 'ms' }
-    case 'simon':
-      return { label: 'Effet Simon', value: metrics.simon_effect_rt, unit: 'ms' }
-    case 'digital_span':
-      return { label: 'Span total', value: metrics.total_span, unit: 'chiffres' }
-    default:
-      return { label: '—', value: undefined, unit: '' }
+    case 'pvt':             return { label: 'RT médian',      value: metrics.median_rt,         unit: 'ms' }
+    case 'stroop':          return { label: 'Effet Stroop',   value: metrics.stroop_effect_rt,  unit: 'ms' }
+    case 'simon':           return { label: 'Effet Simon',    value: metrics.simon_effect_rt,   unit: 'ms' }
+    case 'digital_span':    return { label: 'Span total',     value: metrics.total_span,        unit: 'chiffres' }
+    case 'go-nogo-visual':  return { label: 'Précision',      value: metrics.accuracy,          unit: '%' }
+    case 'flanker':         return { label: 'Effet Flanker',  value: metrics.flanker_effect_rt, unit: 'ms' }
+    case 'stop-signal':     return { label: 'SSRT',           value: metrics.ssrt,              unit: 'ms' }
+    case 'mackworth-clock': return { label: 'Précision',      value: metrics.accuracy,          unit: '%' }
+    case 'spatial-span':    return { label: 'Span max',       value: metrics.max_span,          unit: 'cases' }
+    case 'n-back-2':        return { label: 'Précision nette',value: metrics.accuracy,          unit: '%' }
+    case 'visual-choice-4': return { label: 'RT moyen',       value: metrics.mean_rt,           unit: 'ms' }
+    case 'visual-search':   return { label: 'RT moyen',       value: metrics.mean_rt,           unit: 'ms' }
+    default:                return { label: '—',              value: undefined,                 unit: '' }
   }
 }
 
@@ -115,6 +128,18 @@ function MetricsGrid({ metrics, slug }: { metrics: CognitiveTestResult; slug: st
     total_span: 'Span total',
     longest_sequence: 'Séquence max',
     global_accuracy: 'Précision globale',
+    // Nouveaux drills
+    accuracy: 'Précision',
+    flanker_effect_rt: 'Effet Flanker',
+    commission_errors: 'Erreurs commission',
+    omission_errors: 'Erreurs omission',
+    ssrt: 'SSRT',
+    max_span: 'Span max',
+    hit_rate: 'Taux détection',
+    false_alarm_rate: 'Taux fausses alarmes',
+    rcs: 'Régularité (RCS)',
+    variation: 'Variation (CV)',
+    speed: 'Score vitesse',
   }
 
   // Unités par métrique
@@ -127,6 +152,11 @@ function MetricsGrid({ metrics, slug }: { metrics: CognitiveTestResult; slug: st
     stroop_effect_accuracy: '%', simon_effect_accuracy: '%', global_accuracy: '%',
     span_forward: 'chiff.', span_backward: 'chiff.', total_span: 'chiff.',
     longest_sequence: 'chiff.',
+    // Nouveaux drills
+    accuracy: '%', hit_rate: '%', false_alarm_rate: '%',
+    flanker_effect_rt: 'ms', ssrt: 'ms',
+    max_span: 'cases',
+    variation: '%',
   }
 
   return (
@@ -338,7 +368,7 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
                 )}
 
                 <Button
-                  className="w-full bg-[#20808D] hover:bg-[#186870] text-white"
+                  className="w-full bg-[#7069F4] hover:bg-[#5B54D6] text-white"
                   disabled={!selectedSlug || sendLoading}
                   onClick={handleSend}
                 >
@@ -359,7 +389,7 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
           {pendingSessions.map((s) => (
             <div key={s.id} className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
               <div>
-                <p className="text-sm font-medium text-[#1A1A2E]">{s.test_name}</p>
+                <p className="text-sm font-medium text-[#141325]">{s.test_name}</p>
                 {s.preset_name && (
                   <p className="text-xs text-muted-foreground">{s.preset_name}</p>
                 )}
@@ -389,6 +419,7 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
                 <TableHead>Métrique clé</TableHead>
                 <TableHead>Valeur</TableHead>
                 <TableHead>Évolution</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
@@ -409,8 +440,8 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
 
                 const isExpanded = expandedId === session.id
 
-                // F10: Digital Span — hausse = amélioration (inverse des tests RT)
-                const lowerIsBetter = slug !== 'digital_span'
+                // Hausse = amélioration pour les tests de précision/span (pas les tests RT)
+                const lowerIsBetter = !HIGHER_IS_BETTER_SLUGS.includes(slug)
                 const deltaIsGood = delta !== null && (lowerIsBetter ? delta < 0 : delta > 0)
 
                 return (
@@ -457,6 +488,13 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
                         )}
                       </TableCell>
                       <TableCell>
+                        {session.programme_etape_id ? (
+                          <Badge variant="outline" className="text-[#20808D] border-[#20808D] text-xs">Programme</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground text-xs">Manuel</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {isExpanded ? (
                           <ChevronUp className="h-4 w-4 text-muted-foreground" />
                         ) : (
@@ -468,7 +506,7 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
                     {/* Ligne de détail expandable */}
                     {isExpanded && (
                       <TableRow key={`${session.id}-detail`}>
-                        <TableCell colSpan={6} className="bg-muted/30 px-4 py-4">
+                        <TableCell colSpan={7} className="bg-muted/30 px-4 py-4">
                           <div className="space-y-4">
 
                             {/* Toutes les métriques */}
@@ -499,10 +537,14 @@ export function CognitiveTab({ sessions, pendingSessions, clientId }: CognitiveT
                                 <CognitiveEvolutionChart
                                   sessions={allForPreset}
                                   metricKey={
-                                    slug === 'digital_span' ? 'total_span'
-                                    : slug === 'stroop' ? 'stroop_effect_rt'
-                                    : slug === 'simon' ? 'simon_effect_rt'
-                                    : 'median_rt'
+                                    slug === 'digital_span'    ? 'total_span'
+                                    : slug === 'stroop'        ? 'stroop_effect_rt'
+                                    : slug === 'simon'         ? 'simon_effect_rt'
+                                    : slug === 'flanker'       ? 'flanker_effect_rt'
+                                    : slug === 'stop-signal'   ? 'ssrt'
+                                    : slug === 'spatial-span'  ? 'max_span'
+                                    : slug === 'go-nogo-visual' || slug === 'mackworth-clock' || slug === 'n-back-2' ? 'accuracy'
+                                    : 'mean_rt'
                                   }
                                   metricLabel={keyMetric.label}
                                   unit={keyMetric.unit}

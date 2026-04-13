@@ -16,10 +16,12 @@ export interface CognitiveSessionWithDefinition {
   test_slug: string
   test_name: string
   computed_metrics: CognitiveTestResult | null
+  benchmark_results: Array<{ metric: string; value: number; zone: 'elite' | 'average' | 'poor' }> | null
   preset_id: string | null
   preset_slug: string | null
   preset_name: string | null
   is_preset_validated: boolean | null
+  programme_etape_id: string | null
 }
 
 // Helper interne : transforme une ligne Supabase en CognitiveSessionWithDefinition
@@ -28,9 +30,11 @@ function mapRowToSession(s: {
   completed_at: string | null
   cognitive_test_id: string
   computed_metrics: unknown
+  benchmark_results: unknown
   preset_id: string | null
   cognitive_test_definitions: unknown
   cognitive_test_presets: unknown
+  programme_etape_id?: string | null
 }): CognitiveSessionWithDefinition {
   const raw = s.cognitive_test_definitions
   const def = (Array.isArray(raw) ? raw[0] : raw) as { slug: string; name: string } | null
@@ -43,14 +47,16 @@ function mapRowToSession(s: {
     test_slug: def?.slug ?? '',
     test_name: def?.name ?? '',
     computed_metrics: s.computed_metrics as CognitiveTestResult | null,
+    benchmark_results: s.benchmark_results as Array<{ metric: string; value: number; zone: 'elite' | 'average' | 'poor' }> | null,
     preset_id: s.preset_id ?? null,
     preset_slug: preset?.slug ?? null,
     preset_name: preset?.name ?? null,
     is_preset_validated: preset?.is_validated ?? null,
+    programme_etape_id: s.programme_etape_id ?? null,
   }
 }
 
-const SESSION_SELECT = 'id, completed_at, cognitive_test_id, computed_metrics, preset_id, cognitive_test_definitions(slug, name), cognitive_test_presets(slug, name, is_validated)'
+const SESSION_SELECT = 'id, completed_at, cognitive_test_id, computed_metrics, benchmark_results, preset_id, programme_etape_id, cognitive_test_definitions(slug, name), cognitive_test_presets(slug, name, is_validated)'
 
 // ── Pour le CRM Coach ─────────────────────────────────────────────────────────
 
@@ -75,7 +81,10 @@ export async function getCognitiveSessionsForClient(
 
   if (clientError || !clientData?.user_id) return { data: [], error: null }
 
-  const { data, error } = await supabase
+  // Utiliser admin client : la RLS de cognitive_sessions limite SELECT à user_id = auth.uid().
+  // Le coach a déjà été vérifié propriétaire de ce client (clients.coach_id = user.id).
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('cognitive_sessions')
     .select(SESSION_SELECT)
     .eq('user_id', clientData.user_id)

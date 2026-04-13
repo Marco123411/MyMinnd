@@ -61,8 +61,8 @@ export function TestHistoryTimeline({ tests }: TestHistoryTimelineProps) {
               <div
                 className="h-3 w-3 rounded-full border-2 shrink-0 mt-1"
                 style={{
-                  borderColor: test.profile_color ?? '#20808D',
-                  backgroundColor: test.profile_color ? `${test.profile_color}33` : '#E8F4F5',
+                  borderColor: test.profile_color ?? '#7069F4',
+                  backgroundColor: test.profile_color ? `${test.profile_color}33` : '#F1F0FE',
                 }}
               />
               {i < tests.length - 1 && (
@@ -83,7 +83,7 @@ export function TestHistoryTimeline({ tests }: TestHistoryTimelineProps) {
                 <div className="flex items-center gap-1.5 mt-1">
                   <div
                     className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: test.profile_color ?? '#20808D' }}
+                    style={{ backgroundColor: test.profile_color ?? '#7069F4' }}
                   />
                   <span className="text-xs text-muted-foreground">{test.profile_name}</span>
                 </div>

@@ -22,11 +22,11 @@ export default async function OnboardingPage() {
   const prenom = profile?.prenom ?? profile?.nom ?? 'vous'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E8F4F5] to-white flex items-start justify-center pt-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F1F0FE] to-white flex items-start justify-center pt-12 px-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1A1A2E]">MINND</h1>
-          <p className="text-sm text-[#20808D] mt-1 tracking-widest uppercase">Performance Mentale</p>
+          <h1 className="text-3xl font-bold text-[#141325]">MINND</h1>
+          <p className="text-sm text-[#7069F4] mt-1 tracking-widest uppercase">Performance Mentale</p>
         </div>
         <OnboardingClient prenom={prenom} />
       </div>

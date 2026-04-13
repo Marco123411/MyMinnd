@@ -82,11 +82,11 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
           <>
             {/* Header */}
             <div className="flex items-center gap-3 border-b px-5 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F4F5] text-sm font-semibold text-[#20808D]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F1F0FE] text-sm font-semibold text-[#7069F4]">
                 {client.nom.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p id={titleId} className="truncate font-semibold text-[#1A1A2E]">{client.nom}</p>
+                <p id={titleId} className="truncate font-semibold text-[#141325]">{client.nom}</p>
                 <div className="mt-0.5 flex items-center gap-2">
                   {subtitle && (
                     <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
@@ -113,7 +113,7 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
             {/* Contenu scrollable */}
             <div className="flex-1 overflow-y-auto space-y-5 px-5 py-4">
               {/* Score global */}
-              <div className="rounded-lg bg-[#E8F4F5] p-4 text-center">
+              <div className="rounded-lg bg-[#F1F0FE] p-4 text-center">
                 {isPending ? (
                   <div className="flex flex-col items-center gap-1 py-2 text-sm text-muted-foreground">
                     <Clock className="h-5 w-5 text-amber-500" />
@@ -125,7 +125,7 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
                     {client.profileName && (
                       <Badge
                         className="mt-2 text-xs"
-                        style={{ backgroundColor: client.profileColor ?? '#20808D', color: '#fff' }}
+                        style={{ backgroundColor: client.profileColor ?? '#7069F4', color: '#fff' }}
                       >
                         {client.profileName}
                       </Badge>
@@ -154,7 +154,7 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
               {!isPending && client.lastTestDate && (
                 <div>
                   <p className="mb-1 text-xs font-medium text-muted-foreground">Dernier test</p>
-                  <p className="text-sm text-[#1A1A2E]">
+                  <p className="text-sm text-[#141325]">
                     {new Date(client.lastTestDate).toLocaleDateString('fr-FR', {
                       year: 'numeric',
                       month: 'long',
@@ -174,7 +174,7 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
               {client.notes_privees && (
                 <div>
                   <p className="mb-1 text-xs font-medium text-muted-foreground">Notes privées</p>
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-[#1A1A2E]">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-[#141325]">
                     {client.notes_privees}
                   </p>
                 </div>
@@ -184,7 +184,7 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
             {/* Quick actions */}
             <div className="border-t px-5 py-4 space-y-2">
               {isPending ? (
-                <Button asChild className="w-full bg-[#20808D] text-white hover:bg-[#20808D]/90">
+                <Button asChild className="w-full bg-[#7069F4] text-white hover:bg-[#7069F4]/90">
                   <Link href={`/coach/clients/${client.id}`}>
                     <User className="mr-2 h-4 w-4" />
                     Voir la fiche complète
@@ -211,7 +211,7 @@ export function ClientSlideOver({ client, isOpen, onClose }: ClientSlideOverProp
                         Rapport PDF
                       </Link>
                     </Button>
-                    <Button asChild className="bg-[#20808D] text-white hover:bg-[#20808D]/90" size="sm">
+                    <Button asChild className="bg-[#7069F4] text-white hover:bg-[#7069F4]/90" size="sm">
                       <Link href={`/coach/clients/${client.id}`}>
                         <User className="mr-2 h-4 w-4" />
                         Fiche complète

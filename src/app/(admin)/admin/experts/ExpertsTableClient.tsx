@@ -29,8 +29,8 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_VARIANTS: Record<string, string> = {
   free: 'bg-gray-100 text-gray-700',
-  pro: 'bg-[#E8F4F5] text-[#20808D]',
-  expert: 'bg-[#FFC553]/20 text-[#A84B2F]',
+  pro: 'bg-[#F1F0FE] text-[#7069F4]',
+  expert: 'bg-[#FF9F40]/20 text-[#EC638B]',
 }
 
 function formatDate(iso: string | null): string {
@@ -227,7 +227,7 @@ export function ExpertsTableClient({ initialExperts }: Props) {
       {/* Section onboarding */}
       {filtered.some((e) => !e.has_photo || !e.has_bio || !e.has_titre || !e.has_specialites || !e.badge_certifie) && (
         <div className="space-y-3">
-          <h3 className="text-base font-semibold text-[#1A1A2E]">Onboarding en cours</h3>
+          <h3 className="text-base font-semibold text-[#141325]">Onboarding en cours</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtered
               .filter((e) => !e.has_photo || !e.has_bio || !e.has_titre || !e.has_specialites)

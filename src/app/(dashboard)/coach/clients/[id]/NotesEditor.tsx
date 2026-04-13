@@ -65,11 +65,11 @@ export function NotesEditor({ clientId, initialNotes, initialObjectifs }: NotesE
         <Button
           onClick={handleSave}
           disabled={isSaving}
-          className="bg-[#20808D] text-white hover:bg-[#20808D]/90"
+          className="bg-[#7069F4] text-white hover:bg-[#7069F4]/90"
         >
           {isSaving ? 'Enregistrement…' : 'Enregistrer'}
         </Button>
-        {saved && <span className="text-sm text-[#20808D]">✓ Enregistré</span>}
+        {saved && <span className="text-sm text-[#7069F4]">✓ Enregistré</span>}
       </div>
     </div>
   )

@@ -36,7 +36,7 @@ export function ProfileIdentityCard({ profile, globalPercentile }: ProfileIdenti
             )}
 
             {profile.description && (
-              <p className="text-sm text-[#1A1A2E] leading-relaxed">{profile.description}</p>
+              <p className="text-sm text-[#141325] leading-relaxed">{profile.description}</p>
             )}
           </div>
 

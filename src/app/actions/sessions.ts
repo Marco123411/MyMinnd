@@ -895,6 +895,57 @@ export async function getMyCabinetSessionsAction(): Promise<{
   return { data: (data ?? []) as CabinetSession[], error: null }
 }
 
+// ============================================================
+// Supprimer une séance (coach uniquement — vérifie coach_id)
+// ============================================================
+
+export async function deleteSessionAction(
+  id: string,
+  type: 'cabinet' | 'autonomie' | 'recurrente',
+  clientCrmId: string,
+): Promise<{ error: string | null }> {
+  const parsedId = z.string().uuid().safeParse(id)
+  if (!parsedId.success) return { error: 'Identifiant invalide' }
+
+  const { user, error: authError } = await requireCoach()
+  if (authError || !user) return { error: authError ?? 'Non authentifié' }
+
+  const admin = createAdminClient()
+
+  let error: string | null = null
+
+  if (type === 'cabinet') {
+    const { error: err } = await admin
+      .from('cabinet_sessions')
+      .delete()
+      .eq('id', parsedId.data)
+      .eq('coach_id', user.id)
+    error = err?.message ?? null
+  } else if (type === 'autonomie') {
+    const { error: err } = await admin
+      .from('autonomous_sessions')
+      .delete()
+      .eq('id', parsedId.data)
+      .eq('coach_id', user.id)
+    error = err?.message ?? null
+  } else if (type === 'recurrente') {
+    // Soft-delete : désactivation plutôt que suppression (exécutions liées en CASCADE)
+    const { error: err } = await admin
+      .from('recurring_templates')
+      .update({ is_active: false })
+      .eq('id', parsedId.data)
+      .eq('coach_id', user.id)
+    error = err?.message ?? null
+  }
+
+  if (!error) {
+    const { revalidatePath } = await import('next/cache')
+    revalidatePath(`/coach/clients/${clientCrmId}`)
+  }
+
+  return { error }
+}
+
 export async function getClientSessionsForProgramme(clientUserId: string): Promise<{
   cabinetSessions: CabinetSession[]
   autonomousSessions: AutonomousSession[]

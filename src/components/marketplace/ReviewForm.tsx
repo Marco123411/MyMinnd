@@ -85,7 +85,7 @@ export function ReviewForm({ dispatchId, expertName, onSuccess }: ReviewFormProp
       <Button
         type="submit"
         disabled={isPending || rating < 1}
-        className="w-full bg-[#20808D] hover:bg-[#20808D]/90"
+        className="w-full bg-[#7069F4] hover:bg-[#7069F4]/90"
       >
         {isPending ? 'Publication...' : 'Publier mon avis'}
       </Button>

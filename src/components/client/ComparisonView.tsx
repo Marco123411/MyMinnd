@@ -61,7 +61,7 @@ export function ComparisonView({ t1, t2, onClose }: ComparisonViewProps) {
     <div className="rounded-xl border bg-card p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-[#1A1A2E]">Comparaison T1 / T2</h3>
+        <h3 className="font-semibold text-[#141325]">Comparaison T1 / T2</h3>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -70,11 +70,11 @@ export function ComparisonView({ t1, t2, onClose }: ComparisonViewProps) {
       {/* Légende dates */}
       <div className="flex gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full bg-[#20808D]" />
+          <div className="h-3 w-3 rounded-full bg-[#7069F4]" />
           <span className="text-muted-foreground">T1 — {formatDate(t1.date)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full border-2 border-[#944454]" />
+          <div className="h-3 w-3 rounded-full border-2 border-[#3C3CD6]" />
           <span className="text-muted-foreground">T2 — {formatDate(t2.date)}</span>
         </div>
       </div>

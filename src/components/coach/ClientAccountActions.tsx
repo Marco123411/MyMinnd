@@ -125,7 +125,7 @@ export function ClientAccountActions({ clientId, currentEmail }: ClientAccountAc
             <Button
               onClick={handleEmailChange}
               disabled={isPendingEmail || !newEmail.trim()}
-              className="bg-[#20808D] hover:bg-[#1a6b77] text-white"
+              className="bg-[#7069F4] hover:bg-[#1a6b77] text-white"
             >
               {isPendingEmail ? 'Mise à jour…' : 'Mettre à jour'}
             </Button>

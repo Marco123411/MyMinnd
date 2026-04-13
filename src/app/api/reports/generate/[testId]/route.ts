@@ -213,11 +213,11 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Erreur lors de l\'enregistrement du rapport' }, { status: 500 })
   }
 
-  // URL signée valable 1 an (accès authentifié uniquement)
-  const ONE_YEAR_IN_SECONDS = 31_536_000
+  // URL signée valable 7 jours (accès authentifié uniquement)
+  const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60
   const { data: signedData, error: signedError } = await admin.storage
     .from('reports')
-    .createSignedUrl(storagePath, ONE_YEAR_IN_SECONDS)
+    .createSignedUrl(storagePath, SEVEN_DAYS_IN_SECONDS)
 
   if (signedError || !signedData) {
     return NextResponse.json({ error: 'Erreur lors de la génération de l\'URL' }, { status: 500 })

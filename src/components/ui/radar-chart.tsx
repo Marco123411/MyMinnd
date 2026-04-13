@@ -39,11 +39,11 @@ const MOCK_DATA: RadarDataPoint[] = [
 
 export function RadarChart({
   data,
-  color = '#20808D',
+  color = '#7069F4',
   height = 300,
   className,
   data2,
-  color2 = '#944454',
+  color2 = '#3C3CD6',
   label1 = 'Test 1',
   label2 = 'Test 2',
 }: RadarChartProps) {

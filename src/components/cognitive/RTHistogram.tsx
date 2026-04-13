@@ -79,7 +79,7 @@ export function RTHistogram({ trials, title }: RTHistogramProps) {
             contentStyle={{ fontSize: 12 }}
             formatter={(value) => [`${value} trials`, 'Nombre']}
           />
-          <Bar dataKey="count" fill="#20808D" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="count" fill="#7069F4" radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
       {lapseCount > 0 && (

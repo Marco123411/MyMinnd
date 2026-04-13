@@ -117,7 +117,7 @@ export function ClientsPageClient({ initialClients }: ClientsPageClientProps) {
     <div className="space-y-4">
       {/* En-tête */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-[#1A1A2E]">
+        <h1 className="text-2xl font-semibold text-[#141325]">
           Clients
           <span className="ml-2 text-base font-normal text-muted-foreground">
             ({filtered.length})
@@ -132,7 +132,7 @@ export function ClientsPageClient({ initialClients }: ClientsPageClientProps) {
             <Download className="mr-2 h-4 w-4" />
             Exporter CSV
           </Button>
-          <Button asChild className="bg-[#20808D] text-white hover:bg-[#20808D]/90">
+          <Button asChild className="bg-[#7069F4] text-white hover:bg-[#7069F4]/90">
             <Link href="/coach/clients/new">
               <UserPlus className="mr-2 h-4 w-4" />
               Ajouter un client
@@ -153,7 +153,7 @@ export function ClientsPageClient({ initialClients }: ClientsPageClientProps) {
               : 'Aucun client ne correspond aux filtres.'}
           </p>
           {initialClients.length === 0 && (
-            <Button asChild className="mt-4 bg-[#20808D] text-white hover:bg-[#20808D]/90">
+            <Button asChild className="mt-4 bg-[#7069F4] text-white hover:bg-[#7069F4]/90">
               <Link href="/coach/clients/new">Ajouter mon premier client</Link>
             </Button>
           )}

@@ -77,7 +77,7 @@ export function CompteRenduForm({ session, exercises }: CompteRenduFormProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4">
         <CheckCircle className="h-12 w-12 text-green-500" />
-        <p className="text-lg font-medium text-[#1A1A2E]">Séance enregistrée</p>
+        <p className="text-lg font-medium text-[#141325]">Séance enregistrée</p>
       </div>
     )
   }
@@ -129,7 +129,7 @@ export function CompteRenduForm({ session, exercises }: CompteRenduFormProps) {
                     variant={selectedExercices.includes(ex.id) ? 'default' : 'outline'}
                     className={`cursor-pointer transition-colors ${
                       selectedExercices.includes(ex.id)
-                        ? 'bg-[#20808D] hover:bg-[#1a6b78] text-white'
+                        ? 'bg-[#7069F4] hover:bg-[#1a6b78] text-white'
                         : 'hover:bg-gray-100'
                     }`}
                   >
@@ -228,7 +228,7 @@ export function CompteRenduForm({ session, exercises }: CompteRenduFormProps) {
             <Button
               onClick={() => handleSave()}
               disabled={isPending}
-              className="bg-[#20808D] hover:bg-[#1a6b78] text-white"
+              className="bg-[#7069F4] hover:bg-[#1a6b78] text-white"
             >
               {isPending ? 'Enregistrement…' : 'Sauvegarder'}
             </Button>

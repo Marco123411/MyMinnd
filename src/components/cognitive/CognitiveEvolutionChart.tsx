@@ -102,13 +102,13 @@ export function CognitiveEvolutionChart({
             formatter={(v) => [`${Math.round(Number(v))} ${unit}`, metricLabel]}
             contentStyle={{ fontSize: 12 }}
           />
-          <ReferenceLine y={first} stroke="#E8F4F5" strokeDasharray="4 2" />
+          <ReferenceLine y={first} stroke="#F1F0FE" strokeDasharray="4 2" />
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#20808D"
+            stroke="#7069F4"
             strokeWidth={2}
-            dot={{ fill: '#20808D', r: 3 }}
+            dot={{ fill: '#7069F4', r: 3 }}
             activeDot={{ r: 5 }}
           />
         </LineChart>

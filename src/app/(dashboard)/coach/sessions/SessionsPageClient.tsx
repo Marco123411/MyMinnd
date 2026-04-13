@@ -106,7 +106,7 @@ export function SessionsPageClient({
       {/* En-tête */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Séances</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Séances</h1>
           <p className="text-gray-500 text-sm mt-0.5">
             Gérez les séances cabinet, l&apos;autonomie et les routines de vos clients
           </p>
@@ -123,7 +123,7 @@ export function SessionsPageClient({
                   <TrendingUp className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-[#1A1A2E]">{metrics.taux_completion}%</p>
+                  <p className="text-xl font-bold text-[#141325]">{metrics.taux_completion}%</p>
                   <p className="text-xs text-gray-500">Taux de complétion</p>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export function SessionsPageClient({
                   <AlertTriangle className={`h-4 w-4 ${metrics.seances_en_retard > 0 ? 'text-red-500' : 'text-gray-400'}`} />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-[#1A1A2E]">{metrics.seances_en_retard}</p>
+                  <p className="text-xl font-bold text-[#141325]">{metrics.seances_en_retard}</p>
                   <p className="text-xs text-gray-500">En retard</p>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export function SessionsPageClient({
                   <Calendar className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-[#1A1A2E]">{metrics.seances_ce_mois}</p>
+                  <p className="text-xl font-bold text-[#141325]">{metrics.seances_ce_mois}</p>
                   <p className="text-xs text-gray-500">Ce mois</p>
                 </div>
               </div>
@@ -161,11 +161,11 @@ export function SessionsPageClient({
           <Card>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-[#E8F4F5]">
-                  <Clock className="h-4 w-4 text-[#20808D]" />
+                <div className="p-2 rounded-lg bg-[#F1F0FE]">
+                  <Clock className="h-4 w-4 text-[#7069F4]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#1A1A2E] truncate">
+                  <p className="text-sm font-semibold text-[#141325] truncate">
                     {metrics.derniere_seance_cabinet
                       ? formatDate(metrics.derniere_seance_cabinet)
                       : '—'}
@@ -184,7 +184,7 @@ export function SessionsPageClient({
           <TabsTrigger value="cabinet">
             Cabinet
             {cabinetUpcoming.length > 0 && (
-              <span className="ml-1.5 text-xs bg-[#20808D] text-white rounded-full px-1.5">
+              <span className="ml-1.5 text-xs bg-[#7069F4] text-white rounded-full px-1.5">
                 {cabinetUpcoming.length}
               </span>
             )}
@@ -241,7 +241,7 @@ export function SessionsPageClient({
                         <TableCell>
                           <Link
                             href={`/coach/sessions/${s.id}`}
-                            className="text-xs text-[#20808D] hover:underline"
+                            className="text-xs text-[#7069F4] hover:underline"
                           >
                             Compte-rendu
                           </Link>
@@ -285,7 +285,7 @@ export function SessionsPageClient({
                         <TableCell>
                           <Link
                             href={`/coach/sessions/${s.id}`}
-                            className="text-xs text-[#20808D] hover:underline"
+                            className="text-xs text-[#7069F4] hover:underline"
                           >
                             Voir
                           </Link>

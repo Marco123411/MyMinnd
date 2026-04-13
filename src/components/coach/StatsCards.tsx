@@ -33,13 +33,13 @@ export function StatsCards({ clientsActifs, testsEnvoyesMois, tauxCompletion }: 
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {stats.map((stat) => (
         <Card key={stat.label}>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E8F4F5]">
-              <stat.icon className="h-5 w-5 text-[#20808D]" />
+          <CardContent className="flex items-center gap-4 py-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F1F0FE]">
+              <stat.icon className="h-5 w-5 text-[#7069F4]" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{stat.label}</p>
-              <p className="text-2xl font-bold text-[#1A1A2E]">
+              <p className="text-2xl font-bold text-[#141325]">
                 {stat.value}
                 {stat.suffix}
               </p>

@@ -129,7 +129,7 @@ export function AssignAutonomousSessionModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-[#944454] hover:bg-[#7d3a47] text-white gap-2">
+        <Button className="bg-[#3C3CD6] hover:bg-[#7d3a47] text-white gap-2">
           <ClipboardList className="h-4 w-4" />
           Assigner une séance
         </Button>
@@ -197,7 +197,7 @@ export function AssignAutonomousSessionModal({
                   >
                     <Badge
                       variant="outline"
-                      className="cursor-pointer hover:bg-[#E8F4F5] gap-1"
+                      className="cursor-pointer hover:bg-[#F1F0FE] gap-1"
                     >
                       <Plus className="h-3 w-3" />
                       {ex.titre}
@@ -286,7 +286,7 @@ export function AssignAutonomousSessionModal({
             <Button
               type="submit"
               disabled={isPending || !selectedClientId || !titre || !objectif}
-              className="bg-[#944454] hover:bg-[#7d3a47] text-white"
+              className="bg-[#3C3CD6] hover:bg-[#7d3a47] text-white"
             >
               {isPending ? 'Enregistrement…' : 'Assigner'}
             </Button>

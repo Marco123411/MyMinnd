@@ -34,7 +34,7 @@ export function StarRating({ rating, onChange, size = 'md', showLabel = false, c
           onMouseEnter={() => isInteractive && setHovered(star)}
           onMouseLeave={() => isInteractive && setHovered(0)}
           className={cn(
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20808D] rounded-sm',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7069F4] rounded-sm',
             isInteractive ? 'cursor-pointer' : 'cursor-default pointer-events-none'
           )}
           aria-label={isInteractive ? `${star} étoile${star > 1 ? 's' : ''}` : undefined}
@@ -44,9 +44,9 @@ export function StarRating({ rating, onChange, size = 'md', showLabel = false, c
               SIZE_CLASSES[size],
               'transition-colors',
               star <= displayRating
-                ? 'fill-[#FFC553] text-[#FFC553]'
+                ? 'fill-[#FF9F40] text-[#FF9F40]'
                 : isInteractive && star <= hovered
-                  ? 'fill-[#FFC553]/70 text-[#FFC553]/70'
+                  ? 'fill-[#FF9F40]/70 text-[#FF9F40]/70'
                   : 'fill-none text-muted-foreground/40'
             )}
           />

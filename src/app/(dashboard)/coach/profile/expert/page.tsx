@@ -29,7 +29,7 @@ export default async function CoachExpertProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Mon profil Expert MINND</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Mon profil Expert MINND</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Votre présence publique sur la marketplace
           </p>
@@ -49,22 +49,22 @@ export default async function CoachExpertProfilePage() {
         <div className="grid grid-cols-2 gap-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#E8F4F5] flex items-center justify-center">
-                <Users className="h-5 w-5 text-[#20808D]" />
+              <div className="h-10 w-10 rounded-full bg-[#F1F0FE] flex items-center justify-center">
+                <Users className="h-5 w-5 text-[#7069F4]" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1A1A2E]">{stats.nb_demandes}</p>
+                <p className="text-2xl font-bold text-[#141325]">{stats.nb_demandes}</p>
                 <p className="text-xs text-muted-foreground">Demandes reçues</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#E8F4F5] flex items-center justify-center">
-                <Star className="h-5 w-5 text-[#20808D]" />
+              <div className="h-10 w-10 rounded-full bg-[#F1F0FE] flex items-center justify-center">
+                <Star className="h-5 w-5 text-[#7069F4]" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1A1A2E]">
+                <p className="text-2xl font-bold text-[#141325]">
                   {profile?.note_moyenne ? profile.note_moyenne.toFixed(1) : '-'}
                 </p>
                 <p className="text-xs text-muted-foreground">{profile?.nb_avis ?? 0} avis</p>

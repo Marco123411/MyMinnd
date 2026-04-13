@@ -33,7 +33,7 @@ export default async function MyCoachPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Mon coach</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Mon coach</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Votre accompagnateur MINND</p>
       </div>
 
@@ -44,7 +44,7 @@ export default async function MyCoachPage() {
             <CardContent className="pt-5">
               <div className="flex items-center gap-4">
                 {/* Avatar */}
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#E8F4F5] text-xl font-bold text-[#20808D]">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#F1F0FE] text-xl font-bold text-[#7069F4]">
                   {coach.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -59,7 +59,7 @@ export default async function MyCoachPage() {
 
                 {/* Infos */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[#1A1A2E]">
+                  <p className="font-semibold text-[#141325]">
                     {coach.prenom ? `${coach.prenom} ${coach.nom}` : coach.nom}
                   </p>
                   <p className="text-sm text-muted-foreground">Coach certifié MINND</p>
@@ -97,13 +97,13 @@ export default async function MyCoachPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {t.score_global !== null && (
-                          <span className="text-sm font-medium text-[#20808D]">
+                          <span className="text-sm font-medium text-[#7069F4]">
                             {t.score_global.toFixed(1)}/10
                           </span>
                         )}
                         <Badge
                           variant={t.status === 'completed' ? 'default' : 'outline'}
-                          className={t.status === 'completed' ? 'bg-[#20808D]' : ''}
+                          className={t.status === 'completed' ? 'bg-[#7069F4]' : ''}
                         >
                           {statusLabels[t.status] ?? t.status}
                         </Badge>
@@ -128,7 +128,7 @@ export default async function MyCoachPage() {
             </p>
             <Button
               variant="outline"
-              className="mt-4 border-[#20808D] text-[#20808D]"
+              className="mt-4 border-[#7069F4] text-[#7069F4]"
               disabled
             >
               Trouver un expert MINND

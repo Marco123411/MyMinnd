@@ -20,7 +20,7 @@ const FORMAT_COLORS: Record<ExerciseFormat, string> = {
   document:      'bg-gray-100 text-gray-700',
   audio:         'bg-purple-100 text-purple-700',
   questionnaire: 'bg-yellow-100 text-yellow-700',
-  interactive:   'bg-teal-100 text-teal-700',
+  interactive:   'bg-[#7069F4]-100 text-[#7069F4]-700',
 }
 
 async function getUserTier(): Promise<boolean> {
@@ -47,7 +47,7 @@ export default async function ExercisesPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">Bibliothèque d'exercices</h1>
+          <h1 className="text-2xl font-bold text-[#141325]">Bibliothèque d'exercices</h1>
           <p className="text-muted-foreground">Exercices disponibles pour vos séances</p>
         </div>
         <CreateExerciseDialog isExpert={isExpert} />
@@ -69,7 +69,7 @@ export default async function ExercisesPage() {
                         {FORMAT_LABELS[exercise.format]}
                       </Badge>
                       {exercise.is_custom && (
-                        <Badge variant="outline" className="text-xs text-[#20808D] border-[#20808D]">
+                        <Badge variant="outline" className="text-xs text-[#7069F4] border-[#7069F4]">
                           Personnalisé
                         </Badge>
                       )}
@@ -85,12 +85,12 @@ export default async function ExercisesPage() {
                   )}
                   <div className="flex flex-col gap-2">
                     {questionCount > 0 && (
-                      <p className="text-xs text-[#20808D] font-medium">
+                      <p className="text-xs text-[#7069F4] font-medium">
                         {questionCount} question{questionCount > 1 ? 's' : ''}
                       </p>
                     )}
                     {exercise.format === 'interactive' && (
-                      <Button asChild className="bg-[#20808D] hover:bg-[#20808D]/90 text-white w-full">
+                      <Button asChild className="bg-[#7069F4] hover:bg-[#7069F4]/90 text-white w-full">
                         <Link href={`/coach/exercises/${exercise.id}/run`}>
                           Lancer l'exercice
                         </Link>

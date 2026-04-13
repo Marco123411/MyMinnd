@@ -151,7 +151,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#1A1A2E]">Paramètres</h1>
+        <h1 className="text-2xl font-bold text-[#141325]">Paramètres</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Gérez votre compte et vos préférences</p>
       </div>
 
@@ -190,7 +190,7 @@ export default function SettingsPage() {
                     onClick={() => setContext(opt.value)}
                     className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                       context === opt.value
-                        ? 'border-[#20808D] bg-[#E8F4F5] text-[#20808D] font-medium'
+                        ? 'border-[#7069F4] bg-[#F1F0FE] text-[#7069F4] font-medium'
                         : 'border-border hover:border-muted-foreground'
                     }`}
                   >
@@ -221,7 +221,7 @@ export default function SettingsPage() {
                         onClick={() => setNiveau(opt.value)}
                         className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                           niveau === opt.value
-                            ? 'border-[#20808D] bg-[#E8F4F5] text-[#20808D] font-medium'
+                            ? 'border-[#7069F4] bg-[#F1F0FE] text-[#7069F4] font-medium'
                             : 'border-border hover:border-muted-foreground'
                         }`}
                       >
@@ -246,7 +246,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={profileSaving}
-              className="w-full bg-[#20808D] hover:bg-[#186870]"
+              className="w-full bg-[#7069F4] hover:bg-[#5B54D6]"
             >
               {profileSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Enregistrer
@@ -336,7 +336,7 @@ export default function SettingsPage() {
               type="button"
               onClick={toggleDarkMode}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                darkMode ? 'bg-[#20808D]' : 'bg-muted'
+                darkMode ? 'bg-[#7069F4]' : 'bg-muted'
               }`}
               aria-label="Basculer le mode sombre"
             >

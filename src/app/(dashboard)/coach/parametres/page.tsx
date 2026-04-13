@@ -17,8 +17,8 @@ export default async function CoachParametresPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Settings className="h-5 w-5 text-[#20808D]" />
-        <h1 className="text-xl font-bold text-[#1A1A2E]">Paramètres</h1>
+        <Settings className="h-5 w-5 text-[#7069F4]" />
+        <h1 className="text-xl font-bold text-[#141325]">Paramètres</h1>
       </div>
 
       <SettingsPageClient

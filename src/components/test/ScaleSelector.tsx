@@ -31,10 +31,10 @@ export function ScaleSelector({
             aria-pressed={value === n}
             className={cn(
               'h-12 w-12 rounded-full border-2 text-base font-semibold transition-colors',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#20808D] focus-visible:ring-offset-2',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7069F4] focus-visible:ring-offset-2',
               value === n
-                ? 'border-[#20808D] bg-[#20808D] text-white'
-                : 'border-[#20808D] bg-white text-[#20808D] hover:bg-[#E8F4F5]'
+                ? 'border-[#7069F4] bg-[#7069F4] text-white'
+                : 'border-[#7069F4] bg-white text-[#7069F4] hover:bg-[#F1F0FE]'
             )}
           >
             {n}

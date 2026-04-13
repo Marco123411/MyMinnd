@@ -18,13 +18,14 @@ import { AssignAutonomousSessionModal } from '@/components/sessions/AssignAutono
 import { CreateRecurringTemplateModal } from '@/components/sessions/CreateRecurringTemplateModal'
 import { InvitationActions } from '@/components/coach/InvitationActions'
 import { ClientAccountActions } from '@/components/coach/ClientAccountActions'
-import { getClientSessionTimelineAction, getClientSessionsForProgramme } from '@/app/actions/sessions'
+import { ClientDocumentsSection } from '@/components/coach/ClientDocumentsSection'
+import { getClientSessionTimelineAction } from '@/app/actions/sessions'
 import { getClientProgrammesAction } from '@/app/actions/programmes'
 import { ProgrammeEtapesList } from '@/components/coach/ProgrammeEtapesList'
 import { CreateProgrammeDialog } from '@/components/coach/CreateProgrammeDialog'
-import { AddEtapeDialog } from '@/components/coach/AddEtapeDialog'
 import { getExercisesAction } from '@/app/actions/exercises'
 import { getCognitiveSessionsForClient, getPendingCognitiveSessionsForClient } from '@/app/actions/cognitive-results'
+import { getCognitiveTestDefinitionsAction } from '@/app/actions/programmes'
 import { CognitiveTab } from './CognitiveTab'
 import { ProfileIntelligenceTab } from './ProfileIntelligenceTab'
 import { ClientSessionTimeline } from '@/components/coach/ClientSessionTimeline'
@@ -45,10 +46,10 @@ const CONTEXT_LABELS: Record<ClientContext, string> = {
 }
 
 const CONTEXT_COLORS: Record<ClientContext, string> = {
-  sport: 'bg-[#E8F4F5] text-[#20808D]',
-  corporate: 'bg-purple-100 text-[#944454]',
+  sport: 'bg-[#F1F0FE] text-[#7069F4]',
+  corporate: 'bg-purple-100 text-[#3C3CD6]',
   wellbeing: 'bg-amber-100 text-amber-700',
-  coaching: 'bg-orange-100 text-[#A84B2F]',
+  coaching: 'bg-orange-100 text-[#EC638B]',
 }
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -79,7 +80,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     { data: pendingCognitiveSessions },
     { data: timeline },
     { data: programmes },
-    { cabinetSessions, autonomousSessions, recurringTemplates },
+    { data: cognitiveTests },
   ] = await Promise.all([
     // Dernier test complété pour le radar/score
     client.user_id
@@ -132,10 +133,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       ? getClientProgrammesAction(client.user_id)
       : Promise.resolve({ data: [] }),
 
-    // Séances brutes du client pour AddEtapeDialog
-    client.user_id
-      ? getClientSessionsForProgramme(client.user_id)
-      : Promise.resolve({ cabinetSessions: [], autonomousSessions: [], recurringTemplates: [], error: null }),
+    // Tests cognitifs disponibles pour AddDrillDialog
+    getCognitiveTestDefinitionsAction(),
   ])
 
   // Scores par domaine du dernier test (dépend de lastTest.id)
@@ -181,6 +180,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   const coachTier = (coachData?.subscription_tier ?? 'free') as SubscriptionTier
 
+  // Générer des URLs signées courte durée (1h) pour les documents — ne pas stocker de tokens en base
+  const documentsWithUrls = await Promise.all(
+    (client.documents ?? []).map(async (doc) => {
+      const { data: signed } = await supabase.storage
+        .from('dossiers')
+        .createSignedUrl(doc.path, 60 * 60)
+      return { ...doc, url: signed?.signedUrl ?? '' }
+    })
+  )
+
   return (
     <div className="space-y-6">
       {/* En-tête client */}
@@ -188,11 +197,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#E8F4F5] text-2xl font-bold text-[#20808D]">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#F1F0FE] text-2xl font-bold text-[#7069F4]">
                 {client.nom.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#1A1A2E]">{client.nom}</h1>
+                <h1 className="text-xl font-bold text-[#141325]">{client.nom}</h1>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <Badge className={CONTEXT_COLORS[client.context]}>
                     {CONTEXT_LABELS[client.context]}
@@ -222,8 +231,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     clientId={id}
                     status={client.invitation_status}
                     hasUserAccount={!!client.user_id}
+                    hasEmail={!!client.email}
                   />
                 </div>
+                {client.manually_validated_at && (
+                  <div className="mt-1">
+                    <Badge variant="outline" className="text-xs text-[#20808D] border-[#20808D] bg-[#E8F4F5]">
+                      Validé manuellement le {new Date(client.manually_validated_at).toLocaleDateString('fr-FR')}
+                    </Badge>
+                  </div>
+                )}
                 {/* Actions de gestion du compte (reset MDP, changement email) */}
                 {client.user_id && client.email && (
                   <div className="mt-2">
@@ -270,7 +287,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   const { archiveClientAction } = await import('@/app/actions/clients')
                   await archiveClientAction(id, 'actif')
                 }}>
-                  <Button variant="outline" type="submit" className="text-[#20808D]">
+                  <Button variant="outline" type="submit" className="text-[#7069F4]">
                     Réactiver
                   </Button>
                 </form>
@@ -298,6 +315,12 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </TabsTrigger>
           <TabsTrigger value="seances">Séances</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="documents">
+            Documents
+            {client.documents && client.documents.length > 0 && (
+              <Badge variant="secondary" className="ml-1.5 text-xs">{client.documents.length}</Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* Profil — Intelligence Layer étape 25 */}
@@ -348,22 +371,23 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           {client.user_id && (
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[#1A1A2E]">Programme actif</h3>
-                {(!programmes || programmes.length === 0) && (
-                  <CreateProgrammeDialog clientId={client.user_id} />
-                )}
+                <h3 className="text-sm font-semibold text-[#141325]">Programme actif</h3>
+                <CreateProgrammeDialog clientId={client.user_id} />
               </div>
 
               {programmes && programmes.length > 0 ? (
                 <div className="space-y-4">
                   {programmes.map((prog) => (
                     <div key={prog.id} className="border rounded-lg p-4 space-y-3">
-                      <ProgrammeEtapesList programme={prog} />
-                      <AddEtapeDialog
-                        programmeId={prog.id}
-                        cabinetSessions={cabinetSessions ?? []}
-                        autonomousSessions={autonomousSessions ?? []}
-                        recurringTemplates={recurringTemplates ?? []}
+                      <ProgrammeEtapesList
+                        programme={prog}
+                        cognitiveTests={cognitiveTests ?? []}
+                        exercises={(exercises ?? []).map(ex => ({
+                          id:          ex.id,
+                          titre:       ex.titre,
+                          format:      ex.format,
+                          description: ex.description ?? null,
+                        }))}
                       />
                     </div>
                   ))}
@@ -432,6 +456,21 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 clientId={id}
                 initialNotes={client.notes_privees ?? ''}
                 initialObjectifs={client.objectifs ?? ''}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Documents */}
+        <TabsContent value="documents" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ClientDocumentsSection
+                clientId={id}
+                documents={documentsWithUrls}
               />
             </CardContent>
           </Card>

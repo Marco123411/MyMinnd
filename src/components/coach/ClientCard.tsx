@@ -24,16 +24,16 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } } : undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={onClick ? 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#20808D] rounded-lg' : undefined}
+      className={onClick ? 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#7069F4] rounded-lg' : undefined}
     >
       <Card className="transition-shadow hover:shadow-md">
         <CardContent className="flex items-center justify-between gap-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F4F5] text-sm font-semibold text-[#20808D]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F1F0FE] text-sm font-semibold text-[#7069F4]">
               {client.nom.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-medium text-[#1A1A2E]">{client.nom}</p>
+              <p className="font-medium text-[#141325]">{client.nom}</p>
               {isPending ? (
                 <p className="text-xs text-amber-600">Invitation envoyée</p>
               ) : subtitle ? (
@@ -58,7 +58,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             )}
             {!isPending && client.profileName && (
               <Badge
-                style={{ backgroundColor: client.profileColor ?? '#20808D', color: '#fff' }}
+                style={{ backgroundColor: client.profileColor ?? '#7069F4', color: '#fff' }}
                 className="text-xs"
               >
                 {client.profileName}
