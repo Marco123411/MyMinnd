@@ -86,9 +86,9 @@ export async function createCognitiveSessionAction(
 
   if (defError || !definition) return { data: null, error: defError?.message ?? 'Test introuvable' }
 
-  // Réutiliser une session active existante uniquement en mode autonome (sans programme)
-  // En mode programme, chaque exercice doit avoir sa propre session distincte
+  // Réutiliser une session active existante pour éviter les doublons (double-clic, retour arrière…)
   if (!programExerciseId) {
+    // Mode autonome : chercher une session active sans programme
     const { data: existing } = await supabase
       .from('cognitive_sessions')
       .select('id')
@@ -100,6 +100,23 @@ export async function createCognitiveSessionAction(
 
     if (existing) {
       return { data: { sessionId: existing.id, definition: definition as CognitiveTestDefinition }, error: null }
+    }
+  } else {
+    // Mode programme : réutiliser la session active liée à ce program_exercise_id précis
+    const parsedExIdCheck = z.string().uuid().safeParse(programExerciseId)
+    if (parsedExIdCheck.success) {
+      const { data: existing } = await supabase
+        .from('cognitive_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('cognitive_test_id', definition.id)
+        .eq('program_exercise_id', parsedExIdCheck.data)
+        .in('status', ['pending', 'in_progress'])
+        .single()
+
+      if (existing) {
+        return { data: { sessionId: existing.id, definition: definition as CognitiveTestDefinition }, error: null }
+      }
     }
   }
 
