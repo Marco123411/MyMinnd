@@ -135,7 +135,7 @@ export function ProgrammeProgress({ programme }: ProgrammeProgressProps) {
                   )}
                 </div>
 
-                {/* Exercices et drills cognitifs de cette étape */}
+                {/* Exercices de cette étape */}
                 {drills.length > 0 && (
                   <div className="px-3 pb-3 space-y-2">
                     <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium mb-1">

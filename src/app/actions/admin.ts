@@ -52,7 +52,6 @@ export async function getAdminDashboardStatsAction(): Promise<{
 
   const [
     testsTodayProfilage,
-    testsTodayCognitif,
     mrrData,
     signups,
     dispatchesPending,
@@ -65,12 +64,6 @@ export async function getAdminDashboardStatsAction(): Promise<{
       .select('id', { count: 'exact', head: true })
       .eq('status', 'completed')
       .gte('updated_at', startOfToday),
-    // Sessions cognitives complétées aujourd'hui
-    admin
-      .from('cognitive_sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'completed')
-      .gte('completed_at', startOfToday),
     // MRR : somme des paiements subscription ce mois
     admin
       .from('payments')
@@ -107,7 +100,6 @@ export async function getAdminDashboardStatsAction(): Promise<{
   return {
     data: {
       tests_today_profilage: testsTodayProfilage.count ?? 0,
-      tests_today_cognitif: testsTodayCognitif.count ?? 0,
       mrr_this_month: mrrCents,
       signups_this_week: signups.count ?? 0,
       dispatches_pending: dispatchesPending.count ?? 0,
@@ -134,7 +126,7 @@ export async function getAdminDashboardChartsAction(): Promise<{
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString()
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [mrrPayments, tierCounts, recentTests, recentCognitive] = await Promise.all([
+  const [mrrPayments, tierCounts, recentTests] = await Promise.all([
     // Paiements subscription des 6 derniers mois
     admin
       .from('payments')
@@ -151,12 +143,6 @@ export async function getAdminDashboardChartsAction(): Promise<{
       .select('updated_at')
       .eq('status', 'completed')
       .gte('updated_at', thirtyDaysAgo),
-    // Sessions cognitives des 30 derniers jours
-    admin
-      .from('cognitive_sessions')
-      .select('completed_at')
-      .eq('status', 'completed')
-      .gte('completed_at', thirtyDaysAgo),
   ])
 
   // Agrégation MRR par mois
@@ -190,22 +176,16 @@ export async function getAdminDashboardChartsAction(): Promise<{
   ]
 
   // Tests par jour sur 30 jours
-  const testsByDayMap: Record<string, { profilage: number; cognitif: number }> = {}
+  const testsByDayMap: Record<string, { profilage: number }> = {}
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    testsByDayMap[key] = { profilage: 0, cognitif: 0 }
+    testsByDayMap[key] = { profilage: 0 }
   }
   for (const t of recentTests.data ?? []) {
     const d = new Date(t.updated_at)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     if (key in testsByDayMap) testsByDayMap[key].profilage++
-  }
-  for (const s of recentCognitive.data ?? []) {
-    if (!s.completed_at) continue
-    const d = new Date(s.completed_at)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    if (key in testsByDayMap) testsByDayMap[key].cognitif++
   }
   const testsByDay = Object.entries(testsByDayMap).map(([date, counts]) => ({
     date: `${date.split('-')[2]}/${date.split('-')[1]}`,
@@ -495,8 +475,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
     mauLast,
     testsThisWeek,
     testsLastWeek,
-    cognitiveThisWeek,
-    cognitiveLastWeek,
     testsL1ThisMonth,
     testsL2ThisMonth,
     testsL3ThisMonth,
@@ -507,10 +485,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
     mrrLast,
     transacThis,
     transacLast,
-    cogCompletedThisWeek,
-    cogTotalThisWeek,
-    cogCompletedLastWeek,
-    cogTotalLastWeek,
     dispatchesThisWeek,
     dispatchesLastWeek,
     subsStartOfMonth,
@@ -528,10 +502,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
     admin.from('tests').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('updated_at', startOfThisWeek),
     // Tests profilage semaine dernière
     admin.from('tests').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('updated_at', startOfLastWeek).lt('updated_at', startOfThisWeek),
-    // Sessions cognitives cette semaine
-    admin.from('cognitive_sessions').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('completed_at', startOfThisWeek),
-    // Sessions cognitives semaine dernière
-    admin.from('cognitive_sessions').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('completed_at', startOfLastWeek).lt('completed_at', startOfThisWeek),
     // Tests L1 ce mois
     admin.from('tests').select('id', { count: 'exact', head: true }).eq('level_slug', 'discovery').eq('status', 'completed').gte('updated_at', startOfThisMonth),
     // Tests L2 ce mois
@@ -552,14 +522,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
     admin.from('payments').select('amount_cents').in('type', ['test_l2', 'test_l3']).eq('status', 'succeeded').gte('created_at', startOfThisMonth),
     // Revenus transac mois dernier
     admin.from('payments').select('amount_cents').in('type', ['test_l2', 'test_l3']).eq('status', 'succeeded').gte('created_at', startOfLastMonth).lt('created_at', startOfThisMonth),
-    // Taux complétion cognitif cette semaine — completed
-    admin.from('cognitive_sessions').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('created_at', startOfThisWeek),
-    // Taux complétion cognitif cette semaine — total (non-pending)
-    admin.from('cognitive_sessions').select('id', { count: 'exact', head: true }).neq('status', 'pending').gte('created_at', startOfThisWeek),
-    // Taux complétion semaine dernière — completed
-    admin.from('cognitive_sessions').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('created_at', startOfLastWeek).lt('created_at', startOfThisWeek),
-    // Taux complétion semaine dernière — total
-    admin.from('cognitive_sessions').select('id', { count: 'exact', head: true }).neq('status', 'pending').gte('created_at', startOfLastWeek).lt('created_at', startOfThisWeek),
     // Dispatches créés cette semaine (pour temps moyen)
     admin.from('dispatches').select('created_at, dispatched_at').gte('created_at', startOfThisWeek).not('dispatched_at', 'is', null),
     // Dispatches créés semaine dernière
@@ -588,13 +550,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
   const mrrLastCents = (mrrLast.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
   const transacThisCents = (transacThis.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
   const transacLastCents = (transacLast.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
-
-  const completionThis = (cogTotalThisWeek.count ?? 0) > 0
-    ? Math.round(((cogCompletedThisWeek.count ?? 0) / (cogTotalThisWeek.count ?? 1)) * 100)
-    : 0
-  const completionLast = (cogTotalLastWeek.count ?? 0) > 0
-    ? Math.round(((cogCompletedLastWeek.count ?? 0) / (cogTotalLastWeek.count ?? 1)) * 100)
-    : 0
 
   const l1This = testsL1ThisMonth.count ?? 0
   const l2This = testsL2ThisMonth.count ?? 0
@@ -643,14 +598,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
       delta_pct: deltaPct(testsThisWeek.count ?? 0, testsLastWeek.count ?? 0),
     },
     {
-      key: 'tests_cognitifs',
-      label: 'Tests cognitifs complétés',
-      value: cognitiveThisWeek.count ?? 0,
-      previous: cognitiveLastWeek.count ?? 0,
-      frequency: 'hebdo',
-      delta_pct: deltaPct(cognitiveThisWeek.count ?? 0, cognitiveLastWeek.count ?? 0),
-    },
-    {
       key: 'conv_l1_l2',
       label: 'Taux conversion L1 → L2',
       value: convL1L2This,
@@ -694,15 +641,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
       unit: '%',
       frequency: 'mensuel',
       delta_pct: null,
-    },
-    {
-      key: 'taux_completion',
-      label: 'Taux complétion tests cognitifs',
-      value: completionThis,
-      previous: completionLast,
-      unit: '%',
-      frequency: 'hebdo',
-      delta_pct: deltaPct(completionThis, completionLast),
     },
     {
       key: 'avg_dispatch',
@@ -948,24 +886,3 @@ export async function getAdminTestDefinitionsAction(): Promise<{
   return { data: (data ?? []) as { id: string; slug: string; name: string }[], error: null }
 }
 
-// ============================================================
-// getAdminCognitiveTestsAction — Tests cognitifs pour configuration
-// ============================================================
-export async function getAdminCognitiveTestsAction(): Promise<{
-  data: { id: string; slug: string; name: string; description: string | null; duration_minutes: number; trial_based: boolean; config: Record<string, unknown> | null; is_active: boolean }[]
-  error: string | null
-}> {
-  const { error, admin } = await requireAdmin()
-  if (error || !admin) return { data: [], error }
-
-  const { data, error: dbError } = await admin
-    .from('cognitive_test_definitions')
-    .select('id, slug, name, description, duration_minutes, trial_based, config, is_active')
-    .order('name')
-
-  if (dbError) return { data: [], error: dbError.message }
-  return {
-    data: (data ?? []) as { id: string; slug: string; name: string; description: string | null; duration_minutes: number; trial_based: boolean; config: Record<string, unknown> | null; is_active: boolean }[],
-    error: null,
-  }
-}

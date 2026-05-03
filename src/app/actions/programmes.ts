@@ -12,7 +12,6 @@ import type {
   CabinetSession,
   AutonomousSession,
   RecurringTemplate,
-  CognitiveTestDefinition,
 } from '@/types'
 import { computeProgrammeStats } from '@/lib/programme-utils'
 
@@ -30,11 +29,10 @@ const createProgrammeSchema = z.object({
 
 const addEtapeSchema = z.object({
   programme_id:           z.string().uuid(),
-  type_seance:            z.enum(['cabinet', 'autonomie', 'recurrente', 'cognitif']),
+  type_seance:            z.enum(['cabinet', 'autonomie', 'recurrente']),
   cabinet_session_id:     z.string().uuid().optional().nullable(),
   autonomous_session_id:  z.string().uuid().optional().nullable(),
   recurring_template_id:  z.string().uuid().optional().nullable(),
-  cognitive_session_id:   z.string().uuid().optional().nullable(),
 })
 
 // ============================================================
@@ -70,18 +68,10 @@ type RawEtapeRow = {
   cabinet_session_id: string | null
   autonomous_session_id: string | null
   recurring_template_id: string | null
-  cognitive_session_id: string | null
   created_at: string
   cabinet_sessions: CabinetSession | null
   autonomous_sessions: AutonomousSession | null
   recurring_templates: RecurringTemplate | null
-  cognitive_sessions: {
-    id: string
-    status: string
-    completed_at: string | null
-    computed_metrics: Record<string, unknown> | null
-    cognitive_test_definitions: { slug: string; name: string } | null
-  } | null
   program_exercises?: ProgramExercise[]
 }
 
@@ -95,8 +85,6 @@ function enrichEtapes(rawEtapes: RawEtapeRow[]): ProgrammeEtapeEnrichie[] {
       let autonomous: AutonomousSession | undefined
       let template: RecurringTemplate | undefined
 
-      let cognitive_session: ProgrammeEtapeEnrichie['cognitive_session'] = null
-
       if (etape.type_seance === 'cabinet') {
         cabinet = etape.cabinet_sessions ?? undefined
         est_complete = cabinet?.statut === 'realisee'
@@ -109,27 +97,6 @@ function enrichEtapes(rawEtapes: RawEtapeRow[]): ProgrammeEtapeEnrichie[] {
         template = etape.recurring_templates ?? undefined
         est_complete = false  // récurrents n'ont pas de statut global
         titre_display = template?.titre ?? 'Routine supprimée'
-      } else if (etape.type_seance === 'cognitif') {
-        if (etape.cognitive_session_id && etape.cognitive_sessions) {
-          // Rétrocompatibilité : ancienne étape cognitif avec session unique
-          const cs = etape.cognitive_sessions
-          const def = Array.isArray(cs.cognitive_test_definitions) ? cs.cognitive_test_definitions[0] : cs.cognitive_test_definitions
-          cognitive_session = {
-            id:               cs.id,
-            status:           cs.status,
-            completed_at:     cs.completed_at,
-            computed_metrics: cs.computed_metrics,
-            test_name:        (def as { name: string } | null)?.name ?? 'Test cognitif',
-            test_slug:        (def as { slug: string } | null)?.slug ?? '',
-          }
-          est_complete = cs.completed_at != null
-          titre_display = etape.titre ?? cognitive_session.test_name
-        } else {
-          // Nouveau modèle : titre libre, drills dans program_exercises
-          titre_display = etape.titre ?? 'Séance cognitive'
-          const inDrills = (etape.program_exercises ?? []).filter(ex => ex.phase === 'in')
-          est_complete = inDrills.length > 0 && inDrills.every(ex => ex.completed_at != null)
-        }
       }
 
       return {
@@ -141,12 +108,10 @@ function enrichEtapes(rawEtapes: RawEtapeRow[]): ProgrammeEtapeEnrichie[] {
         cabinet_session_id:    etape.cabinet_session_id,
         autonomous_session_id: etape.autonomous_session_id,
         recurring_template_id: etape.recurring_template_id,
-        cognitive_session_id:  etape.cognitive_session_id,
         created_at:            etape.created_at,
         cabinet,
         autonomous,
         template,
-        cognitive_session,
         est_complete,
         titre_display,
         program_exercises: (etape.program_exercises ?? []) as ProgramExercise[],
@@ -353,25 +318,14 @@ export async function getClientProgrammesAction(
       *,
       programme_etapes (
         id, programme_id, ordre, type_seance, titre,
-        cabinet_session_id, autonomous_session_id, recurring_template_id, cognitive_session_id,
+        cabinet_session_id, autonomous_session_id, recurring_template_id,
         created_at,
         cabinet_sessions (*),
         autonomous_sessions (*),
         recurring_templates (*),
-        cognitive_sessions!cognitive_session_id (
-          id,
-          status,
-          completed_at,
-          computed_metrics,
-          cognitive_test_definitions (slug, name)
-        ),
         program_exercises (
-          id, programme_etape_id, cognitive_test_id, exercise_id, phase,
-          configured_duration_sec, configured_intensity_percent,
-          cognitive_load_score, display_order, created_at, completed_at,
-          cognitive_test_definitions!cognitive_test_id (id, slug, name, base_cognitive_load,
-            default_duration_sec, default_intensity_percent, intensity_configurable,
-            configurable_durations, phase_tags, instructions_fr, cognitive_category),
+          id, programme_etape_id, exercise_id, phase,
+          display_order, created_at, completed_at,
           exercises!exercise_id (id, titre, format, description)
         )
       )
@@ -416,7 +370,6 @@ export async function addEtapeAction(
     parsed.data.cabinet_session_id,
     parsed.data.autonomous_session_id,
     parsed.data.recurring_template_id,
-    parsed.data.cognitive_session_id,
   ].filter(Boolean).length
 
   if (fkCount !== 1) return { error: 'Une seule séance doit être liée à chaque étape' }
@@ -454,7 +407,6 @@ export async function addEtapeAction(
       cabinet_session_id:    parsed.data.cabinet_session_id ?? null,
       autonomous_session_id: parsed.data.autonomous_session_id ?? null,
       recurring_template_id: parsed.data.recurring_template_id ?? null,
-      cognitive_session_id:  parsed.data.cognitive_session_id ?? null,
     })
 
   if (error) return { error: error.message }
@@ -487,11 +439,6 @@ const createRecurrenteEtapeSchema = z.object({
   description:  z.string().optional(),
 })
 
-const createCognitifEtapeSchema = z.object({
-  programme_id: z.string().uuid(),
-  titre:        z.string().min(1, 'Le titre est obligatoire').max(200),
-})
-
 export async function createAndAddEtapeAction(
   type: TypeSeance,
   data: Record<string, unknown>
@@ -519,7 +466,7 @@ export async function createAndAddEtapeAction(
 
   // Créer la séance selon le type et récupérer son ID
   let newSessionId: string
-  let sessionTable: 'cabinet_sessions' | 'autonomous_sessions' | 'recurring_templates' | 'cognitive_sessions'
+  let sessionTable: 'cabinet_sessions' | 'autonomous_sessions' | 'recurring_templates'
 
   if (type === 'cabinet') {
     const parsed = createCabinetEtapeSchema.safeParse(data)
@@ -583,40 +530,6 @@ export async function createAndAddEtapeAction(
     newSessionId = session.id as string
     sessionTable = 'recurring_templates'
 
-  } else if (type === 'cognitif') {
-    const parsed = createCognitifEtapeSchema.safeParse(data)
-    if (!parsed.success) return { error: parsed.error.issues[0].message }
-
-    // Calcul de l'ordre
-    const { data: maxOrdreResult } = await admin
-      .from('programme_etapes')
-      .select('ordre')
-      .eq('programme_id', parsedProgrammeId.data)
-      .order('ordre', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    const prochain_ordre = ((maxOrdreResult as { ordre: number } | null)?.ordre ?? 0) + 1
-
-    // Insertion directe de l'étape — pas de session à créer
-    const { error: etapeError } = await admin
-      .from('programme_etapes')
-      .insert({
-        programme_id:          parsedProgrammeId.data,
-        ordre:                 prochain_ordre,
-        type_seance:           'cognitif',
-        titre:                 parsed.data.titre,
-        cabinet_session_id:    null,
-        autonomous_session_id: null,
-        recurring_template_id: null,
-        cognitive_session_id:  null,
-      })
-
-    if (etapeError) return { error: etapeError.message ?? 'Erreur création étape cognitive' }
-
-    revalidatePath(`/coach/clients/${clientUserId}`)
-    return { error: null }
-
   } else {
     return { error: 'Type de séance invalide' }
   }
@@ -642,7 +555,6 @@ export async function createAndAddEtapeAction(
       cabinet_session_id:    type === 'cabinet'    ? newSessionId : null,
       autonomous_session_id: type === 'autonomie'  ? newSessionId : null,
       recurring_template_id: type === 'recurrente' ? newSessionId : null,
-      cognitive_session_id:  null,
     })
     .select('id')
     .single()
@@ -758,25 +670,14 @@ export async function getMyProgrammeAction(): Promise<{
       *,
       programme_etapes (
         id, programme_id, ordre, type_seance, titre,
-        cabinet_session_id, autonomous_session_id, recurring_template_id, cognitive_session_id,
+        cabinet_session_id, autonomous_session_id, recurring_template_id,
         created_at,
         cabinet_sessions (*),
         autonomous_sessions (*),
         recurring_templates (*),
-        cognitive_sessions!cognitive_session_id (
-          id,
-          status,
-          completed_at,
-          computed_metrics,
-          cognitive_test_definitions (slug, name)
-        ),
         program_exercises (
-          id, programme_etape_id, cognitive_test_id, exercise_id, phase,
-          configured_duration_sec, configured_intensity_percent,
-          cognitive_load_score, display_order, created_at, completed_at,
-          cognitive_test_definitions!cognitive_test_id (id, slug, name, base_cognitive_load,
-            default_duration_sec, default_intensity_percent, intensity_configurable,
-            configurable_durations, phase_tags, instructions_fr, cognitive_category),
+          id, programme_etape_id, exercise_id, phase,
+          display_order, created_at, completed_at,
           exercises!exercise_id (id, titre, format, description)
         )
       )
@@ -806,188 +707,7 @@ export async function getMyProgrammeAction(): Promise<{
 }
 
 // ============================================================
-// Drills cognitifs — actions COACH (ajout, config, suppression, phase)
-// ============================================================
-
-// Récupère tous les tests cognitifs actifs pour le sélecteur de drills
-export async function getCognitiveTestDefinitionsAction(): Promise<{
-  data: CognitiveTestDefinition[]
-  error: string | null
-}> {
-  const { user, error: authError } = await requireCoach()
-  if (authError || !user) return { data: [], error: authError ?? 'Non authentifié' }
-
-  const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('cognitive_test_definitions')
-    .select('*')
-    .eq('is_active', true)
-    .order('name')
-
-  if (error) return { data: [], error: error.message }
-  return { data: (data ?? []) as CognitiveTestDefinition[], error: null }
-}
-
-const addDrillSchema = z.object({
-  etape_id:                  z.string().uuid(),
-  cognitive_test_id:         z.string().uuid(),
-  phase:                     z.enum(['pre', 'in', 'post']),
-  configured_duration_sec:   z.number().int().positive(),
-  configured_intensity_percent: z.number().int().min(10).max(100),
-  cognitive_load_score:      z.number().int().min(1).max(26),
-})
-
-// Ajoute un drill cognitif à une étape de programme (coach only)
-export async function addDrillToEtapeAction(
-  input: z.infer<typeof addDrillSchema>
-): Promise<{ data: ProgramExercise | null; error: string | null }> {
-  const { user, error: authError } = await requireCoach()
-  if (authError || !user) return { data: null, error: authError ?? 'Non authentifié' }
-
-  const parsed = addDrillSchema.safeParse(input)
-  if (!parsed.success) return { data: null, error: parsed.error.issues[0].message }
-
-  const admin = createAdminClient()
-
-  // Vérifier que l'étape appartient à un programme de ce coach
-  const { data: etape } = await admin
-    .from('programme_etapes')
-    .select('id, programmes!inner(coach_id, client_id)')
-    .eq('id', parsed.data.etape_id)
-    .eq('programmes.coach_id', user.id)
-    .single()
-
-  if (!etape) return { data: null, error: 'Étape introuvable ou non autorisée' }
-
-  // Prochain display_order
-  const { count } = await admin
-    .from('program_exercises')
-    .select('id', { count: 'exact', head: true })
-    .eq('programme_etape_id', parsed.data.etape_id)
-    .eq('phase', parsed.data.phase)
-
-  const { data, error } = await admin
-    .from('program_exercises')
-    .insert({
-      programme_etape_id:           parsed.data.etape_id,
-      cognitive_test_id:            parsed.data.cognitive_test_id,
-      phase:                        parsed.data.phase,
-      configured_duration_sec:      parsed.data.configured_duration_sec,
-      configured_intensity_percent: parsed.data.configured_intensity_percent,
-      cognitive_load_score:         parsed.data.cognitive_load_score,
-      display_order:                count ?? 0,
-    })
-    .select('*, cognitive_test_definitions(*)')
-    .single()
-
-  if (error) return { data: null, error: error.message }
-
-  const prog = (etape.programmes as unknown as { client_id: string }[] | { client_id: string })
-  const clientId = Array.isArray(prog) ? prog[0]?.client_id : prog?.client_id
-  if (clientId) revalidatePath(`/coach/clients/${clientId}`)
-
-  return { data: data as unknown as ProgramExercise, error: null }
-}
-
-const updateDrillSchema = z.object({
-  drill_id:                     z.string().uuid(),
-  phase:                        z.enum(['pre', 'in', 'post']).optional(),
-  configured_duration_sec:      z.number().int().positive().optional(),
-  configured_intensity_percent: z.number().int().min(10).max(100).optional(),
-  cognitive_load_score:         z.number().int().min(1).max(26).optional(),
-})
-
-// Met à jour la config d'un drill (phase, durée, intensité)
-export async function updateDrillAction(
-  input: z.infer<typeof updateDrillSchema>
-): Promise<{ error: string | null }> {
-  const { user, error: authError } = await requireCoach()
-  if (authError || !user) return { error: authError ?? 'Non authentifié' }
-
-  const parsed = updateDrillSchema.safeParse(input)
-  if (!parsed.success) return { error: parsed.error.issues[0].message }
-
-  const admin = createAdminClient()
-
-  // Vérifier ownership via la chaîne programme_etapes → programmes
-  const { data: drill } = await admin
-    .from('program_exercises')
-    .select(`
-      id,
-      programme_etapes!inner (
-        programmes!inner ( coach_id, client_id )
-      )
-    `)
-    .eq('id', parsed.data.drill_id)
-    .eq('programme_etapes.programmes.coach_id', user.id)
-    .single()
-
-  if (!drill) return { error: 'Drill introuvable ou non autorisé' }
-
-  const updates: Record<string, unknown> = {}
-  if (parsed.data.phase !== undefined)                        updates.phase = parsed.data.phase
-  if (parsed.data.configured_duration_sec !== undefined)      updates.configured_duration_sec = parsed.data.configured_duration_sec
-  if (parsed.data.configured_intensity_percent !== undefined) updates.configured_intensity_percent = parsed.data.configured_intensity_percent
-  if (parsed.data.cognitive_load_score !== undefined)         updates.cognitive_load_score = parsed.data.cognitive_load_score
-
-  const { error } = await admin
-    .from('program_exercises')
-    .update(updates)
-    .eq('id', parsed.data.drill_id)
-
-  if (error) return { error: error.message }
-
-  const etapeData = drill.programme_etapes as unknown as { programmes: { client_id: string }[] | { client_id: string } }
-  const prog = etapeData?.programmes
-  const clientId = Array.isArray(prog) ? prog[0]?.client_id : prog?.client_id
-  if (clientId) revalidatePath(`/coach/clients/${clientId}`)
-
-  return { error: null }
-}
-
-// Supprime un drill
-export async function deleteDrillAction(
-  drillId: string
-): Promise<{ error: string | null }> {
-  const parsedId = z.string().uuid().safeParse(drillId)
-  if (!parsedId.success) return { error: 'Identifiant invalide' }
-
-  const { user, error: authError } = await requireCoach()
-  if (authError || !user) return { error: authError ?? 'Non authentifié' }
-
-  const admin = createAdminClient()
-
-  const { data: drill } = await admin
-    .from('program_exercises')
-    .select(`
-      id,
-      programme_etapes!inner (
-        programmes!inner ( coach_id, client_id )
-      )
-    `)
-    .eq('id', parsedId.data)
-    .eq('programme_etapes.programmes.coach_id', user.id)
-    .single()
-
-  if (!drill) return { error: 'Drill introuvable ou non autorisé' }
-
-  const { error } = await admin
-    .from('program_exercises')
-    .delete()
-    .eq('id', parsedId.data)
-
-  if (error) return { error: error.message }
-
-  const etapeData = drill.programme_etapes as unknown as { programmes: { client_id: string }[] | { client_id: string } }
-  const prog = etapeData?.programmes
-  const clientId = Array.isArray(prog) ? prog[0]?.client_id : prog?.client_id
-  if (clientId) revalidatePath(`/coach/clients/${clientId}`)
-
-  return { error: null }
-}
-
-// ============================================================
-// Exercices bibliothèque — ajout à une étape non-cognitive (Pre/In/Post)
+// Exercices bibliothèque — ajout à une étape (Pre/In/Post)
 // ============================================================
 
 const addExerciseSchema = z.object({
@@ -1039,7 +759,6 @@ export async function addExerciseToEtapeAction(
     .insert({
       programme_etape_id: parsed.data.etape_id,
       exercise_id:        parsed.data.exercise_id,
-      cognitive_test_id:  null,
       phase:              parsed.data.phase,
       display_order:      count ?? 0,
     })
@@ -1056,41 +775,8 @@ export async function addExerciseToEtapeAction(
 }
 
 // ============================================================
-// Exercices cognitifs de programme (client)
+// Exercices de programme (client)
 // ============================================================
-
-// Charge un program_exercise avec sa définition de test cognitif
-// Vérifie que le programme appartient au client connecté
-export async function getProgramExerciseAction(
-  id: string
-): Promise<{ data: ProgramExercise | null; error: string | null }> {
-  const parsedId = z.string().uuid().safeParse(id)
-  if (!parsedId.success) return { data: null, error: 'Identifiant invalide' }
-
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: 'Non authentifié' }
-
-  const admin = createAdminClient()
-
-  const { data, error } = await admin
-    .from('program_exercises')
-    .select(`
-      *,
-      cognitive_test_definitions (*),
-      programme_etapes!inner (
-        programme_id,
-        programmes!inner ( client_id )
-      )
-    `)
-    .eq('id', parsedId.data)
-    .eq('programme_etapes.programmes.client_id', user.id)
-    .single()
-
-  if (error || !data) return { data: null, error: error?.message ?? 'Exercice introuvable' }
-
-  return { data: data as unknown as ProgramExercise, error: null }
-}
 
 // Marque un program_exercise comme complété par le client
 export async function markProgramExerciseCompleteAction(

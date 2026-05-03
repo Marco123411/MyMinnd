@@ -154,8 +154,8 @@ export async function completeTestAction(
 
   // Mise à jour atomique du statut (WHERE status='in_progress' évite les doublons)
   // Auto-release des résultats en mode teaser UNIQUEMENT pour les athlètes auto-inscrits
-  // passant le PMA (slug='pma' + coach_id IS NULL). Les tests cognitifs, autres tests
-  // coach-initiés ou tests dont le coach a été retiré restent sous contrôle coach.
+  // passant le PMA (slug='pma' + coach_id IS NULL). Les autres tests coach-initiés
+  // ou tests dont le coach a été retiré restent sous contrôle coach.
   const autoRelease = test.coach_id === null && testDefSlug === 'pma'
   const { data: locked, error: lockError } = await admin
     .from('tests')
