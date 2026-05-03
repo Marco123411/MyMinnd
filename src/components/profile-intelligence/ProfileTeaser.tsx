@@ -255,7 +255,7 @@ export function ProfileTeaser({
               Contenu verrouillé
             </h3>
             <p className="text-sm text-muted-foreground">
-              Débloquez votre analyse complète avec un préparateur mental certifié MINND.
+              Cette analyse complète est réservée à votre coach.
             </p>
           </Card>
         </div>

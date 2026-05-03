@@ -696,7 +696,7 @@ function RecommendationsPage({ data }: { data: ReportData }) {
 
   const recommendations =
     profile.recommendations ??
-    `Sur la base de votre profil ${profile.name}, nous vous recommandons de travailler en priorite sur vos axes d'amelioration identifies dans ce rapport. Un accompagnement par un expert certifie MINND vous permettra de progresser efficacement.`
+    `Sur la base de votre profil ${profile.name}, nous vous recommandons de travailler en priorite sur vos axes d'amelioration identifies dans ce rapport. Un accompagnement par votre coach vous permettra de progresser efficacement.`
 
   return (
     <Page size="A4" style={s.page}>
@@ -716,8 +716,7 @@ function RecommendationsPage({ data }: { data: ReportData }) {
           textAlign: 'center',
         }}
       >
-        Ce rapport a ete genere automatiquement par MINND Mental Performance. Pour un
-        accompagnement personnalise, contactez un expert certifie sur minnd-mental.com
+        Ce rapport a ete genere automatiquement par MINND Mental Performance.
       </Text>
     </Page>
   )
