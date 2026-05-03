@@ -26,7 +26,7 @@ import { CreateProgrammeDialog } from '@/components/coach/CreateProgrammeDialog'
 import { getExercisesAction } from '@/app/actions/exercises'
 import { ProfileIntelligenceTab } from './ProfileIntelligenceTab'
 import { ClientSessionTimeline } from '@/components/coach/ClientSessionTimeline'
-import type { ClientContext, TestLevelConfig, SubscriptionTier } from '@/types'
+import type { ClientContext, TestLevelConfig } from '@/types'
 
 interface TestDefinitionForModal {
   id: string
@@ -66,12 +66,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   // Admin client nécessaire pour lire invitation_token (révoqué pour authenticated)
   const admin = createAdminClient()
 
-  // Requêtes parallèles : dernier test complété + définitions + historique + coach + réponses exercices
+  // Requêtes parallèles : dernier test complété + définitions + historique + exercices
   const [
     { data: lastTest },
     { data: testDefinitionsRaw },
     { data: testHistory },
-    { data: coachData },
     { data: exercises },
     { data: timeline },
     { data: programmes },
@@ -105,9 +104,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
     // Historique complet via admin (inclut les pending, invite_url construite côté serveur)
     getClientTestsForCoach(id),
-
-    // Données du coach (nom pour emails, subscription_tier pour SendTestModal)
-    admin.from('users').select('nom, subscription_tier').eq('id', coachId).single(),
 
     // Exercices disponibles pour les modals de séance
     getExercisesAction(),
@@ -164,7 +160,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     levels: d.levels as TestLevelConfig[],
   }))
 
-  const coachTier = (coachData?.subscription_tier ?? 'free') as SubscriptionTier
 
   // Générer des URLs signées courte durée (1h) pour les documents — ne pas stocker de tokens en base
   const documentsWithUrls = await Promise.all(
@@ -248,7 +243,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   clientContext={client.context}
                   clientEmail={client.email ?? null}
                   testDefinitions={testDefinitions}
-                  coachTier={coachTier}
                 />
               )}
               <Button variant="outline" asChild>
