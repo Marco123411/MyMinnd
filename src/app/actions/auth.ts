@@ -6,6 +6,7 @@ import { z } from 'zod'
 import {
   loginSchema,
   registerSchema,
+  registerAthleteSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   completeProfileSchema,
@@ -14,6 +15,7 @@ import {
   changePasswordSchema,
   type LoginFormData,
   type RegisterFormData,
+  type RegisterAthleteFormData,
   type ForgotPasswordFormData,
   type ResetPasswordFormData,
   type CompleteProfileFormData,
@@ -67,6 +69,81 @@ export async function signUpAction(
     .eq('id', data.user.id)
 
   if (profileError) return { error: profileError.message }
+  return { error: null }
+}
+
+// Inscription publique athlète : crée un compte client sans coach (coach_id = NULL)
+// et une fiche dans public.clients avec invitation_status = 'none'.
+export async function signUpAthleteAction(
+  formData: RegisterAthleteFormData
+): Promise<{ error: string | null }> {
+  const parsed = registerAthleteSchema.safeParse(formData)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const { email, password, nom, prenom } = parsed.data
+  const supabase = await createClient()
+
+  const { data, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { nom, prenom, role: 'client', context: 'sport' },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/callback`,
+    },
+  })
+
+  if (signUpError) return { error: signUpError.message }
+  if (!data.user) return { error: "Erreur lors de la création du compte" }
+
+  // PROTECTION contre la prise de contrôle de compte : Supabase masque les comptes
+  // existants en renvoyant un user avec identities=[] (enumeration protection).
+  // Sans ce check, l'UPDATE admin ci-dessous écraserait le rôle/nom/prénom d'un
+  // coach existant avec les données athlète. On détecte le masquage et retourne
+  // un message générique (aucune mutation).
+  const identitiesPresent = Array.isArray(data.user.identities) && data.user.identities.length > 0
+  if (!identitiesPresent) {
+    // Même message UX que le cas succès pour ne pas divulguer l'existence du compte.
+    return { error: null }
+  }
+
+  // Admin client : définit le contexte athlète et crée la fiche clients (sans coach)
+  const admin = createAdminClient()
+  const { error: profileError } = await admin
+    .from('users')
+    .update({
+      role: 'client',
+      context: 'sport',
+      nom,
+      prenom,
+    })
+    .eq('id', data.user.id)
+
+  if (profileError) return { error: profileError.message }
+
+  const { error: clientError } = await admin
+    .from('clients')
+    .insert({
+      user_id: data.user.id,
+      coach_id: null,
+      nom: `${prenom} ${nom}`.trim(),
+      email,
+      context: 'sport',
+      invitation_status: 'none',
+    })
+
+  if (clientError) {
+    // Rollback best-effort : supprime l'auth user pour éviter un état demi-créé.
+    console.error('[signUpAthleteAction] clients insert error:', clientError.message)
+    try {
+      await admin.auth.admin.deleteUser(data.user.id)
+    } catch (cleanupErr) {
+      console.error('[signUpAthleteAction] rollback deleteUser failed:', cleanupErr)
+    }
+    return { error: clientError.message }
+  }
+
   return { error: null }
 }
 

@@ -6,14 +6,17 @@ import type { UserRole } from '@/types'
 const roleSchema = z.enum(['client', 'coach', 'admin'])
 
 // Routes publiques — accessibles sans session
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/complete-profile']
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/register/athlete', '/forgot-password', '/reset-password', '/complete-profile']
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((r) => pathname === r)
     || pathname.startsWith('/auth/')
     || pathname.startsWith('/test/invite/')
     || pathname.startsWith('/marketplace')   // Annuaire public des experts MINND
+    || pathname.startsWith('/profil/')        // Pages publiques de profils-types MINND
     || pathname === '/api/stripe/webhooks' // Stripe envoie sans cookie de session (exact match)
+    || pathname.startsWith('/api/og/')        // Génération d'images OG (public)
+    || pathname.startsWith('/api/cron/')      // Endpoints cron protégés par CRON_SECRET
 }
 
 // Redirige vers l'espace approprié selon le rôle

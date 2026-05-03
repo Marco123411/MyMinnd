@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MapPin, Star, Users, TrendingUp, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/marketplace/StarRating'
 import { ReviewCard } from '@/components/marketplace/ReviewCard'
+import { ContactRequestCta, type ContactRequestCtaMode } from '@/components/marketplace/ContactRequestCta'
 import { getExpertAction } from '@/app/actions/marketplace'
+import { createClient } from '@/lib/supabase/server'
 
 interface PageProps {
   params: Promise<{ expertId: string }>
@@ -36,6 +37,75 @@ export default async function ExpertProfilePage({ params }: PageProps) {
     .toUpperCase()
 
   const anciennete = new Date().getFullYear() - new Date(expert.created_at).getFullYear()
+
+  // Détermine le mode du CTA de demande d'accompagnement
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Récupère le tier d'abonnement du coach (non inclus dans getExpertAction)
+  const { data: coachTierRow } = await supabase
+    .from('users')
+    .select('subscription_tier')
+    .eq('id', expertId)
+    .single()
+
+  const ctaMode: ContactRequestCtaMode = await (async () => {
+    // Coach en plan free : non disponible pour les demandes
+    if (!coachTierRow || coachTierRow.subscription_tier === 'free') {
+      return { kind: 'not-eligible' as const }
+    }
+    if (!user) {
+      return { kind: 'guest' as const }
+    }
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (userRow?.role !== 'client') {
+      return { kind: 'not-eligible' as const }
+    }
+    // Dernier PMA complété
+    const { data: lastPma } = await supabase
+      .from('tests')
+      .select('id, score_global, profile_id, test_definitions!inner(slug)')
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .eq('test_definitions.slug', 'pma')
+      .order('completed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!lastPma) {
+      return { kind: 'no-pma' as const }
+    }
+    // Demande pending existante
+    const { data: pending } = await supabase
+      .from('contact_requests')
+      .select('id')
+      .eq('athlete_user_id', user.id)
+      .eq('coach_user_id', expertId)
+      .eq('status', 'pending')
+      .maybeSingle()
+    if (pending) return { kind: 'pending' as const }
+
+    // Récupère le nom du profil + sport de l'athlète pour prefill
+    const [{ data: profileRow }, { data: clientRow }] = await Promise.all([
+      lastPma.profile_id
+        ? supabase.from('profiles').select('name').eq('id', lastPma.profile_id).single()
+        : Promise.resolve({ data: null }),
+      supabase.from('clients').select('sport').eq('user_id', user.id).maybeSingle(),
+    ])
+
+    return {
+      kind: 'eligible' as const,
+      pmaTestId: lastPma.id,
+      profileName: profileRow?.name ?? null,
+      globalScore: lastPma.score_global,
+      athleteSport: clientRow?.sport ?? null,
+    }
+  })()
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -215,22 +285,16 @@ export default async function ExpertProfilePage({ params }: PageProps) {
           </div>
 
           {/* CTA */}
-          <div className="rounded-xl border bg-[#141325] p-5 text-white space-y-3">
-            <h3 className="font-semibold">Demander une analyse Expert</h3>
+          <div className="rounded-xl border bg-[#1A1A2E] p-5 text-white space-y-3">
+            <h3 className="font-semibold">Demander un accompagnement</h3>
             <p className="text-sm text-white/70">
-              Séance de 30 à 45 min avec {expert.prenom ?? displayName} après votre test MINND Expert.
+              Envoyez votre profil mental PMA à {expert.prenom ?? displayName} pour démarrer un suivi.
             </p>
-            <Button
-              className="w-full bg-[#7069F4] hover:bg-[#7069F4]/90 text-white"
-              asChild
-            >
-              <Link href={`/register?redirect=/test/pma&level=expert&expert=${expertId}`}>
-                Demander une analyse
-              </Link>
-            </Button>
-            <p className="text-xs text-white/50 text-center">
-              Connexion requise
-            </p>
+            <ContactRequestCta
+              expertId={expertId}
+              coachDisplayName={displayName}
+              mode={ctaMode}
+            />
           </div>
         </div>
       </div>

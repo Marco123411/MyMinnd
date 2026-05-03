@@ -43,6 +43,7 @@ export default async function MerciPage({ params }: PageProps) {
   }
 
   const isReleased = !!test.results_released_at
+  const hasCoach = test.coach_id !== null
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f4f4f5] px-4 py-12">
@@ -71,79 +72,83 @@ export default async function MerciPage({ params }: PageProps) {
           Merci&nbsp;! Votre test a bien été enregistré.
         </h1>
         <p className="mb-8 text-center text-muted-foreground">
-          {isReleased
-            ? 'Votre restitution personnalisée est prête.'
-            : `${coachFirstName} a été notifié et prépare votre restitution personnalisée.`}
+          {!hasCoach
+            ? 'Votre profil mental est prêt. Découvrez vos résultats.'
+            : isReleased
+              ? 'Votre restitution personnalisée est prête.'
+              : `${coachFirstName} a été notifié et prépare votre restitution personnalisée.`}
         </p>
 
-        {/* Stepper 3 étapes */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {/* Étape 1 — Test complété */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7069F4] text-white">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-center text-xs font-medium text-[#7069F4]">Test<br />complété</span>
-            </div>
-
-            {/* Ligne 1 */}
-            <div className="mb-4 flex-1 border-t-2 border-[#7069F4] mx-2" />
-
-            {/* Étape 2 — Coach notifié */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7069F4] text-white">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-center text-xs font-medium text-[#7069F4]">Coach<br />notifié</span>
-            </div>
-
-            {/* Ligne 2 */}
-            <div
-              className={`mb-4 flex-1 border-t-2 mx-2 ${isReleased ? 'border-[#7069F4]' : 'border-gray-200'}`}
-            />
-
-            {/* Étape 3 — Résultats */}
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  isReleased ? 'bg-[#7069F4] text-white' : 'bg-gray-100 text-gray-400'
-                }`}
-              >
-                {isReleased ? (
+        {/* Stepper 3 étapes — masqué pour athlètes autonomes (pas de coach) */}
+        {hasCoach && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              {/* Étape 1 — Test complété */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7069F4] text-white">
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                ) : (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                )}
+                </div>
+                <span className="text-center text-xs font-medium text-[#7069F4]">Test<br />complété</span>
               </div>
-              <span
-                className={`text-center text-xs font-medium ${
-                  isReleased ? 'text-[#7069F4]' : 'text-gray-400'
-                }`}
-              >
-                {isReleased ? (
-                  <>Résultats<br />disponibles&nbsp;!</>
-                ) : (
-                  <>Résultats<br />en préparation</>
-                )}
-              </span>
+
+              {/* Ligne 1 */}
+              <div className="mb-4 flex-1 border-t-2 border-[#7069F4] mx-2" />
+
+              {/* Étape 2 — Coach notifié */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7069F4] text-white">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="text-center text-xs font-medium text-[#7069F4]">Coach<br />notifié</span>
+              </div>
+
+              {/* Ligne 2 */}
+              <div
+                className={`mb-4 flex-1 border-t-2 mx-2 ${isReleased ? 'border-[#7069F4]' : 'border-gray-200'}`}
+              />
+
+              {/* Étape 3 — Résultats */}
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    isReleased ? 'bg-[#7069F4] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  {isReleased ? (
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
+                </div>
+                <span
+                  className={`text-center text-xs font-medium ${
+                    isReleased ? 'text-[#7069F4]' : 'text-gray-400'
+                  }`}
+                >
+                  {isReleased ? (
+                    <>Résultats<br />disponibles&nbsp;!</>
+                  ) : (
+                    <>Résultats<br />en préparation</>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* CTA si résultats disponibles */}
         {isReleased ? (
           <div className="mb-6 text-center">
             <Link href={`/client/results/${testId}`}>
-              <Button className="w-full bg-[#7069F4] hover:bg-[#5B54D6]">
+              <Button className="w-full bg-[#20808D] hover:bg-[#1a6b76]">
                 Voir mes résultats
               </Button>
             </Link>

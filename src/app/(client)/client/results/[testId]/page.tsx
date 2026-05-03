@@ -2,12 +2,14 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { FileDown } from 'lucide-react'
 import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
 import { getClientTestDetail } from '@/app/actions/client-data'
 import { getProfileIntelligenceData } from '@/app/actions/profile-intelligence'
 import { RadarChart } from '@/components/ui/radar-chart'
 import { SubcompetenceBar } from '@/components/test/SubcompetenceBar'
 import { ProfileCard } from '@/components/client/ProfileCard'
 import { ClientProfileView } from '@/components/profile-intelligence/ClientProfileView'
+import { ProfileTeaser } from '@/components/profile-intelligence/ProfileTeaser'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -35,6 +37,26 @@ export default async function ClientResultsPage({ params }: PageProps) {
   // Valider le format UUID avant d'interroger la base
   const uuidSchema = z.string().uuid()
   if (!uuidSchema.safeParse(testId).success) notFound()
+
+  // Détecte le mode d'affichage : source authoritative = clients.coach_id
+  // (spec : "const client = await getClient(userId); hasCoach = client?.coach_id !== null")
+  const supabase = await createClient()
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser()
+  if (!authUser) notFound()
+
+  const { data: clientRow, error: clientErr } = await supabase
+    .from('clients')
+    .select('coach_id')
+    .eq('user_id', authUser.id)
+    .maybeSingle()
+
+  // Échec de lecture = on ne prend pas de risque → notFound plutôt que choisir teaser à tort.
+  if (clientErr) notFound()
+
+  const hasCoach = clientRow?.coach_id !== null && clientRow?.coach_id !== undefined
+  const displayMode: 'teaser' | 'full' = hasCoach ? 'full' : 'teaser'
 
   const [detail, intelligenceData] = await Promise.all([
     getClientTestDetail(testId),
@@ -73,6 +95,47 @@ export default async function ClientResultsPage({ params }: PageProps) {
 
   const top5 = leafScores.slice(0, 5)
   const bottom5 = leafScores.slice(-5).reverse()
+
+  // Mode teaser : rendu simplifié pour athlètes sans coach
+  if (displayMode === 'teaser') {
+    // Recharge le profil avec les champs enrichis pour le teaser (tagline, slug, celebrity_examples)
+    let teaserProfile = null
+    if (profile?.id) {
+      const { data: fullProfile } = await supabase
+        .from('profiles')
+        .select('id, name, family, color, tagline, description, celebrity_examples, slug')
+        .eq('id', profile.id)
+        .single()
+      teaserProfile = fullProfile
+    }
+
+    const top3Forces = leafScores.slice(0, 3).map((l) => ({ name: l.name, score: l.score }))
+    const top3Axes = leafScores.slice(-3).reverse().map((l) => ({ name: l.name, score: l.score }))
+    const domainScoresForRadar = domainNodes.map((d) => ({
+      name: d.name,
+      score: getScore(d.id),
+    }))
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[#1A1A2E]">
+            Votre profil mental
+          </h1>
+          <Badge variant="outline">{test.definition_name}</Badge>
+        </div>
+        <ProfileTeaser
+          profile={teaserProfile}
+          globalScore={globalScore ?? null}
+          globalPercentile={globalPercentile}
+          top3Forces={top3Forces}
+          top3Axes={top3Axes}
+          domainScores={domainScoresForRadar}
+          testDefinitionName="athlètes"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">

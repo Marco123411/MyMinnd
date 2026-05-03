@@ -13,6 +13,14 @@ export const registerSchema = z.object({
   prenom: z.string().optional(),
 })
 
+// Inscription publique athlète — crée un client autonome (sans coach)
+export const registerAthleteSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(8, 'Minimum 8 caractères'),
+  nom: z.string().min(1, 'Nom requis').max(100),
+  prenom: z.string().min(1, 'Prénom requis').max(100),
+})
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Email invalide'),
 })
@@ -85,6 +93,7 @@ export const changePasswordSchema = z
 
 export type LoginFormData = z.infer<typeof loginSchema>
 export type RegisterFormData = z.infer<typeof registerSchema>
+export type RegisterAthleteFormData = z.infer<typeof registerAthleteSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 export type CompleteProfileFormData = z.infer<typeof completeProfileSchema>

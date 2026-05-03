@@ -1,28 +1,77 @@
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let userRole: string | null = null
+  if (user) {
+    const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
+    userRole = data?.role ?? null
+  }
+
+  const athleteHref = userRole === 'client' ? '/test/pma/start' : '/register/athlete'
+  const athleteCtaLabel = userRole === 'client' ? 'Commencer mon test' : 'Passez le test gratuitement'
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background to-muted flex flex-col items-center justify-center p-8">
+    <main className="min-h-screen bg-gradient-to-b from-[#E8F4F5] to-white flex flex-col items-center justify-center p-8">
       <div className="max-w-2xl mx-auto text-center space-y-6">
         <Badge variant="secondary" className="text-sm px-4 py-1.5">
           MINND Mental Performance
         </Badge>
-        <h1 className="text-5xl font-bold tracking-tight">
-          Bienvenue sur{' '}
-          <span className="text-[#7069F4]">MINND</span>
+        <h1 className="text-5xl font-bold tracking-tight text-[#1A1A2E]">
+          Bienvenue sur <span className="text-[#20808D]">MINND</span>
         </h1>
         <p className="text-xl text-muted-foreground">
-          Plateforme de performance mentale pour coachs et athlètes.
+          Découvrez votre profil mental et trouvez un préparateur pour aller plus loin.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <Button asChild size="lg" className="bg-[#7069F4] hover:bg-[#5B54D6] text-white min-w-40">
+
+        {/* CTA principal athlète */}
+        <div className="pt-4">
+          <Button
+            asChild
+            size="lg"
+            className="bg-[#20808D] hover:bg-[#1a6b76] text-white h-14 px-8 text-lg min-w-64"
+          >
+            <Link href={athleteHref}>{athleteCtaLabel}</Link>
+          </Button>
+          <p className="mt-3 text-sm text-muted-foreground">
+            155 questions • 15-20 minutes • Résultats immédiats
+          </p>
+        </div>
+
+        {/* Séparateur */}
+        <div className="pt-6 pb-2">
+          <div className="inline-flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="h-px w-12 bg-gray-300" />
+            <span>ou</span>
+            <span className="h-px w-12 bg-gray-300" />
+          </div>
+        </div>
+
+        {/* CTAs secondaires */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild size="lg" variant="outline" className="min-w-40">
             <Link href="/login">Connexion</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="min-w-40">
-            <Link href="/register">Créer un compte</Link>
+            <Link href="/register">Espace préparateur</Link>
           </Button>
+        </div>
+
+        {/* Lien marketplace */}
+        <div className="pt-4">
+          <Link
+            href="/marketplace"
+            className="text-sm text-[#20808D] hover:underline"
+          >
+            Explorer l&apos;annuaire des préparateurs mentaux →
+          </Link>
         </div>
       </div>
     </main>

@@ -87,5 +87,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${base}/login?error=invalid_role`)
   }
 
+  // Athlète auto-inscrit (client + contexte sport déjà défini) → PMA direct
+  if (parsedRole.data === 'client' && userData.context === 'sport') {
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('coach_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (clientRow && clientRow.coach_id === null) {
+      return NextResponse.redirect(`${base}/test/pma/start`)
+    }
+  }
+
   return redirectHome(parsedRole.data)
 }

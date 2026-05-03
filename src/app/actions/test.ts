@@ -110,13 +110,15 @@ export async function completeTestAction(
   // Vérification propriété (lecture seule — le write atomique viendra après)
   const { data: test, error: testError } = await supabase
     .from('tests')
-    .select('id, test_definition_id, level_slug, status, coach_id')
+    .select('id, test_definition_id, level_slug, status, coach_id, test_definitions!inner(slug)')
     .eq('id', testId)
     .eq('user_id', user.id)
     .single()
 
   if (testError || !test) return { error: 'Test introuvable' }
   if (test.status === 'completed') return { error: null } // déjà complété, idempotent
+
+  const testDefSlug = (test.test_definitions as unknown as { slug: string } | null)?.slug ?? null
 
   // Admin client requis pour lire les tables restreintes (normative_stats, centroids)
   // et écrire test_scores / score_global (révoqués pour authenticated)
@@ -151,6 +153,10 @@ export async function completeTestAction(
   }
 
   // Mise à jour atomique du statut (WHERE status='in_progress' évite les doublons)
+  // Auto-release des résultats en mode teaser UNIQUEMENT pour les athlètes auto-inscrits
+  // passant le PMA (slug='pma' + coach_id IS NULL). Les tests cognitifs, autres tests
+  // coach-initiés ou tests dont le coach a été retiré restent sous contrôle coach.
+  const autoRelease = test.coach_id === null && testDefSlug === 'pma'
   const { data: locked, error: lockError } = await admin
     .from('tests')
     .update({
@@ -158,6 +164,7 @@ export async function completeTestAction(
       completed_at: new Date().toISOString(),
       score_global: scoring.globalScore,
       profile_id: scoring.profileId,
+      ...(autoRelease ? { results_released_at: new Date().toISOString() } : {}),
     })
     .eq('id', testId)
     .eq('status', 'in_progress')
