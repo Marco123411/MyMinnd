@@ -160,21 +160,43 @@ WHERE table_schema = 'public'
 -- Information uniquement, pas un blocage. Permet à l'utilisateur de
 -- décider si une sauvegarde additionnelle des données métier vaut le
 -- coup avant DROP (par ex. exporter en CSV).
+--
+-- Tolérant aux tables absentes : si une table de la liste n'existe pas
+-- dans la BDD, l'audit le signale au lieu d'échouer. Les résultats
+-- apparaissent dans l'onglet "Results" (Supabase SQL editor) ou en
+-- sortie de psql.
 
-SELECT 'cognitive_trials'             AS table_name, count(*) FROM public.cognitive_trials
-UNION ALL SELECT 'cognitive_sessions',        count(*) FROM public.cognitive_sessions
-UNION ALL SELECT 'cognitive_baselines',       count(*) FROM public.cognitive_baselines
-UNION ALL SELECT 'cognitive_normative_stats', count(*) FROM public.cognitive_normative_stats
-UNION ALL SELECT 'cognitive_test_definitions',count(*) FROM public.cognitive_test_definitions
-UNION ALL SELECT 'cognitive_test_presets',    count(*) FROM public.cognitive_test_presets
-UNION ALL SELECT 'program_exercise_cognitive_types', count(*) FROM public.program_exercise_cognitive_types
-UNION ALL SELECT 'expert_profiles',           count(*) FROM public.expert_profiles
-UNION ALL SELECT 'profile_intelligence',      count(*) FROM public.profile_intelligence
-UNION ALL SELECT 'profile_centroids',         count(*) FROM public.profile_centroids
-UNION ALL SELECT 'profile_compatibility',     count(*) FROM public.profile_compatibility
-UNION ALL SELECT 'study_reference_data',      count(*) FROM public.study_reference_data
-UNION ALL SELECT 'elite_markers',             count(*) FROM public.elite_markers
-UNION ALL SELECT 'global_predictors',         count(*) FROM public.global_predictors
+DROP TABLE IF EXISTS pg_temp.phase4_audit_volumes;
+CREATE TEMP TABLE pg_temp.phase4_audit_volumes (
+  table_name text PRIMARY KEY,
+  row_count  bigint,
+  status     text
+);
+
+DO $$
+DECLARE
+  t text;
+  n bigint;
+BEGIN
+  FOR t IN SELECT unnest(ARRAY[
+    'cognitive_trials','cognitive_sessions','cognitive_baselines',
+    'cognitive_normative_stats','cognitive_test_definitions',
+    'cognitive_test_presets','program_exercise_cognitive_types',
+    'expert_profiles','profile_intelligence','profile_centroids',
+    'profile_compatibility','study_reference_data','elite_markers',
+    'global_predictors'
+  ]) LOOP
+    IF to_regclass('public.' || t) IS NULL THEN
+      INSERT INTO pg_temp.phase4_audit_volumes VALUES (t, NULL, 'table absente');
+    ELSE
+      EXECUTE format('SELECT count(*) FROM public.%I', t) INTO n;
+      INSERT INTO pg_temp.phase4_audit_volumes VALUES (t, n, 'présente');
+    END IF;
+  END LOOP;
+END $$;
+
+SELECT table_name, row_count, status
+FROM pg_temp.phase4_audit_volumes
 ORDER BY table_name;
 
 
