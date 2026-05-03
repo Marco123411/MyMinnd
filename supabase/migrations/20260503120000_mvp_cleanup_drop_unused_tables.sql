@@ -35,6 +35,21 @@ SET statement_timeout = '120s';
 BEGIN;
 
 -- =====================================================================
+-- 0a. Désarmer les triggers du domaine cognitif AVANT toute mutation
+--     - le trigger enforce_cognitive_session_transitions sur
+--       cognitive_sessions valide les transitions de status. Il
+--       interfère avec les UPDATE en cascade qu'on va déclencher
+--       (programme_etapes DELETE → program_exercises DELETE CASCADE
+--        → cognitive_sessions UPDATE SET program_exercise_id=NULL).
+--     - On drop la fonction avec CASCADE : tous les triggers qui
+--       l'utilisent disparaissent. Les tables cognitives sont de
+--       toute façon dropées plus bas.
+-- =====================================================================
+
+DROP FUNCTION IF EXISTS public.enforce_cognitive_session_transitions() CASCADE;
+
+
+-- =====================================================================
 -- 0. Pré-flight : nettoyer les rows qui violeraient les CHECK
 --    reconstruits plus bas. Comptages logués pour audit.
 -- =====================================================================
