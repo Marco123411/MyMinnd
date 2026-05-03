@@ -118,29 +118,7 @@ COMMIT;
 
 **Note** : `CASCADE` n'est utilisé qu'en dernier recours. Si l'audit 4.1 montre que des FK extérieures pointent vers ces tables, traiter les FK explicitement avant le DROP plutôt que d'utiliser `CASCADE` aveuglément.
 
-### Tâche 4.3 — Migration de simplification (`dispatches` et `payments`)
-
-Créer une seconde migration :
-
-```
-supabase/migrations/<timestamp>_mvp_simplify_dispatches_and_payments.sql
-```
-
-**`dispatches.status`** :
-- Lister les valeurs actuelles : `SELECT DISTINCT status FROM dispatches;`
-- Si la colonne est un `enum` Postgres : créer un nouveau enum avec `draft / released / archived`, migrer les données, puis remplacer
-- Si c'est un `text` ou `varchar` avec un check constraint : modifier le check constraint
-- Mapper les valeurs existantes :
-  - `pending`, `assigned`, `reviewed` → `draft`
-  - `released` → `released`
-  - `archived` → `archived`
-
-**`payments.tier`** :
-- Lister les valeurs actuelles
-- Mapper toutes les valeurs vers un seul tier `coach` (ou simplement `active` / `inactive` selon la logique souhaitée)
-- Modifier le check constraint ou enum en conséquence
-
-**Demander confirmation à l'utilisateur** avant d'écrire cette migration, car le mapping des données existantes dépend du contexte business.
+> **Note** : la simplification de `dispatches.status` et `payments.type` (ex-Tâche 4.3) est **reportée à une Phase 5** — voir `mvp-cleanup/phase-5-simplifications.md`. Ces deux tables sont conservées telles quelles pour le launch ; leurs valeurs actuelles fonctionnent avec le code MVP. La simplification sera tranchée après le retour d'expérience opérationnel.
 
 ### Tâche 4.4 — Test sur staging
 
@@ -153,9 +131,7 @@ supabase/migrations/<timestamp>_mvp_simplify_dispatches_and_payments.sql
    - Annotation + publication
    - Programme + séance
    - Souscription Stripe
-4. Si tout passe : appliquer la migration 4.3
-5. Re-tester les flows
-6. Si un test échoue : `git revert` la migration et investiguer
+4. Si un test échoue : `git revert` la migration et investiguer
 
 ### Tâche 4.5 — Application en production
 
@@ -165,16 +141,13 @@ supabase/migrations/<timestamp>_mvp_simplify_dispatches_and_payments.sql
 2. Annoncer la fenêtre de maintenance (si nécessaire)
 3. Appliquer la migration 4.2 en prod
 4. Vérifier l'application
-5. Appliquer la migration 4.3 en prod
-6. Re-vérifier
-7. Communiquer la fin de l'opération
+5. Communiquer la fin de l'opération
 
 ## Critères de validation
 
 - [ ] Audit FK passé sans dépendance résiduelle
 - [ ] Migration 4.2 appliquée sur staging avec succès
 - [ ] Tous les flows MVP fonctionnent sur staging après migration
-- [ ] Migration 4.3 appliquée et validée sur staging
 - [ ] Sauvegarde prod confirmée avant application
 - [ ] Migration appliquée en prod sans incident
 - [ ] Branche `mvp-launch` mergée dans `main` après validation finale
