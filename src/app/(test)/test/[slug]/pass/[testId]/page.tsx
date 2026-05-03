@@ -28,24 +28,13 @@ export default async function PassPage({ params }: PageProps) {
   if (testError || !test) redirect(`/test/${slug}`)
   if (test.status === 'completed') redirect(`/test/${slug}/merci/${testId}`)
 
-  // Récupère les questions selon le niveau du test
-  const questionsQuery =
-    test.level_slug === 'discovery'
-      ? supabase
-          .from('questions')
-          .select('id, text_fr, text_en, is_reversed, level_required, order_index, competency_node_id, test_definition_id, is_active')
-          .eq('test_definition_id', test.test_definition_id)
-          .eq('is_active', true)
-          .eq('level_required', 'discovery')
-          .order('order_index')
-      : supabase
-          .from('questions')
-          .select('id, text_fr, text_en, is_reversed, level_required, order_index, competency_node_id, test_definition_id, is_active')
-          .eq('test_definition_id', test.test_definition_id)
-          .eq('is_active', true)
-          .order('order_index')
-
-  const { data: questions } = await questionsQuery
+  // Charge toutes les questions actives — un seul niveau de test en MVP
+  const { data: questions } = await supabase
+    .from('questions')
+    .select('id, text_fr, text_en, is_reversed, level_required, order_index, competency_node_id, test_definition_id, is_active')
+    .eq('test_definition_id', test.test_definition_id)
+    .eq('is_active', true)
+    .order('order_index')
 
   // Récupère les réponses existantes (reprise)
   const { data: existingResponses } = await supabase

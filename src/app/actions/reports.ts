@@ -146,13 +146,12 @@ export async function getCoachAlerts(): Promise<{
       .eq('coach_id', user.id)
       .eq('status', 'pending')
       .lt('created_at', sevenDaysAgo.toISOString()),
-    // Tests Complete/Expert complétés sans rapport PDF généré
+    // Tests complétés sans rapport PDF généré
     supabase
       .from('tests')
       .select('*', { count: 'exact', head: true })
       .eq('coach_id', user.id)
       .eq('status', 'completed')
-      .in('level_slug', ['complete', 'expert'])
       .is('report_url', null),
   ])
 

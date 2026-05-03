@@ -8,7 +8,9 @@ import { TestCompletedCoachEmail } from '@/emails/TestCompletedCoachEmail'
 
 const createTestSchema = z.object({
   testDefinitionId: z.string().uuid(),
-  levelSlug: z.enum(['discovery', 'complete', 'expert']),
+  // MVP : un seul niveau de test (Phase 3.7). La colonne BDD reste un text
+  // pour rétrocompatibilité (Phase 4 nettoiera les anciennes valeurs).
+  levelSlug: z.literal('complete'),
   coachId: z.string().uuid().optional(),
 })
 
@@ -110,7 +112,7 @@ export async function completeTestAction(
   // Vérification propriété (lecture seule — le write atomique viendra après)
   const { data: test, error: testError } = await supabase
     .from('tests')
-    .select('id, test_definition_id, level_slug, status, coach_id, test_definitions!inner(slug)')
+    .select('id, test_definition_id, status, coach_id, test_definitions!inner(slug)')
     .eq('id', testId)
     .eq('user_id', user.id)
     .single()
@@ -125,7 +127,7 @@ export async function completeTestAction(
   const admin = createAdminClient()
 
   // Calcul complet des scores via le moteur (feuilles, domaines, global, percentiles, profil)
-  const scoring = await computeTestScores(testId, test.test_definition_id, test.level_slug, admin)
+  const scoring = await computeTestScores(testId, test.test_definition_id, admin)
 
   // Construit les lignes test_scores
   const testScores: {
@@ -154,8 +156,8 @@ export async function completeTestAction(
 
   // Mise à jour atomique du statut (WHERE status='in_progress' évite les doublons)
   // Auto-release des résultats en mode teaser UNIQUEMENT pour les athlètes auto-inscrits
-  // passant le PMA (slug='pma' + coach_id IS NULL). Les tests cognitifs, autres tests
-  // coach-initiés ou tests dont le coach a été retiré restent sous contrôle coach.
+  // passant le PMA (slug='pma' + coach_id IS NULL). Les autres tests coach-initiés
+  // ou tests dont le coach a été retiré restent sous contrôle coach.
   const autoRelease = test.coach_id === null && testDefSlug === 'pma'
   const { data: locked, error: lockError } = await admin
     .from('tests')
@@ -212,7 +214,6 @@ export async function completeTestAction(
           coachName: coachFirstName,
           clientName: clientFullName,
           testName,
-          levelSlug: test.level_slug,
           globalScore: scoring.globalScore ?? 0,
           annotateUrl,
         }),

@@ -7,8 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScoreDisplay } from '@/components/ui/score-display'
-import { RadarChart } from '@/components/ui/radar-chart'
 import { NotesEditor } from './NotesEditor'
 import { SendTestModal } from '@/components/coach/SendTestModal'
 import { TestHistoryCoach } from '@/components/coach/TestHistoryCoach'
@@ -24,7 +22,6 @@ import { getClientProgrammesAction } from '@/app/actions/programmes'
 import { ProgrammeEtapesList } from '@/components/coach/ProgrammeEtapesList'
 import { CreateProgrammeDialog } from '@/components/coach/CreateProgrammeDialog'
 import { getExercisesAction } from '@/app/actions/exercises'
-import { ProfileIntelligenceTab } from './ProfileIntelligenceTab'
 import { ClientSessionTimeline } from '@/components/coach/ClientSessionTimeline'
 import type { ClientContext, TestLevelConfig } from '@/types'
 
@@ -66,35 +63,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   // Admin client nécessaire pour lire invitation_token (révoqué pour authenticated)
   const admin = createAdminClient()
 
-  // Requêtes parallèles : dernier test complété + définitions + historique + exercices
+  // Requêtes parallèles : définitions + historique + exercices + timeline + programmes
   const [
-    { data: lastTest },
     { data: testDefinitionsRaw },
     { data: testHistory },
     { data: exercises },
     { data: timeline },
     { data: programmes },
   ] = await Promise.all([
-    // Dernier test complété pour le radar/score
-    client.user_id
-      ? supabase
-          .from('tests')
-          .select(`
-            id,
-            score_global,
-            completed_at,
-            level_slug,
-            profiles ( name, color ),
-            test_definitions ( name )
-          `)
-          .eq('coach_id', coachId)
-          .eq('user_id', client.user_id)
-          .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-
     // Définitions de tests actives pour le modal
     admin
       .from('test_definitions')
@@ -118,39 +94,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       ? getClientProgrammesAction(client.user_id)
       : Promise.resolve({ data: [] }),
   ])
-
-  // Scores par domaine du dernier test (dépend de lastTest.id)
-  let radarData: { subject: string; value: number; fullMark: number }[] = []
-  if (lastTest?.id) {
-    const { data: domainScores } = await supabase
-      .from('test_scores')
-      .select(`
-        score,
-        competency_tree ( name, depth )
-      `)
-      .eq('test_id', lastTest.id)
-      .eq('entity_type', 'competency_node')
-
-    if (domainScores) {
-      radarData = domainScores
-        .filter((s) => {
-          const node = Array.isArray(s.competency_tree) ? s.competency_tree[0] : s.competency_tree
-          return (node as { depth: number } | null)?.depth === 0
-        })
-        .map((s) => {
-          const node = Array.isArray(s.competency_tree) ? s.competency_tree[0] : s.competency_tree
-          return {
-            subject: (node as { name: string } | null)?.name ?? '',
-            value: s.score,
-            fullMark: 10,
-          }
-        })
-    }
-  }
-
-  const profile = lastTest
-    ? (Array.isArray(lastTest.profiles) ? lastTest.profiles[0] : lastTest.profiles) as { name: string; color: string } | null
-    : null
 
   // Normalise les test_definitions pour le modal (sous-ensemble des champs requis)
   const testDefinitions: TestDefinitionForModal[] = (testDefinitionsRaw ?? []).map((d) => ({
@@ -278,9 +221,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       </Card>
 
       {/* Onglets */}
-      <Tabs defaultValue="profil">
+      <Tabs defaultValue="tests">
         <TabsList>
-          <TabsTrigger value="profil">Profil</TabsTrigger>
           <TabsTrigger value="tests">
             Tests
             {testHistory && testHistory.length > 0 && (
@@ -296,23 +238,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             )}
           </TabsTrigger>
         </TabsList>
-
-        {/* Profil — Intelligence Layer étape 25 */}
-        <TabsContent value="profil" className="mt-4">
-          {!client.user_id ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Ce client n&apos;a pas encore de compte MINND lié.
-              </CardContent>
-            </Card>
-          ) : (
-            <ProfileIntelligenceTab
-              lastTestId={lastTest?.id ?? null}
-              levelSlug={lastTest?.level_slug ?? null}
-              hasProfile={!!profile}
-            />
-          )}
-        </TabsContent>
 
         {/* Tests */}
         <TabsContent value="tests" className="mt-4">

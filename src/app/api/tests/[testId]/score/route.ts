@@ -38,8 +38,8 @@ export async function POST(request: Request, { params }: RouteParams) {
   // Vérifie que le test existe et appartient à l'utilisateur (ou admin)
   // Note: Supabase builder is immutable — must capture the returned value of each .eq() call
   const { data: test, error: testError } = await (isAdmin
-    ? supabase.from('tests').select('id, test_definition_id, level_slug, status, user_id').eq('id', testId).single()
-    : supabase.from('tests').select('id, test_definition_id, level_slug, status, user_id').eq('id', testId).eq('user_id', user.id).single()
+    ? supabase.from('tests').select('id, test_definition_id, status, user_id').eq('id', testId).single()
+    : supabase.from('tests').select('id, test_definition_id, status, user_id').eq('id', testId).eq('user_id', user.id).single()
   )
   if (testError || !test) {
     return NextResponse.json({ error: 'Test introuvable' }, { status: 404 })
@@ -51,7 +51,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   const admin = createAdminClient()
 
   // Calcul des scores via le moteur
-  const scoring = await computeTestScores(test.id, test.test_definition_id, test.level_slug, admin)
+  const scoring = await computeTestScores(test.id, test.test_definition_id, admin)
 
   // Construit les lignes test_scores
   const testScores: {

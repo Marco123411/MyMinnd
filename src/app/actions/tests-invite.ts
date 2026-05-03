@@ -19,7 +19,8 @@ function getResend() {
 const createInvitationSchema = z.object({
   clientId: z.string().uuid(),
   testDefinitionId: z.string().uuid(),
-  levelSlug: z.enum(['discovery', 'complete', 'expert']),
+  // MVP : un seul niveau de test (Phase 3.7).
+  levelSlug: z.literal('complete'),
 })
 
 // Construit l'URL d'invitation à partir du token
@@ -37,21 +38,21 @@ function formatDateFr(iso: string): string {
   })
 }
 
-// Helper : vérifie auth + rôle coach, retourne user + subscription_tier
+// Helper : vérifie auth + rôle coach
 async function requireCoach() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { user: null, tier: null, error: 'Non authentifié' as const }
+  if (!user) return { user: null, error: 'Non authentifié' as const }
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role, subscription_tier')
+    .select('role')
     .eq('id', user.id)
     .single()
   if (!profile || profile.role !== 'coach') {
-    return { user: null, tier: null, error: 'Accès réservé aux coachs' as const }
+    return { user: null, error: 'Accès réservé aux coachs' as const }
   }
-  return { user, tier: profile.subscription_tier as string, error: null }
+  return { user, error: null }
 }
 
 /**
@@ -67,13 +68,8 @@ export async function createInvitationAction(
   const parsed = createInvitationSchema.safeParse({ clientId, testDefinitionId, levelSlug })
   if (!parsed.success) return { data: null, error: parsed.error.issues[0].message }
 
-  const { user, tier, error: authError } = await requireCoach()
+  const { user, error: authError } = await requireCoach()
   if (!user) return { data: null, error: authError }
-
-  // Vérification serveur du tier : seuls les coachs expert peuvent envoyer complete/expert
-  if (parsed.data.levelSlug !== 'discovery' && tier !== 'expert') {
-    return { data: null, error: 'Votre abonnement ne permet pas ce niveau de test' }
-  }
 
   const admin = createAdminClient()
 

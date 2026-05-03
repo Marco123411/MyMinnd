@@ -12,8 +12,6 @@ import type { SubscriptionTier, SubscriptionStatus } from '@/types'
 interface PriceIds {
   proMonthly: string
   proAnnual: string
-  expertMonthly: string
-  expertAnnual: string
 }
 
 interface PricingClientProps {
@@ -41,7 +39,6 @@ const TIER_CONFIGS: TierConfig[] = [
     annualTotal: 0,
     features: [
       'CRM basique',
-      '2 demandes de dispatch / mois',
       'Tests discovery illimités',
     ],
   },
@@ -53,24 +50,11 @@ const TIER_CONFIGS: TierConfig[] = [
     annualTotal: 348,
     features: [
       'CRM complet',
-      'Tests illimités (Complete inclus)',
+      'Tests illimités',
       'Séances de suivi',
-      "Jusqu'à 30 profils actifs",
+      'Profils clients illimités',
       'Rapports PDF',
-    ],
-  },
-  {
-    id: 'expert',
-    name: 'Coach Expert',
-    monthlyPrice: 59,
-    annualMonthlyPrice: 49,
-    annualTotal: 588,
-    features: [
-      'Tout illimité',
       'Exercices personnalisés',
-      'Badge certifié',
-      'Priorité dispatch',
-      'Sessions Expert (Level 3)',
     ],
     recommended: true,
   },
@@ -79,7 +63,6 @@ const TIER_CONFIGS: TierConfig[] = [
 const TIER_LABELS: Record<SubscriptionTier, string> = {
   free: 'Gratuit',
   pro: 'Coach Pro',
-  expert: 'Coach Expert',
 }
 
 export function PricingClient({ currentTier, currentStatus, priceIds }: PricingClientProps) {
@@ -101,7 +84,6 @@ export function PricingClient({ currentTier, currentStatus, priceIds }: PricingC
 
   function getPriceId(tierId: SubscriptionTier): string {
     if (tierId === 'pro') return isAnnual ? priceIds.proAnnual : priceIds.proMonthly
-    if (tierId === 'expert') return isAnnual ? priceIds.expertAnnual : priceIds.expertMonthly
     return ''
   }
 

@@ -4,12 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
 import { getOrCreateStripeCustomer } from '@/lib/stripe/customer'
 
-// Team prices exclus : pas de mapping tier dans le webhook (F12)
+// Un seul abonnement coach (Pro mensuel/annuel) — Phase 3 MVP
 const ALLOWED_PRICE_IDS = new Set([
   process.env.STRIPE_PRICE_PRO_MONTHLY,
   process.env.STRIPE_PRICE_PRO_ANNUAL,
-  process.env.STRIPE_PRICE_EXPERT_MONTHLY,
-  process.env.STRIPE_PRICE_EXPERT_ANNUAL,
 ].filter(Boolean) as string[])
 
 const schema = z.object({

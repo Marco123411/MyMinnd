@@ -1,15 +1,11 @@
-import type { MentalProfile, TestLevelSlug } from '@/types'
+import type { MentalProfile } from '@/types'
 
 interface ProfileCardProps {
   profile: MentalProfile | null
-  levelSlug: TestLevelSlug
 }
 
-export function ProfileCard({ profile, levelSlug }: ProfileCardProps) {
-  const isDiscovery = levelSlug === 'discovery'
-
-  // Pas de profil disponible pour ce niveau → rien à afficher
-  if (isDiscovery || !profile) {
+export function ProfileCard({ profile }: ProfileCardProps) {
+  if (!profile) {
     return null
   }
 

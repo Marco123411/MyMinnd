@@ -45,13 +45,14 @@ export async function POST(request: Request, { params }: RouteParams) {
     .eq('id', user.id)
     .single()
   const isAdmin = userProfile?.role === 'admin'
+  const isCoachRole = userProfile?.role === 'coach'
 
   // ── Fetch test + définition ───────────────────────────────────
   const admin = createAdminClient()
 
   const { data: test, error: testError } = await admin
     .from('tests')
-    .select('id, user_id, coach_id, level_slug, status, score_global, profile_id, completed_at, test_definition_id, report_url, test_definitions(name)')
+    .select('id, user_id, coach_id, status, score_global, profile_id, completed_at, test_definition_id, report_url, test_definitions(name)')
     .eq('id', testId)
     .single()
 
@@ -59,20 +60,16 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Test introuvable' }, { status: 404 })
   }
 
-  // Vérification des droits d'accès
+  // Vérification des droits d'accès — un coach légitime doit avoir role='coach'
+  // ET être désigné comme coach_id du test (évite escalade si ancien coach rétrogradé).
   const isOwner = test.user_id === user.id
-  const isCoach = test.coach_id === user.id
+  const isCoach = isCoachRole && test.coach_id === user.id
   if (!isOwner && !isCoach && !isAdmin) {
     return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
   }
 
   if (test.status !== 'completed') {
     return NextResponse.json({ error: 'Le test n\'est pas encore terminé' }, { status: 422 })
-  }
-
-  // Discovery n'inclut pas de rapport PDF
-  if (test.level_slug === 'discovery') {
-    return NextResponse.json({ error: 'Le niveau Discovery n\'inclut pas de rapport PDF' }, { status: 422 })
   }
 
   if (!test.user_id) {
@@ -170,7 +167,6 @@ export async function POST(request: Request, { params }: RouteParams) {
   const reportData: ReportData = {
     test: {
       id: test.id as string,
-      level_slug: test.level_slug as string,
       score_global: test.score_global as number | null,
       completed_at: test.completed_at as string,
       definition_name: definitionName,

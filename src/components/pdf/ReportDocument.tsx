@@ -36,7 +36,6 @@ export interface NodeEntry {
 export interface ReportData {
   test: {
     id: string
-    level_slug: string
     score_global: number | null
     completed_at: string
     definition_name: string
@@ -147,12 +146,7 @@ function PageHeader({ testName, clientName }: { testName: string; clientName: st
 
 // ── Page 1: Cover ─────────────────────────────────────────────
 function CoverPage({ data }: { data: ReportData }) {
-  const levelLabel =
-    data.test.level_slug === 'expert'
-      ? 'Expert'
-      : data.test.level_slug === 'complete'
-        ? 'Complet'
-        : 'Discovery'
+  const levelLabel = 'Profil mental'
   const contextMap: Record<string, string> = {
     sport: 'Sport',
     corporate: 'Corporate',
@@ -809,13 +803,11 @@ function LongitudinalPage({ data }: { data: ReportData }) {
 
 // ── Main export ───────────────────────────────────────────────
 export function ReportDocument({ data }: { data: ReportData }) {
-  const isDiscovery = data.test.level_slug === 'discovery'
-
   return (
     <Document>
       <CoverPage data={data} />
       <ScoreOverviewPage data={data} />
-      {!isDiscovery && <SubCompetenciesPage data={data} />}
+      <SubCompetenciesPage data={data} />
       {data.profile && <ProfilePage data={data} />}
       <ForceWeaknessPage data={data} />
       {data.profile && <RecommendationsPage data={data} />}

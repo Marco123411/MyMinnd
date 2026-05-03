@@ -38,13 +38,11 @@ const ROLE_COLORS: Record<string, string> = {
 const TIER_LABELS: Record<string, string> = {
   free: 'Gratuit',
   pro: 'Pro',
-  expert: 'Expert',
 }
 
 const TIER_COLORS: Record<string, string> = {
   free: 'bg-gray-100 text-gray-600',
   pro: 'bg-[#F1F0FE] text-[#7069F4]',
-  expert: 'bg-[#FF9F40]/20 text-[#EC638B]',
 }
 
 function formatDate(iso: string | null): string {
@@ -143,7 +141,6 @@ export function UsersPageClient({ initialUsers }: Props) {
             <SelectItem value="all">Tous les tiers</SelectItem>
             <SelectItem value="free">Gratuit</SelectItem>
             <SelectItem value="pro">Pro</SelectItem>
-            <SelectItem value="expert">Expert</SelectItem>
           </SelectContent>
         </Select>
 

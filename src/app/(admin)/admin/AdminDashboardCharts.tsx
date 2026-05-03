@@ -88,11 +88,11 @@ export function AdminDashboardCharts({ charts }: Props) {
         </CardContent>
       </Card>
 
-      {/* Tests par type sur 30 jours */}
+      {/* Tests profilage sur 30 jours */}
       <Card className="lg:col-span-3">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Tests complétés par type — 30 derniers jours
+            Tests profilage complétés — 30 derniers jours
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -106,8 +106,7 @@ export function AdminDashboardCharts({ charts }: Props) {
               <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip />
               <Legend iconType="square" iconSize={10} />
-              <Bar dataKey="profilage" name="Profilage" stackId="a" fill="#7069F4" />
-              <Bar dataKey="cognitif" name="Cognitif" stackId="a" fill="#3C3CD6" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="profilage" name="Profilage" fill="#7069F4" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

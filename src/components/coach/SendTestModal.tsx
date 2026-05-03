@@ -29,14 +29,8 @@ interface SendTestModalProps {
   testDefinitions: TestDefinitionForModal[]
 }
 
-// Niveau MVP unique : on attribue toujours "complete", fallback sur le premier niveau disponible
+// Niveau MVP unique : tous les tests sont créés en "complete" en Phase 3.7.
 const DEFAULT_LEVEL: TestLevelSlug = 'complete'
-
-function pickDefaultLevel(levels: TestLevelConfig[] | undefined): TestLevelSlug {
-  if (!levels || levels.length === 0) return DEFAULT_LEVEL
-  const complete = levels.find((l) => l.slug === DEFAULT_LEVEL)
-  return (complete?.slug ?? levels[0].slug) as TestLevelSlug
-}
 
 // Ordre de priorité par context pour afficher le test le plus pertinent en premier
 const CONTEXT_PRIORITY: Record<ClientContext, string[]> = {
@@ -102,9 +96,7 @@ export function SendTestModal({
     if (!selectedDefinitionId) return
     setIsLoading(true)
     setError(null)
-    const def = testDefinitions.find((d) => d.id === selectedDefinitionId)
-    const level = pickDefaultLevel(def?.levels)
-    const result = await createInvitationAction(clientId, selectedDefinitionId, level)
+    const result = await createInvitationAction(clientId, selectedDefinitionId, DEFAULT_LEVEL)
     setIsLoading(false)
     if (result.error || !result.data) { setError(result.error ?? 'Erreur inattendue'); return }
     setInviteUrl(result.data.inviteUrl)

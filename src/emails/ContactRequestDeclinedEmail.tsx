@@ -6,7 +6,6 @@ import {
   Container,
   Heading,
   Text,
-  Button,
   Hr,
   Section,
   Img,
@@ -16,14 +15,12 @@ interface ContactRequestDeclinedEmailProps {
   athleteName: string
   coachName: string
   coachMessage?: string | null
-  marketplaceUrl: string
 }
 
 export function ContactRequestDeclinedEmail({
   athleteName,
   coachName,
   coachMessage,
-  marketplaceUrl,
 }: ContactRequestDeclinedEmailProps) {
   const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://myminnd.com'}/logo.png`
   return (
@@ -47,15 +44,6 @@ export function ContactRequestDeclinedEmail({
                 <Text style={messageTextStyle}>« {coachMessage} »</Text>
               </Section>
             )}
-            <Text style={textStyle}>
-              De nombreux autres préparateurs mentaux certifiés MINND sont disponibles sur notre
-              annuaire.
-            </Text>
-            <Section style={buttonSectionStyle}>
-              <Button href={marketplaceUrl} style={buttonStyle}>
-                Consulter l&apos;annuaire
-              </Button>
-            </Section>
           </Section>
           <Hr style={dividerStyle} />
           <Section style={footerStyle}>
@@ -73,7 +61,6 @@ ContactRequestDeclinedEmail.PreviewProps = {
   athleteName: 'Jean',
   coachName: 'Marie Dupont',
   coachMessage: 'Mon agenda est complet pour les 3 prochains mois.',
-  marketplaceUrl: 'https://myminnd.com/marketplace',
 } satisfies ContactRequestDeclinedEmailProps
 
 const bodyStyle: React.CSSProperties = {
@@ -120,17 +107,6 @@ const messageTextStyle: React.CSSProperties = {
   fontStyle: 'italic',
   lineHeight: '1.5',
   margin: '0',
-}
-const buttonSectionStyle: React.CSSProperties = { margin: '24px 0', textAlign: 'center' }
-const buttonStyle: React.CSSProperties = {
-  backgroundColor: '#20808D',
-  borderRadius: '6px',
-  color: '#ffffff',
-  display: 'inline-block',
-  fontSize: '15px',
-  fontWeight: '600',
-  padding: '12px 32px',
-  textDecoration: 'none',
 }
 const footerStyle: React.CSSProperties = { backgroundColor: '#f4f4f5', padding: '20px 32px' }
 const footerTextStyle: React.CSSProperties = {

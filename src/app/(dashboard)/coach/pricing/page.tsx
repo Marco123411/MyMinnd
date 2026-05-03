@@ -8,8 +8,6 @@ function getPriceIds() {
   return {
     proMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? '',
     proAnnual: process.env.STRIPE_PRICE_PRO_ANNUAL ?? '',
-    expertMonthly: process.env.STRIPE_PRICE_EXPERT_MONTHLY ?? '',
-    expertAnnual: process.env.STRIPE_PRICE_EXPERT_ANNUAL ?? '',
   }
 }
 
