@@ -1,7 +1,7 @@
 // User & auth — matches DB schema (public.users)
 export type UserRole = 'client' | 'coach' | 'admin'
 export type ClientContext = 'sport' | 'corporate' | 'wellbeing' | 'coaching'
-export type SubscriptionTier = 'free' | 'pro' | 'expert'
+export type SubscriptionTier = 'free' | 'pro'
 export type SubscriptionStatus = 'active' | 'inactive' | 'past_due' | 'cancelled'
 
 export interface User {

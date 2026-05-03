@@ -8,9 +8,8 @@ const WEBHOOK_SECRET: string = process.env.STRIPE_WEBHOOK_SECRET ?? ''
 
 // Maps a Stripe price ID to a MINND subscription tier — throws on unknown ID (F4)
 function getTierFromPriceId(priceId: string): SubscriptionTier {
-  const { STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_PRO_ANNUAL, STRIPE_PRICE_EXPERT_MONTHLY, STRIPE_PRICE_EXPERT_ANNUAL } = process.env
+  const { STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_PRO_ANNUAL } = process.env
   if (priceId === STRIPE_PRICE_PRO_MONTHLY || priceId === STRIPE_PRICE_PRO_ANNUAL) return 'pro'
-  if (priceId === STRIPE_PRICE_EXPERT_MONTHLY || priceId === STRIPE_PRICE_EXPERT_ANNUAL) return 'expert'
   // Fail-closed : price ID inconnu → erreur explicite, Stripe retentera
   throw new Error(`Price ID Stripe inconnu: ${priceId}`)
 }
@@ -75,52 +74,6 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, user
   if (insertError) throw new Error(`Enregistrement paiement échoué: ${insertError.message}`)
 }
 
-async function handleOneTimePaymentCheckout(session: Stripe.Checkout.Session, userId: string): Promise<void> {
-  const admin = createAdminClient()
-  const levelSlug = session.metadata?.level_slug ?? ''
-  const testId = session.metadata?.test_id || null
-  const paymentType = levelSlug === 'expert' ? 'test_l3' : 'test_l2'
-
-  // Idempotency : vérifier si ce paiement existe déjà (F3)
-  const { data: existing } = await admin
-    .from('payments')
-    .select('id')
-    .contains('metadata', { session_id: session.id })
-    .maybeSingle()
-  if (existing) {
-    // Mise à jour du test même si paiement déjà existant (reprise après crash)
-    if (testId && existing.id) {
-      await admin.from('tests').update({ payment_id: existing.id, status: 'pending' }).eq('id', testId)
-    }
-    return
-  }
-
-  const { data: payment, error: insertError } = await admin
-    .from('payments')
-    .insert({
-      user_id: userId,
-      type: paymentType,
-      amount_cents: session.amount_total ?? 0,
-      currency: (session.currency ?? 'eur').toUpperCase(),
-      stripe_payment_id: typeof session.payment_intent === 'string'
-        ? session.payment_intent
-        : (session.payment_intent?.id ?? null),
-      status: 'succeeded',
-      metadata: { session_id: session.id, test_definition_id: session.metadata?.test_definition_id },
-    })
-    .select('id')
-    .single()
-  if (insertError) throw new Error(`Enregistrement paiement test échoué: ${insertError.message}`)
-
-  if (testId && payment?.id) {
-    const { error: testError } = await admin
-      .from('tests')
-      .update({ payment_id: payment.id, status: 'pending' })
-      .eq('id', testId)
-    if (testError) throw new Error(`Mise à jour test échouée: ${testError.message}`)
-  }
-}
-
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
   const userId = session.metadata?.user_id
   if (!userId) {
@@ -129,9 +82,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
   if (session.mode === 'subscription') {
     await handleSubscriptionCheckout(session, userId)
-  } else if (session.mode === 'payment') {
-    await handleOneTimePaymentCheckout(session, userId)
   }
+  // Mode 'payment' (achat unitaire de test) supprimé en MVP — un seul abonnement coach
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {

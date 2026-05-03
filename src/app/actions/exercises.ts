@@ -182,7 +182,7 @@ export async function createCustomExerciseAction(
 
   const admin = createAdminClient()
 
-  // Vérification rôle coach ou admin + tier expert
+  // Vérification rôle coach ou admin (tier coach simplifié — un seul abonnement)
   const { data: me } = await admin
     .from('users')
     .select('role, subscription_tier')
@@ -192,8 +192,8 @@ export async function createCustomExerciseAction(
   if (!me || (me.role !== 'coach' && me.role !== 'admin')) {
     return { data: null, error: 'Accès réservé aux coachs' }
   }
-  if (me.role === 'coach' && me.subscription_tier !== 'expert') {
-    return { data: null, error: 'La création d\'exercices personnalisés est réservée au tier Expert' }
+  if (me.role === 'coach' && me.subscription_tier === 'free') {
+    return { data: null, error: 'La création d\'exercices personnalisés requiert un abonnement Pro' }
   }
 
   const { data, error: insertError } = await admin

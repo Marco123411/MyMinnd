@@ -138,7 +138,7 @@ export async function getAdminDashboardChartsAction(): Promise<{
   })
 
   // Répartition par tier
-  const tierMap: Record<string, number> = { free: 0, pro: 0, expert: 0 }
+  const tierMap: Record<string, number> = { free: 0, pro: 0 }
   for (const u of tierCounts.data ?? []) {
     const t = u.subscription_tier as string
     if (t in tierMap) tierMap[t]++
@@ -146,7 +146,6 @@ export async function getAdminDashboardChartsAction(): Promise<{
   const tierDistribution = [
     { tier: 'Gratuit', count: tierMap.free },
     { tier: 'Pro', count: tierMap.pro },
-    { tier: 'Expert', count: tierMap.expert },
   ]
 
   // Tests par jour sur 30 jours

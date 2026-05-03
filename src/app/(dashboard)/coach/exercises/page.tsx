@@ -23,7 +23,7 @@ const FORMAT_COLORS: Record<ExerciseFormat, string> = {
   interactive:   'bg-[#7069F4]-100 text-[#7069F4]-700',
 }
 
-async function getUserTier(): Promise<boolean> {
+async function canCreateExercises(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
@@ -33,14 +33,14 @@ async function getUserTier(): Promise<boolean> {
     .select('subscription_tier, role')
     .eq('id', user.id)
     .single()
-  return me?.subscription_tier === 'expert' || me?.role === 'admin'
+  return me?.subscription_tier === 'pro' || me?.role === 'admin'
 }
 
 export default async function ExercisesPage() {
-  // Requêtes parallèles : exercices + tier utilisateur (F10)
+  // Requêtes parallèles : exercices + droit de création (Pro/admin uniquement)
   const [{ data: exercises }, isExpert] = await Promise.all([
     getExercisesAction(),
-    getUserTier(),
+    canCreateExercises(),
   ])
 
   return (
