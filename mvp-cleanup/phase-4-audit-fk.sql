@@ -200,18 +200,46 @@ FROM pg_temp.phase4_audit_volumes
 ORDER BY table_name;
 
 
--- ── 10. État des colonnes simplifiables (Tâche 4.3) ──────────────────
--- Aide au mapping business avant écriture de la migration de
--- simplification.
+-- ── 10. État des colonnes simplifiables (Phase 5) ────────────────────
+-- Aide au mapping business pour la phase de simplification reportée
+-- (mvp-cleanup/phase-5-simplifications.md). Tolérant aux tables
+-- absentes : la table dispatches ou payments peut ne pas encore
+-- exister dans toutes les BDD (dev local, projet pas migré, etc.).
 
-SELECT 'dispatches.status' AS column, status AS value, count(*) AS rows
-FROM public.dispatches
-GROUP BY status
-ORDER BY count(*) DESC;
+DROP TABLE IF EXISTS pg_temp.phase4_audit_status_values;
+CREATE TEMP TABLE pg_temp.phase4_audit_status_values (
+  source     text,
+  value      text,
+  rows       bigint
+);
 
--- payments : la colonne réelle s'appelle `type` (pas `tier`). Confirmer
--- l'intention business avec l'utilisateur si la spec parle de `tier`.
-SELECT 'payments.type' AS column, type AS value, count(*) AS rows
-FROM public.payments
-GROUP BY type
-ORDER BY count(*) DESC;
+DO $$
+BEGIN
+  IF to_regclass('public.dispatches') IS NULL THEN
+    INSERT INTO pg_temp.phase4_audit_status_values
+      VALUES ('dispatches.status', '(table absente)', NULL);
+  ELSE
+    EXECUTE $sql$
+      INSERT INTO pg_temp.phase4_audit_status_values (source, value, rows)
+      SELECT 'dispatches.status', status, count(*)
+      FROM public.dispatches
+      GROUP BY status
+    $sql$;
+  END IF;
+
+  IF to_regclass('public.payments') IS NULL THEN
+    INSERT INTO pg_temp.phase4_audit_status_values
+      VALUES ('payments.type', '(table absente)', NULL);
+  ELSE
+    EXECUTE $sql$
+      INSERT INTO pg_temp.phase4_audit_status_values (source, value, rows)
+      SELECT 'payments.type', type, count(*)
+      FROM public.payments
+      GROUP BY type
+    $sql$;
+  END IF;
+END $$;
+
+SELECT source, value, rows
+FROM pg_temp.phase4_audit_status_values
+ORDER BY source, rows DESC NULLS FIRST;
