@@ -122,11 +122,14 @@ GROUP BY n.nspname, c.relname, c.relkind, t.relname;
 
 
 -- ── 4. Fonctions PL/pgSQL référençant ces tables ─────────────────────
+-- Les fonctions ne bloquent PAS le DROP TABLE (elles deviennent juste
+-- cassées si appelées après migration). À nettoyer si elles sont
+-- encore appelées par du code applicatif. Niveau "info" pour révision.
 INSERT INTO pg_temp.phase4_audit (section, detail, verdict)
 SELECT
   '4. Fonctions',
   format('%s.%s', n.nspname, p.proname),
-  '⛔ UNEXPECTED — fonction à supprimer ou réécrire'
+  '⚠️ À REVOIR — fonction qui cassera à l''appel (non-bloquante pour la migration)'
 FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
@@ -134,11 +137,23 @@ WHERE n.nspname = 'public'
 
 
 -- ── 5. Triggers liés à des fonctions concernées ──────────────────────
+-- Seuls les triggers sur des tables CONSERVÉES sont problématiques :
+-- un trigger sur une table droppée disparaît avec la table.
 INSERT INTO pg_temp.phase4_audit (section, detail, verdict)
 SELECT
   '5. Triggers',
   format('trigger %s on %s -> function %s', t.tgname, c.relname, p.proname),
-  '⛔ UNEXPECTED — trigger qui cassera après la migration'
+  CASE
+    WHEN c.relname IN (
+      'cognitive_trials','cognitive_sessions','cognitive_baselines',
+      'cognitive_normative_stats','cognitive_test_definitions',
+      'cognitive_test_presets','cognitive_benchmarks',
+      'program_exercise_cognitive_types','expert_profiles',
+      'profile_intelligence','profile_centroids','profile_compatibility',
+      'study_reference_data','elite_markers','global_predictors'
+    ) THEN 'OK (sera dropé avec la table)'
+    ELSE '⛔ UNEXPECTED — trigger sur table conservée qui cassera après migration'
+  END
 FROM pg_trigger t
 JOIN pg_class c ON c.oid = t.tgrelid
 JOIN pg_proc  p ON p.oid = t.tgfoid
@@ -147,11 +162,23 @@ WHERE NOT t.tgisinternal
 
 
 -- ── 6. Policies RLS référençant ces tables ────────────────────────────
+-- Seules les policies sur des tables CONSERVÉES sont bloquantes : une
+-- policy sur une table droppée disparaît automatiquement avec la table.
 INSERT INTO pg_temp.phase4_audit (section, detail, verdict)
 SELECT
   '6. Policies RLS',
   format('policy %s on %s', pol.polname, c.relname),
-  '⛔ UNEXPECTED — policy qui bloquera le DROP'
+  CASE
+    WHEN c.relname IN (
+      'cognitive_trials','cognitive_sessions','cognitive_baselines',
+      'cognitive_normative_stats','cognitive_test_definitions',
+      'cognitive_test_presets','cognitive_benchmarks',
+      'program_exercise_cognitive_types','expert_profiles',
+      'profile_intelligence','profile_centroids','profile_compatibility',
+      'study_reference_data','elite_markers','global_predictors'
+    ) THEN 'OK (sera dropée avec la table)'
+    ELSE '⛔ UNEXPECTED — policy sur table conservée qui bloquera le DROP'
+  END
 FROM pg_policy pol
 JOIN pg_class c ON c.oid = pol.polrelid
 WHERE pg_get_expr(pol.polqual, pol.polrelid)      ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M'
