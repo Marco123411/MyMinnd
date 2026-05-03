@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, Circle, Lock, UserCheck, Clock, RefreshCw, Brain, ArrowRight, Dumbbell } from 'lucide-react'
+import { CheckCircle2, Circle, Lock, UserCheck, Clock, RefreshCw, ArrowRight, Dumbbell } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { ProgrammeAvecEtapes, ProgramExercise } from '@/types'
@@ -31,53 +31,17 @@ function EtapeIcon({ estComplete, estAccessible }: {
 }
 
 function DrillCard({ drill, accessible }: { drill: ProgramExercise; accessible: boolean }) {
-  const def = drill.cognitive_test_definitions
-  const ex  = drill.exercises
+  const ex = drill.exercises
 
-  // Exercice PM classique (video, document, questionnaire…)
-  if (!def && ex) {
-    if (!accessible) {
-      return (
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-2.5 opacity-50">
-          <Dumbbell className="h-4 w-4 text-muted-foreground shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground truncate">{ex.titre}</p>
-          </div>
-          <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        </div>
-      )
-    }
-    return (
-      <Link
-        href={`/client/exercises/${ex.id}`}
-        className="flex items-center gap-2 rounded-lg border border-[#7069F4]/30 bg-[#F1F0FE]/50 p-2.5 hover:bg-[#F1F0FE] hover:border-[#7069F4] transition-colors group"
-      >
-        <Dumbbell className="h-4 w-4 text-[#7069F4] shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-[#141325] truncate">{ex.titre}</p>
-          {drill.phase && (
-            <span className={`inline-block rounded text-[10px] px-1.5 py-0.5 font-semibold mt-0.5 ${PHASE_COLORS[drill.phase as 'pre' | 'in' | 'post']}`}>
-              {PHASE_LABELS[drill.phase as 'pre' | 'in' | 'post']}
-            </span>
-          )}
-        </div>
-        <ArrowRight className="h-3.5 w-3.5 text-[#7069F4] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-      </Link>
-    )
-  }
-
-  // Drill cognitif
-  if (!def) return null
-
-  const phase = drill.phase as 'pre' | 'in' | 'post' | null
-  const durationMin = drill.configured_duration_sec ? drill.configured_duration_sec / 60 : null
+  // Exercice PM classique (video, document, questionnaire…) — seuls types supportés en MVP
+  if (!ex) return null
 
   if (!accessible) {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-2.5 opacity-50">
-        <Brain className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Dumbbell className="h-4 w-4 text-muted-foreground shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-muted-foreground truncate">{def.name}</p>
+          <p className="text-xs font-medium text-muted-foreground truncate">{ex.titre}</p>
         </div>
         <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
       </div>
@@ -86,27 +50,19 @@ function DrillCard({ drill, accessible }: { drill: ProgramExercise; accessible: 
 
   return (
     <Link
-      href={`/test/program/${drill.id}`}
-      className="flex items-center gap-2 rounded-lg border border-[#20808D]/30 bg-[#E8F4F5]/50 p-2.5 hover:bg-[#E8F4F5] hover:border-[#20808D] transition-colors group"
+      href={`/client/exercises/${ex.id}`}
+      className="flex items-center gap-2 rounded-lg border border-[#7069F4]/30 bg-[#F1F0FE]/50 p-2.5 hover:bg-[#F1F0FE] hover:border-[#7069F4] transition-colors group"
     >
-      <Brain className="h-4 w-4 text-[#20808D] shrink-0" />
+      <Dumbbell className="h-4 w-4 text-[#7069F4] shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-[#141325] truncate">{def.name}</p>
-        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-          {phase && (
-            <span className={`rounded text-[10px] px-1.5 py-0.5 font-semibold ${PHASE_COLORS[phase]}`}>
-              {PHASE_LABELS[phase]}
-            </span>
-          )}
-          {durationMin !== null && (
-            <span className="text-[10px] text-muted-foreground">{durationMin} min</span>
-          )}
-          {drill.cognitive_load_score !== null && (
-            <span className="text-[10px] text-muted-foreground">CLS {drill.cognitive_load_score}</span>
-          )}
-        </div>
+        <p className="text-xs font-medium text-[#141325] truncate">{ex.titre}</p>
+        {drill.phase && (
+          <span className={`inline-block rounded text-[10px] px-1.5 py-0.5 font-semibold mt-0.5 ${PHASE_COLORS[drill.phase as 'pre' | 'in' | 'post']}`}>
+            {PHASE_LABELS[drill.phase as 'pre' | 'in' | 'post']}
+          </span>
+        )}
       </div>
-      <ArrowRight className="h-3.5 w-3.5 text-[#20808D] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <ArrowRight className="h-3.5 w-3.5 text-[#7069F4] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
     </Link>
   )
 }

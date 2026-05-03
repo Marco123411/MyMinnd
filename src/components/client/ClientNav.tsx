@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Brain, Clock, UserCheck, Dumbbell, CalendarDays, Activity, Layers } from 'lucide-react'
+import { Home, Brain, Clock, UserCheck, Dumbbell, CalendarDays, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ClientNavVisibility } from '@/app/actions/client-data'
 
@@ -20,7 +20,6 @@ export function ClientNav({ visibility }: ClientNavProps) {
     { href: '/client/sessions', label: 'Séances', icon: CalendarDays, exact: false, show: visibility.hasSessions },
     { href: '/client/programme', label: 'Programme', icon: Layers, exact: false, show: visibility.hasProgramme },
     { href: '/client/history', label: 'Historique', icon: Clock, exact: false, show: visibility.hasTests },
-    { href: '/client/cognitive', label: 'Cognitif', icon: Activity, exact: false, show: visibility.hasCognitive },
     { href: '/client/coach', label: 'Coach', icon: UserCheck, exact: false, show: true },
   ].filter((item) => item.show)
 

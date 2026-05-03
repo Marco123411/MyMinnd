@@ -10,13 +10,12 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, UserCheck, Clock, RefreshCw, Brain, ChevronLeft } from 'lucide-react'
+import { Plus, UserCheck, Clock, RefreshCw, ChevronLeft } from 'lucide-react'
 import { createAndAddEtapeAction } from '@/app/actions/programmes'
-import type { TypeSeance, CognitiveTestDefinition } from '@/types'
+import type { TypeSeance } from '@/types'
 
 interface AddEtapeDialogProps {
   programmeId: string
-  cognitiveTests: CognitiveTestDefinition[]
   onAdded?: () => void
 }
 
@@ -47,15 +46,6 @@ const TYPE_CARDS = [
     color: '#FF9F40',
     borderClass: 'border-amber-400',
     bgClass: 'bg-amber-50',
-  },
-  {
-    type: 'cognitif' as TypeSeance,
-    label: 'Cognitif',
-    sub: 'Test cognitif programmé',
-    Icon: Brain,
-    color: '#20808D',
-    borderClass: 'border-[#20808D]',
-    bgClass: 'bg-[#E8F4F5]',
   },
 ]
 
@@ -188,33 +178,7 @@ function RecurrenteForm({
   )
 }
 
-function CognitifForm({
-  data,
-  onChange,
-}: {
-  data: Record<string, string>
-  onChange: (k: string, v: string) => void
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor="titre-cognitif">
-        Nom de la séance <span className="text-red-500">*</span>
-      </Label>
-      <Input
-        id="titre-cognitif"
-        value={data.titre ?? ''}
-        onChange={(e) => onChange('titre', e.target.value)}
-        placeholder="Ex : Séance focus — semaine 3"
-        required
-      />
-      <p className="text-xs text-muted-foreground">
-        Vous ajouterez les drills cognitifs (Pré/In/Post) après la création.
-      </p>
-    </div>
-  )
-}
-
-export function AddEtapeDialog({ programmeId, cognitiveTests, onAdded }: AddEtapeDialogProps) {
+export function AddEtapeDialog({ programmeId, onAdded }: AddEtapeDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<1 | 2>(1)
@@ -300,7 +264,7 @@ export function AddEtapeDialog({ programmeId, cognitiveTests, onAdded }: AddEtap
         </DialogHeader>
 
         {step === 1 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
             {TYPE_CARDS.map(({ type, label, sub, Icon, color, borderClass, bgClass }) => (
               <button
                 key={type}
@@ -325,9 +289,6 @@ export function AddEtapeDialog({ programmeId, cognitiveTests, onAdded }: AddEtap
             {selectedType === 'recurrente' && (
               <RecurrenteForm data={formData} onChange={handleFieldChange} />
             )}
-            {selectedType === 'cognitif' && (
-              <CognitifForm data={formData} onChange={handleFieldChange} />
-            )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -337,7 +298,7 @@ export function AddEtapeDialog({ programmeId, cognitiveTests, onAdded }: AddEtap
               </Button>
               <Button
                 type="submit"
-                disabled={isPending || (selectedType === 'cognitif' && !formData.titre?.trim())}
+                disabled={isPending}
                 className="bg-[#7069F4] hover:bg-[#5a54e0] text-white"
               >
                 {isPending ? 'Création…' : 'Créer et ajouter au programme'}

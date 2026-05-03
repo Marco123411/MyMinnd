@@ -24,12 +24,9 @@ import { getClientProgrammesAction } from '@/app/actions/programmes'
 import { ProgrammeEtapesList } from '@/components/coach/ProgrammeEtapesList'
 import { CreateProgrammeDialog } from '@/components/coach/CreateProgrammeDialog'
 import { getExercisesAction } from '@/app/actions/exercises'
-import { getCognitiveSessionsForClient, getPendingCognitiveSessionsForClient } from '@/app/actions/cognitive-results'
-import { getCognitiveTestDefinitionsAction } from '@/app/actions/programmes'
-import { CognitiveTab } from './CognitiveTab'
 import { ProfileIntelligenceTab } from './ProfileIntelligenceTab'
 import { ClientSessionTimeline } from '@/components/coach/ClientSessionTimeline'
-import type { ClientContext, TestLevelConfig, SubscriptionTier } from '@/types'
+import type { ClientContext, TestLevelConfig } from '@/types'
 
 interface TestDefinitionForModal {
   id: string
@@ -69,18 +66,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   // Admin client nécessaire pour lire invitation_token (révoqué pour authenticated)
   const admin = createAdminClient()
 
-  // Requêtes parallèles : dernier test complété + définitions + historique + coach + réponses exercices
+  // Requêtes parallèles : dernier test complété + définitions + historique + exercices
   const [
     { data: lastTest },
     { data: testDefinitionsRaw },
     { data: testHistory },
-    { data: coachData },
     { data: exercises },
-    { data: cognitiveSessions },
-    { data: pendingCognitiveSessions },
     { data: timeline },
     { data: programmes },
-    { data: cognitiveTests },
   ] = await Promise.all([
     // Dernier test complété pour le radar/score
     client.user_id
@@ -112,16 +105,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     // Historique complet via admin (inclut les pending, invite_url construite côté serveur)
     getClientTestsForCoach(id),
 
-    // Données du coach (nom pour emails, subscription_tier pour SendTestModal)
-    admin.from('users').select('nom, subscription_tier').eq('id', coachId).single(),
-
     // Exercices disponibles pour les modals de séance
     getExercisesAction(),
-
-    // Sessions cognitives complètes du client (onglet Cognitif)
-    getCognitiveSessionsForClient(id),
-    // Sessions cognitives en attente du client (onglet Cognitif)
-    getPendingCognitiveSessionsForClient(id),
 
     // Timeline unifiée enrichie (exercices_total, exercices_completes par séance)
     client.user_id
@@ -132,9 +117,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     client.user_id
       ? getClientProgrammesAction(client.user_id)
       : Promise.resolve({ data: [] }),
-
-    // Tests cognitifs disponibles pour AddDrillDialog
-    getCognitiveTestDefinitionsAction(),
   ])
 
   // Scores par domaine du dernier test (dépend de lastTest.id)
@@ -178,7 +160,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     levels: d.levels as TestLevelConfig[],
   }))
 
-  const coachTier = (coachData?.subscription_tier ?? 'free') as SubscriptionTier
 
   // Générer des URLs signées courte durée (1h) pour les documents — ne pas stocker de tokens en base
   const documentsWithUrls = await Promise.all(
@@ -262,7 +243,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   clientContext={client.context}
                   clientEmail={client.email ?? null}
                   testDefinitions={testDefinitions}
-                  coachTier={coachTier}
                 />
               )}
               <Button variant="outline" asChild>
@@ -307,12 +287,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               <Badge variant="secondary" className="ml-1.5 text-xs">{testHistory.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="cognitif">
-            Cognitif
-            {cognitiveSessions && cognitiveSessions.length > 0 && (
-              <Badge variant="secondary" className="ml-1.5 text-xs">{cognitiveSessions.length}</Badge>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="seances">Séances</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="documents">
@@ -354,16 +328,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </Card>
         </TabsContent>
 
-        {/* Cognitif — tests trial-based */}
-        <TabsContent value="cognitif" className="mt-4">
-          <CognitiveTab
-            sessions={cognitiveSessions ?? []}
-            pendingSessions={pendingCognitiveSessions ?? []}
-            clientId={id}
-            coachId={coachId}
-          />
-        </TabsContent>
-
         {/* Séances — programme actif + historique cabinet, autonomie et récurrentes */}
         <TabsContent value="seances" className="mt-4 space-y-6">
 
@@ -381,7 +345,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     <div key={prog.id} className="border rounded-lg p-4 space-y-3">
                       <ProgrammeEtapesList
                         programme={prog}
-                        cognitiveTests={cognitiveTests ?? []}
                         exercises={(exercises ?? []).map(ex => ({
                           id:          ex.id,
                           titre:       ex.titre,

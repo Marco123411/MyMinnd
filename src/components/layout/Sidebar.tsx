@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, BarChart2, Settings, UserCheck, FileText, Dumbbell, CalendarDays, UserCircle, BookOpen, Inbox } from 'lucide-react'
+import { LayoutDashboard, Users, BarChart2, Settings, Dumbbell, CalendarDays, BookOpen, Inbox } from 'lucide-react'
 
 const coachNavItems = [
   { href: '/coach', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
@@ -13,16 +13,12 @@ const coachNavItems = [
   { href: '/coach/exercises', label: 'Exercices', icon: Dumbbell },
   { href: '/coach/sessions', label: 'Séances', icon: CalendarDays },
   { href: '/coach/rapports', label: 'Rapports', icon: BarChart2 },
-  { href: '/coach/profile/expert', label: 'Profil Expert', icon: UserCircle },
   { href: '/coach/parametres', label: 'Paramètres', icon: Settings },
 ]
 
 const adminNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
-  { href: '/admin/experts', label: 'Experts', icon: UserCheck },
-  { href: '/admin/monitoring', label: 'Monitoring', icon: BarChart2 },
-  { href: '/admin/content', label: 'Contenu', icon: FileText },
 ]
 
 interface SidebarProps {

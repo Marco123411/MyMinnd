@@ -28,7 +28,7 @@ export default async function Home() {
           Bienvenue sur <span className="text-[#20808D]">MINND</span>
         </h1>
         <p className="text-xl text-muted-foreground">
-          Découvrez votre profil mental et trouvez un préparateur pour aller plus loin.
+          Découvrez votre profil mental en 15 minutes.
         </p>
 
         {/* CTA principal athlète */}
@@ -62,16 +62,6 @@ export default async function Home() {
           <Button asChild size="lg" variant="outline" className="min-w-40">
             <Link href="/register">Espace préparateur</Link>
           </Button>
-        </div>
-
-        {/* Lien marketplace */}
-        <div className="pt-4">
-          <Link
-            href="/marketplace"
-            className="text-sm text-[#20808D] hover:underline"
-          >
-            Explorer l&apos;annuaire des préparateurs mentaux →
-          </Link>
         </div>
       </div>
     </main>

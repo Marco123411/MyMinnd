@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { createInvitationAction, resendInvitationAction } from '@/app/actions/tests-invite'
-import type { TestLevelConfig, TestLevelSlug, ClientContext, SubscriptionTier } from '@/types'
+import type { TestLevelConfig, TestLevelSlug, ClientContext } from '@/types'
 import { Send, Copy, Check, ChevronDown } from 'lucide-react'
 
 // Sous-ensemble de TestDefinition nécessaire pour le modal
@@ -28,7 +27,15 @@ interface SendTestModalProps {
   clientContext: ClientContext
   clientEmail: string | null
   testDefinitions: TestDefinitionForModal[]
-  coachTier: SubscriptionTier
+}
+
+// Niveau MVP unique : on attribue toujours "complete", fallback sur le premier niveau disponible
+const DEFAULT_LEVEL: TestLevelSlug = 'complete'
+
+function pickDefaultLevel(levels: TestLevelConfig[] | undefined): TestLevelSlug {
+  if (!levels || levels.length === 0) return DEFAULT_LEVEL
+  const complete = levels.find((l) => l.slug === DEFAULT_LEVEL)
+  return (complete?.slug ?? levels[0].slug) as TestLevelSlug
 }
 
 // Ordre de priorité par context pour afficher le test le plus pertinent en premier
@@ -47,7 +54,6 @@ export function SendTestModal({
   clientContext,
   clientEmail,
   testDefinitions,
-  coachTier,
 }: SendTestModalProps) {
   // Trie les tests selon le context du client (F13: mémoïsé)
   const sortedDefinitions = useMemo(
@@ -69,12 +75,6 @@ export function SendTestModal({
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<string>(
     sortedDefinitions[0]?.id ?? ''
   )
-  const [selectedLevel, setSelectedLevel] = useState<TestLevelSlug>('discovery')
-
-  // Remet à discovery quand on change de définition de test
-  useEffect(() => {
-    setSelectedLevel('discovery')
-  }, [selectedDefinitionId])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [inviteUrl, setInviteUrl] = useState<string | null>(null)
@@ -95,7 +95,6 @@ export function SendTestModal({
       setEmailSent(false)
       setEmailError(null)
       setSelectedDefinitionId(sortedDefinitions[0]?.id ?? '')
-      setSelectedLevel('discovery')
     }
   }
 
@@ -103,7 +102,9 @@ export function SendTestModal({
     if (!selectedDefinitionId) return
     setIsLoading(true)
     setError(null)
-    const result = await createInvitationAction(clientId, selectedDefinitionId, selectedLevel)
+    const def = testDefinitions.find((d) => d.id === selectedDefinitionId)
+    const level = pickDefaultLevel(def?.levels)
+    const result = await createInvitationAction(clientId, selectedDefinitionId, level)
     setIsLoading(false)
     if (result.error || !result.data) { setError(result.error ?? 'Erreur inattendue'); return }
     setInviteUrl(result.data.inviteUrl)
@@ -129,8 +130,6 @@ export function SendTestModal({
     if (result.error) { setEmailError(result.error); return }
     setEmailSent(true)
   }
-
-  const selectedDef = testDefinitions.find((d) => d.id === selectedDefinitionId)
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -167,42 +166,6 @@ export function SendTestModal({
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
-            </div>
-
-            {/* Choix du niveau */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[#141325]">Niveau</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(selectedDef?.levels ?? []).map((level) => {
-                  const isUnlocked = level.slug === 'discovery' || coachTier === 'expert'
-                  const isSelected = selectedLevel === level.slug
-                  const priceLabel = level.price_cents === 0
-                    ? 'Gratuit'
-                    : `${level.price_cents / 100} €`
-                  return (
-                    <div
-                      key={level.slug}
-                      onClick={() => isUnlocked && setSelectedLevel(level.slug as TestLevelSlug)}
-                      className={`relative rounded-lg border p-3 text-center transition-colors ${
-                        !isUnlocked
-                          ? 'cursor-not-allowed border-dashed opacity-50'
-                          : isSelected
-                          ? 'cursor-pointer border-[#7069F4] bg-[#F1F0FE]'
-                          : 'cursor-pointer border-gray-200 hover:border-[#7069F4]/60'
-                      }`}
-                    >
-                      <p className="text-xs font-semibold text-[#141325]">{level.name}</p>
-                      {isUnlocked ? (
-                        <p className="mt-1 text-xs text-[#7069F4]">{priceLabel}</p>
-                      ) : (
-                        <Badge variant="outline" className="mt-1 text-[10px] text-muted-foreground">
-                          Bientôt disponible
-                        </Badge>
-                      )}
-                    </div>
-                  )
-                })}
               </div>
             </div>
 
