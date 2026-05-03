@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { ResultsRadar } from '@/components/test/ResultsRadar'
 import { SubcompetenceBar } from '@/components/test/SubcompetenceBar'
 import { Button } from '@/components/ui/button'
-import type { TestLevelConfig } from '@/types'
 
 interface PageProps {
   params: Promise<{ slug: string; testId: string }>
@@ -12,7 +11,6 @@ interface PageProps {
 
 interface TestRow {
   id: string
-  level_slug: string
   status: string
   score_global: number | null
   profile_id: string | null
@@ -20,7 +18,6 @@ interface TestRow {
   test_definitions: {
     id: string
     name: string
-    levels: TestLevelConfig[]
   } | null
 }
 
@@ -62,7 +59,7 @@ export default async function ResultsPage({ params }: PageProps) {
 
   const { data: testRow, error: testError } = await supabase
     .from('tests')
-    .select('id, level_slug, status, score_global, profile_id, test_definition_id, results_released_at, test_definitions(id, name, levels)')
+    .select('id, status, score_global, profile_id, test_definition_id, results_released_at, test_definitions(id, name)')
     .eq('id', testId)
     .eq('user_id', user.id)
     .single()
@@ -112,11 +109,9 @@ export default async function ResultsPage({ params }: PageProps) {
 
   const globalScore = test.score_global ?? scoreRows.find((s) => s.entity_type === 'global')?.score
 
-  const isDiscovery = test.level_slug === 'discovery'
-
-  // Profil mental (Complete / Expert uniquement)
+  // Profil mental
   let profile: ProfileRow | null = null
-  if (!isDiscovery && test.profile_id) {
+  if (test.profile_id) {
     const { data: profileData } = await supabase
       .from('profiles')
       .select('id, name, family, color, description, strengths, weaknesses, recommendations')
@@ -124,15 +119,6 @@ export default async function ResultsPage({ params }: PageProps) {
       .single()
     profile = profileData ?? null
   }
-
-  // Prix du niveau Complete pour l'upsell
-  const levels = definition.levels as TestLevelConfig[]
-  const completeLevel = levels.find((l) => l.slug === 'complete')
-  const completePrice = completeLevel
-    ? completeLevel.price_cents === 0
-      ? 'Gratuit'
-      : `${completeLevel.price_cents / 100} €`
-    : null
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -206,55 +192,36 @@ export default async function ResultsPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Détail par domaine — Complete / Expert uniquement */}
-      {!isDiscovery && (
-        <div className="mb-10 space-y-8">
-          <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
-          {domainNodes.map((domain) => {
-            const leaves = competencyNodes
-              .filter((n) => n.is_leaf && n.parent_id === domain.id)
-              .sort((a, b) => a.order_index - b.order_index)
+      {/* Détail par domaine */}
+      <div className="mb-10 space-y-8">
+        <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
+        {domainNodes.map((domain) => {
+          const leaves = competencyNodes
+            .filter((n) => n.is_leaf && n.parent_id === domain.id)
+            .sort((a, b) => a.order_index - b.order_index)
 
-            return (
-              <div key={domain.id}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold text-[#141325]">{domain.name}</h3>
-                  <span className="text-sm font-medium text-[#7069F4]">
-                    {getScore(domain.id).toFixed(1)}/10
-                  </span>
-                </div>
-                <div className="space-y-3 pl-2">
-                  {leaves.map((leaf) => (
-                    <SubcompetenceBar
-                      key={leaf.id}
-                      name={leaf.name}
-                      score={getScore(leaf.id)}
-                      percentile={getPercentile(leaf.id)}
-                    />
-                  ))}
-                </div>
+          return (
+            <div key={domain.id}>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-semibold text-[#141325]">{domain.name}</h3>
+                <span className="text-sm font-medium text-[#7069F4]">
+                  {getScore(domain.id).toFixed(1)}/10
+                </span>
               </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Upsell Discovery → Complete */}
-      {isDiscovery && completeLevel && (
-        <div className="rounded-xl border-2 border-[#7069F4] bg-[#F1F0FE] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#141325]">Allez plus loin</h2>
-          <p className="mt-2 text-muted-foreground">
-            Accédez au profil MINND complet, au détail de vos compétences et à votre rapport PDF
-            personnalisé.
-          </p>
-          {completePrice && (
-            <p className="mt-3 text-2xl font-bold text-[#7069F4]">{completePrice}</p>
-          )}
-          <Link href={`/test/${slug}`} className="mt-4 inline-block">
-            <Button className="bg-[#7069F4] hover:bg-[#5B54D6]">Passer au niveau Complet</Button>
-          </Link>
-        </div>
-      )}
+              <div className="space-y-3 pl-2">
+                {leaves.map((leaf) => (
+                  <SubcompetenceBar
+                    key={leaf.id}
+                    name={leaf.name}
+                    score={getScore(leaf.id)}
+                    percentile={getPercentile(leaf.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
       {/* Retour tableau de bord */}
       <div className="mt-10 text-center">

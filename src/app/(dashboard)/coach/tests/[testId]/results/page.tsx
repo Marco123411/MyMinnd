@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { CoachAnnotationPanel } from '@/components/coach/CoachAnnotationPanel'
 import { PublishTestButton } from './PublishTestButton'
-import type { TestLevelConfig } from '@/types'
 
 interface PageProps {
   params: Promise<{ testId: string }>
@@ -15,7 +14,6 @@ interface PageProps {
 
 interface TestRow {
   id: string
-  level_slug: string
   status: string
   score_global: number | null
   profile_id: string | null
@@ -24,7 +22,6 @@ interface TestRow {
   test_definitions: {
     id: string
     name: string
-    levels: TestLevelConfig[]
   } | null
 }
 
@@ -67,7 +64,7 @@ export default async function CoachTestResultsPage({ params }: PageProps) {
   // Filtre explicite sur coach_id en plus de la RLS (défense en profondeur)
   const { data: testRow, error: testError } = await supabase
     .from('tests')
-    .select('id, level_slug, status, score_global, profile_id, test_definition_id, results_released_at, test_definitions(id, name, levels)')
+    .select('id, status, score_global, profile_id, test_definition_id, results_released_at, test_definitions(id, name)')
     .eq('id', testId)
     .eq('coach_id', user.id)
     .single()
@@ -78,7 +75,6 @@ export default async function CoachTestResultsPage({ params }: PageProps) {
   const definition = test.test_definitions
   if (!definition) notFound()
 
-  const isDiscovery = test.level_slug === 'discovery'
   const isPublished = !!test.results_released_at
 
   // Inclure la requête profil dans le Promise.all pour éviter le waterfall séquentiel
@@ -97,7 +93,7 @@ export default async function CoachTestResultsPage({ params }: PageProps) {
       .select('node_id, note')
       .eq('test_id', testId)
       .eq('coach_id', user.id),
-    !isDiscovery && test.profile_id
+    test.profile_id
       ? supabase
           .from('profiles')
           .select('id, name, family, color, description, strengths, weaknesses, recommendations')
@@ -160,7 +156,6 @@ export default async function CoachTestResultsPage({ params }: PageProps) {
           {definition.name}
         </p>
         <h1 className="mt-1 text-3xl font-bold text-[#141325]">Résultats du client</h1>
-        <p className="mt-1 text-sm text-muted-foreground capitalize">{test.level_slug}</p>
       </div>
 
       {/* Bandeau état publication */}
@@ -238,59 +233,57 @@ export default async function CoachTestResultsPage({ params }: PageProps) {
       )}
 
       {/* Détail par compétence avec annotations */}
-      {!isDiscovery && (
-        <div className="mb-10 space-y-8">
-          <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
-          {domainNodes.map((domain) => {
-            const leaves = competencyNodes
-              .filter((n) => n.is_leaf && n.parent_id === domain.id)
-              .sort((a, b) => a.order_index - b.order_index)
+      <div className="mb-10 space-y-8">
+        <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
+        {domainNodes.map((domain) => {
+          const leaves = competencyNodes
+            .filter((n) => n.is_leaf && n.parent_id === domain.id)
+            .sort((a, b) => a.order_index - b.order_index)
 
-            return (
-              <div key={domain.id} className="rounded-xl border border-gray-100 p-5">
-                {/* En-tête domaine */}
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold text-[#141325]">{domain.name}</h3>
-                  <span className="text-sm font-medium text-[#7069F4]">
-                    {getScore(domain.id).toFixed(1)}/10
-                  </span>
-                </div>
-
-                {/* Annotation domaine */}
-                <CoachAnnotationPanel
-                  testId={testId}
-                  nodeId={domain.id}
-                  nodeName={domain.name}
-                  initialNote={notesMap[domain.id] ?? ''}
-                  disabled={isPublished}
-                />
-
-                {/* Sous-compétences */}
-                {leaves.length > 0 && (
-                  <div className="mt-4 space-y-4 border-t border-gray-100 pt-4 pl-2">
-                    {leaves.map((leaf) => (
-                      <div key={leaf.id}>
-                        <SubcompetenceBar
-                          name={leaf.name}
-                          score={getScore(leaf.id)}
-                          percentile={getPercentile(leaf.id)}
-                        />
-                        <CoachAnnotationPanel
-                          testId={testId}
-                          nodeId={leaf.id}
-                          nodeName={leaf.name}
-                          initialNote={notesMap[leaf.id] ?? ''}
-                          disabled={isPublished}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
+          return (
+            <div key={domain.id} className="rounded-xl border border-gray-100 p-5">
+              {/* En-tête domaine */}
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-semibold text-[#141325]">{domain.name}</h3>
+                <span className="text-sm font-medium text-[#7069F4]">
+                  {getScore(domain.id).toFixed(1)}/10
+                </span>
               </div>
-            )
-          })}
-        </div>
-      )}
+
+              {/* Annotation domaine */}
+              <CoachAnnotationPanel
+                testId={testId}
+                nodeId={domain.id}
+                nodeName={domain.name}
+                initialNote={notesMap[domain.id] ?? ''}
+                disabled={isPublished}
+              />
+
+              {/* Sous-compétences */}
+              {leaves.length > 0 && (
+                <div className="mt-4 space-y-4 border-t border-gray-100 pt-4 pl-2">
+                  {leaves.map((leaf) => (
+                    <div key={leaf.id}>
+                      <SubcompetenceBar
+                        name={leaf.name}
+                        score={getScore(leaf.id)}
+                        percentile={getPercentile(leaf.id)}
+                      />
+                      <CoachAnnotationPanel
+                        testId={testId}
+                        nodeId={leaf.id}
+                        nodeName={leaf.name}
+                        initialNote={notesMap[leaf.id] ?? ''}
+                        disabled={isPublished}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
       {/* Bouton publier */}
       {!isPublished && (

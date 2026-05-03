@@ -125,7 +125,7 @@ export async function completeTestAction(
   const admin = createAdminClient()
 
   // Calcul complet des scores via le moteur (feuilles, domaines, global, percentiles, profil)
-  const scoring = await computeTestScores(testId, test.test_definition_id, test.level_slug, admin)
+  const scoring = await computeTestScores(testId, test.test_definition_id, admin)
 
   // Construit les lignes test_scores
   const testScores: {

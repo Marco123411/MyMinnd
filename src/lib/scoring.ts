@@ -4,7 +4,6 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { TestLevelConfig } from '@/types'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,31 +64,26 @@ function zToPercentile(z: number): number {
 /**
  * Calcule les scores complets d'un test (feuilles, domaines, global, percentiles, profil).
  * N'effectue aucune écriture en base — retourne seulement les résultats calculés.
+ * Scoring complet activé pour tous les tests en MVP (un seul niveau).
  *
  * @param testId           UUID du test
  * @param testDefinitionId UUID de la définition du test
- * @param levelSlug        Niveau passé ('discovery' | 'complete' | 'expert')
  * @param admin            Client Supabase avec service_role (pour lire les tables restreintes)
  */
 export async function computeTestScores(
   testId: string,
   testDefinitionId: string,
-  levelSlug: string,
   admin: SupabaseClient
 ): Promise<ScoringResult> {
 
-  // ── 1. Récupère la config de niveau (includes_percentiles, includes_profile) ──
+  // ── 1. Récupère la config (clustering_algo uniquement) ──
   const { data: testDef } = await admin
     .from('test_definitions')
-    .select('levels, clustering_algo')
+    .select('clustering_algo')
     .eq('id', testDefinitionId)
     .single()
 
-  const levels = (testDef?.levels ?? []) as TestLevelConfig[]
-  const levelConfig = levels.find((l) => l.slug === levelSlug)
-  const includesPercentiles = levelConfig?.includes_percentiles ?? false
-  const includesProfile    = levelConfig?.includes_profile ?? false
-  const clusteringAlgo     = (testDef?.clustering_algo ?? 'none') as string
+  const clusteringAlgo = (testDef?.clustering_algo ?? 'none') as string
 
   // ── 2. Mapping question_id → competency_node_id ──
   const { data: questions } = await admin
@@ -154,20 +148,17 @@ export async function computeTestScores(
   }
 
   // ── 9. Stats normatives (nécessaires pour les percentiles ET le profil K-Means) ──
-  let normativeMap: Record<string, { mean: number; std_dev: number }> = {}
-  if (includesPercentiles || (includesProfile && clusteringAlgo !== 'none')) {
-    const { data: normStats } = await admin
-      .from('normative_stats')
-      .select('competency_node_id, mean, std_dev')
-      .eq('test_definition_id', testDefinitionId)
+  const normativeMap: Record<string, { mean: number; std_dev: number }> = {}
+  const { data: normStats } = await admin
+    .from('normative_stats')
+    .select('competency_node_id, mean, std_dev')
+    .eq('test_definition_id', testDefinitionId)
 
-    for (const s of normStats ?? []) {
-      normativeMap[s.competency_node_id] = { mean: s.mean, std_dev: s.std_dev }
-    }
+  for (const s of normStats ?? []) {
+    normativeMap[s.competency_node_id] = { mean: s.mean, std_dev: s.std_dev }
   }
 
   function calcPercentile(score: number, nodeId: string | null): number | null {
-    if (!includesPercentiles) return null
     if (nodeId === null) {
       // Percentile global : utilise la moyenne des stats normatives des feuilles
       const leafNorms = Object.values(normativeMap)
@@ -182,9 +173,9 @@ export async function computeTestScores(
     return zToPercentile((score - stat.mean) / stat.std_dev)
   }
 
-  // ── 10. Attribution du profil K-Means (si le niveau l'inclut) ──
+  // ── 10. Attribution du profil K-Means ──
   let profileId: string | null = null
-  if (includesProfile && clusteringAlgo !== 'none') {
+  if (clusteringAlgo !== 'none') {
     const { data: profiles } = await admin
       .from('profiles')
       .select('id')

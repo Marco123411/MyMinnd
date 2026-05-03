@@ -30,20 +30,7 @@ import type { CoachAlerts, CoachPendingTest, CoachReportRow } from '@/types'
 // Types et constantes
 // ============================================================
 
-type Niveau = 'all' | 'discovery' | 'complete' | 'expert'
 type Periode = '30j' | '90j' | '1an' | 'tout'
-
-const NIVEAU_LABELS: Record<'discovery' | 'complete' | 'expert', string> = {
-  discovery: 'Discovery',
-  complete: 'Complete',
-  expert: 'Expert',
-}
-
-const NIVEAU_COLORS: Record<'discovery' | 'complete' | 'expert', string> = {
-  discovery: 'bg-gray-100 text-gray-700',
-  complete: 'bg-[#F1F0FE] text-[#7069F4]',
-  expert: 'bg-amber-50 text-amber-700',
-}
 
 // Formate une date ISO en "31 mars 2026"
 function formatDate(iso: string): string {
@@ -76,7 +63,6 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
   const router = useRouter()
 
   // État des filtres du tableau
-  const [niveau, setNiveau] = useState<Niveau>('all')
   const [periode, setPeriode] = useState<Periode>('tout')
   const [profil, setProfil] = useState<string>('all')
   const [recherche, setRecherche] = useState('')
@@ -110,7 +96,6 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
     }
 
     return reports.filter((r) => {
-      if (niveau !== 'all' && r.levelSlug !== niveau) return false
       const cutoff = periodeMs[periode]
       if (cutoff && now - new Date(r.completedAt).getTime() > cutoff) return false
       if (profil !== 'all' && r.profileName !== profil) return false
@@ -121,7 +106,7 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
       }
       return true
     })
-  }, [reports, niveau, periode, profil, recherche])
+  }, [reports, periode, profil, recherche])
 
   // Génération du rapport PDF via l'API
   async function handleGeneratePdf(testId: string) {
@@ -235,17 +220,6 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
               onChange={(e) => setRecherche(e.target.value)}
               className="max-w-xs"
             />
-            <Select value={niveau} onValueChange={(v) => setNiveau(v as Niveau)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Niveau" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les niveaux</SelectItem>
-                <SelectItem value="discovery">Discovery</SelectItem>
-                <SelectItem value="complete">Complete</SelectItem>
-                <SelectItem value="expert">Expert</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={periode} onValueChange={(v) => setPeriode(v as Periode)}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Période" />
@@ -286,7 +260,6 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
                   <TableRow>
                     <TableHead>Client</TableHead>
                     <TableHead>Test</TableHead>
-                    <TableHead>Niveau</TableHead>
                     <TableHead>Score</TableHead>
                     <TableHead>Profil MINND</TableHead>
                     <TableHead>Date</TableHead>
@@ -318,16 +291,6 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
                         {r.definitionName}
                       </TableCell>
 
-                      {/* Niveau */}
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={NIVEAU_COLORS[r.levelSlug]}
-                        >
-                          {NIVEAU_LABELS[r.levelSlug]}
-                        </Badge>
-                      </TableCell>
-
                       {/* Score */}
                       <TableCell>
                         {r.scoreGlobal !== null ? (
@@ -341,7 +304,7 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
 
                       {/* Profil MINND */}
                       <TableCell>
-                        {r.profileName && r.levelSlug !== 'discovery' ? (
+                        {r.profileName ? (
                           <Badge
                             variant="secondary"
                             style={{
@@ -375,7 +338,7 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
                               Voir PDF
                             </a>
                           </Button>
-                        ) : r.levelSlug !== 'discovery' ? (
+                        ) : (
                           <Button
                             variant="secondary"
                             size="sm"
@@ -391,8 +354,6 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
                               'Générer PDF'
                             )}
                           </Button>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">—</span>
                         )}
                       </TableCell>
 
@@ -456,13 +417,7 @@ export default function RapportsPageClient({ reports, alerts, pendingTests }: Pr
 
                       {/* Test */}
                       <TableCell>
-                        <span className="text-sm">{t.definitionName}</span>{' '}
-                        <Badge
-                          variant="secondary"
-                          className={`ml-1 ${NIVEAU_COLORS[t.levelSlug]}`}
-                        >
-                          {NIVEAU_LABELS[t.levelSlug]}
-                        </Badge>
+                        <span className="text-sm">{t.definitionName}</span>
                       </TableCell>
 
                       {/* Date d'envoi */}

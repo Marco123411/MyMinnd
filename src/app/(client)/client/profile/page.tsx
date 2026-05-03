@@ -94,10 +94,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
           )}
 
           {/* Profil mental */}
-          <ProfileCard
-            profile={data.profile}
-            levelSlug={data.selectedTest.level_slug}
-          />
+          <ProfileCard profile={data.profile} />
         </>
       )}
     </div>

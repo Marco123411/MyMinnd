@@ -80,8 +80,6 @@ export default async function ClientResultsPage({ params }: PageProps) {
 
   const globalScore = test.score_global ?? scores.find((s) => s.entity_type === 'global')?.score
 
-  const isDiscovery = test.level_slug === 'discovery'
-
   // Forces (top 5 feuilles) et axes d'amélioration (bottom 5)
   const leafScores = nodes
     .filter((n) => n.is_leaf)
@@ -173,13 +171,10 @@ export default async function ClientResultsPage({ params }: PageProps) {
       )}
 
       {/* Profil mental */}
-      <ProfileCard
-        profile={profile}
-        levelSlug={test.level_slug}
-      />
+      <ProfileCard profile={profile} />
 
-      {/* Détail par compétence — Complete / Expert uniquement */}
-      {!isDiscovery && domainNodes.length > 0 && (
+      {/* Détail par compétence */}
+      {domainNodes.length > 0 && (
         <div className="space-y-8">
           <h2 className="text-lg font-semibold text-[#141325]">Détail par compétence</h2>
           {domainNodes.map((domain) => {

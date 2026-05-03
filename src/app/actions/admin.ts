@@ -318,14 +318,8 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
     mauLast,
     testsThisWeek,
     testsLastWeek,
-    testsL1ThisMonth,
-    testsL2ThisMonth,
-    testsL1LastMonth,
-    testsL2LastMonth,
     mrrThis,
     mrrLast,
-    transacThis,
-    transacLast,
     subsStartOfMonth,
     unsubsThisMonth,
   ] = await Promise.all([
@@ -341,22 +335,10 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
     admin.from('tests').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('updated_at', startOfThisWeek),
     // Tests profilage semaine dernière
     admin.from('tests').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('updated_at', startOfLastWeek).lt('updated_at', startOfThisWeek),
-    // Tests L1 ce mois
-    admin.from('tests').select('id', { count: 'exact', head: true }).eq('level_slug', 'discovery').eq('status', 'completed').gte('updated_at', startOfThisMonth),
-    // Tests L2 ce mois
-    admin.from('tests').select('id', { count: 'exact', head: true }).eq('level_slug', 'complete').eq('status', 'completed').gte('updated_at', startOfThisMonth),
-    // Tests L1 mois dernier
-    admin.from('tests').select('id', { count: 'exact', head: true }).eq('level_slug', 'discovery').eq('status', 'completed').gte('updated_at', startOfLastMonth).lt('updated_at', startOfThisMonth),
-    // Tests L2 mois dernier
-    admin.from('tests').select('id', { count: 'exact', head: true }).eq('level_slug', 'complete').eq('status', 'completed').gte('updated_at', startOfLastMonth).lt('updated_at', startOfThisMonth),
     // MRR ce mois
     admin.from('payments').select('amount_cents').eq('type', 'subscription').eq('status', 'succeeded').gte('created_at', startOfThisMonth),
     // MRR mois dernier
     admin.from('payments').select('amount_cents').eq('type', 'subscription').eq('status', 'succeeded').gte('created_at', startOfLastMonth).lt('created_at', startOfThisMonth),
-    // Revenus transac ce mois
-    admin.from('payments').select('amount_cents').in('type', ['test_l2', 'test_l3']).eq('status', 'succeeded').gte('created_at', startOfThisMonth),
-    // Revenus transac mois dernier
-    admin.from('payments').select('amount_cents').in('type', ['test_l2', 'test_l3']).eq('status', 'succeeded').gte('created_at', startOfLastMonth).lt('created_at', startOfThisMonth),
     // Abonnés début du mois (proxy: abonnés actifs actuellement — approx)
     admin.from('users').select('id', { count: 'exact', head: true }).neq('subscription_tier', 'free').eq('subscription_status', 'active'),
     // Désabonnements ce mois (cancelled this month)
@@ -365,16 +347,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
 
   const mrrThisCents = (mrrThis.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
   const mrrLastCents = (mrrLast.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
-  const transacThisCents = (transacThis.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
-  const transacLastCents = (transacLast.data ?? []).reduce((s, p) => s + p.amount_cents, 0)
-
-  const l1This = testsL1ThisMonth.count ?? 0
-  const l2This = testsL2ThisMonth.count ?? 0
-  const l1Last = testsL1LastMonth.count ?? 0
-  const l2Last = testsL2LastMonth.count ?? 0
-
-  const convL1L2This = l1This > 0 ? Math.round((l2This / l1This) * 100) : 0
-  const convL1L2Last = l1Last > 0 ? Math.round((l2Last / l1Last) * 100) : 0
 
   const subCount = subsStartOfMonth.count ?? 1
   const churnThis = Math.round(((unsubsThisMonth.count ?? 0) / subCount) * 100 * 10) / 10
@@ -411,15 +383,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
       delta_pct: deltaPct(testsThisWeek.count ?? 0, testsLastWeek.count ?? 0),
     },
     {
-      key: 'conv_l1_l2',
-      label: 'Taux conversion L1 → L2',
-      value: convL1L2This,
-      previous: convL1L2Last,
-      unit: '%',
-      frequency: 'mensuel',
-      delta_pct: deltaPct(convL1L2This, convL1L2Last),
-    },
-    {
       key: 'mrr',
       label: 'MRR (abonnements)',
       value: Math.round(mrrThisCents / 100),
@@ -427,15 +390,6 @@ export async function getAdminMonitoringMetricsAction(): Promise<{
       unit: '€',
       frequency: 'mensuel',
       delta_pct: deltaPct(mrrThisCents, mrrLastCents),
-    },
-    {
-      key: 'revenus_transac',
-      label: 'Revenus transactionnels',
-      value: Math.round(transacThisCents / 100),
-      previous: Math.round(transacLastCents / 100),
-      unit: '€',
-      frequency: 'mensuel',
-      delta_pct: deltaPct(transacThisCents, transacLastCents),
     },
     {
       key: 'churn',
