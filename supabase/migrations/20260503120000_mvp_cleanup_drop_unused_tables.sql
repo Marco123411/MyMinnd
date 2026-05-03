@@ -7,95 +7,47 @@
 --   2. Drop des tables des features supprimées du MVP : bloc cognitif,
 --      marketplace experts, profile intelligence avancé.
 --
--- Pré-requis :
---   - Phases 1, 2, 3 mergées sur mvp-launch.
---   - Audit `mvp-cleanup/phase-4-audit-fk.sql` exécuté ; aucune
---     dépendance résiduelle hors de celles traitées ici (FK formelles,
---     vues, fonctions, triggers, policies, defaults, generated cols).
---   - Backup BDD < 24h.
---   - Migration appliquée sur staging avant la prod.
+-- Ordonnancement (important) :
+--   1. Désarmer triggers/fonctions du domaine cognitif.
+--   2. Retirer sur les tables conservées les colonnes/contraintes qui
+--      pointent vers le domaine cognitif (libère les FK).
+--   3. Drop des tables retirées du MVP (15 tables au total).
+--   4. Nettoyer les programme_etapes orphelines.
+--   5. Reconstruire les CHECK constraints sans la dimension cognitive.
 --
--- Notes :
---   - Pas de CASCADE : les FK résiduelles depuis des tables conservées
---     sont retirées explicitement en première section, et l'ordre des
---     DROP TABLE respecte les FK internes au domaine retiré.
---   - `cognitive_test_presets` n'apparaissait pas dans la liste
---     initiale de la spec (mvp-cleanup/phase-4-bdd.md) mais sa raison
---     d'être est entièrement liée au domaine cognitif → drop, intercalé
---     entre `cognitive_sessions` (qui a une FK vers presets via
---     preset_id) et `cognitive_test_definitions`.
+-- Pourquoi cet ordre :
+--   - Ne pas DELETE programme_etapes tant que cognitive_sessions vit :
+--     une cascade (programme_etapes → program_exercises → cognitive_sessions
+--     ON DELETE SET NULL) déclencherait des UPDATE sur cognitive_sessions
+--     qui violent un index unique partiel (idx_cognitive_sessions_one_active)
+--     ou un trigger de transition de statut.
+--   - Une fois cognitive_sessions dropée, plus aucune cascade vers le
+--     domaine cognitif ; le DELETE devient propre.
 -- =====================================================================
 
--- Garde-fous : éviter qu'un long verrou concurrent ne fasse stampede.
--- Si un autre process tient un AccessShare > 5s, la migration
--- échoue proprement plutôt que de bloquer toute l'app.
+-- Garde-fous : abandonner proprement si un long verrou concurrent.
 SET lock_timeout      = '5s';
 SET statement_timeout = '120s';
 
 BEGIN;
 
 -- =====================================================================
--- 0a. Désarmer les triggers du domaine cognitif AVANT toute mutation
---     - le trigger enforce_cognitive_session_transitions sur
---       cognitive_sessions valide les transitions de status. Il
---       interfère avec les UPDATE en cascade qu'on va déclencher
---       (programme_etapes DELETE → program_exercises DELETE CASCADE
---        → cognitive_sessions UPDATE SET program_exercise_id=NULL).
---     - On drop la fonction avec CASCADE : tous les triggers qui
---       l'utilisent disparaissent. Les tables cognitives sont de
---       toute façon dropées plus bas.
+-- 1. Désarmer triggers / fonctions du domaine cognitif
 -- =====================================================================
-
+-- enforce_cognitive_session_transitions valide les transitions de
+-- statut sur cognitive_sessions et bloquerait les UPDATE en cascade.
+-- Drop avec CASCADE retire aussi tout trigger qui l'utilise. Les
+-- tables cognitives sont dropées plus bas, donc la perte de la
+-- fonction est sans effet.
 DROP FUNCTION IF EXISTS public.enforce_cognitive_session_transitions() CASCADE;
 
 
 -- =====================================================================
--- 0. Pré-flight : nettoyer les rows qui violeraient les CHECK
---    reconstruits plus bas. Comptages logués pour audit.
+-- 2. Tables conservées : retirer les références au domaine cognitif
 -- =====================================================================
 
-DO $$
-DECLARE
-  cognitif_rows int;
-  one_fk_zero_rows int;
-  pe_cognitive_rows int;
-BEGIN
-  SELECT count(*) INTO cognitif_rows
-    FROM public.programme_etapes
-    WHERE type_seance = 'cognitif';
-  RAISE NOTICE 'programme_etapes rows with type_seance=cognitif: %', cognitif_rows;
-
-  -- Rows qui n'ont aucun FK de séance non-cognitive : après DROP COLUMN
-  -- cognitive_session_id elles violeraient programme_etapes_one_fk.
-  SELECT count(*) INTO one_fk_zero_rows
-    FROM public.programme_etapes
-    WHERE cabinet_session_id    IS NULL
-      AND autonomous_session_id IS NULL
-      AND recurring_template_id IS NULL;
-  RAISE NOTICE 'programme_etapes rows with no kept FK (will be deleted): %', one_fk_zero_rows;
-
-  SELECT count(*) INTO pe_cognitive_rows
-    FROM public.program_exercises
-    WHERE cognitive_test_id IS NOT NULL;
-  RAISE NOTICE 'program_exercises rows linked to a cognitive test (preserved as orphan shells): %', pe_cognitive_rows;
-END $$;
-
--- Suppression des rows orphelines de programme_etapes (cognitif-only).
--- Justification : la feature cognitive est retirée du MVP ; ces étapes
--- n'ont plus de cible. Les autres tables de séance (cabinet, autonome,
--- recurring) restent conservées.
-DELETE FROM public.programme_etapes
- WHERE cabinet_session_id    IS NULL
-   AND autonomous_session_id IS NULL
-   AND recurring_template_id IS NULL;
-
-
--- =====================================================================
--- 1. Colonnes / contraintes résiduelles sur les tables CONSERVÉES
--- =====================================================================
-
--- 1.a programme_etapes : la colonne `cognitive_session_id` et la
---      valeur 'cognitif' du `type_seance` sont devenues obsolètes.
+-- 2.a programme_etapes : drop des contraintes et de la colonne FK.
+--      On garde la table, mais on retire la dimension cognitive.
 ALTER TABLE public.programme_etapes
   DROP CONSTRAINT IF EXISTS programme_etapes_one_fk;
 
@@ -107,10 +59,86 @@ DROP INDEX IF EXISTS public.idx_programme_etapes_cognitive_session_id;
 ALTER TABLE public.programme_etapes
   DROP COLUMN IF EXISTS cognitive_session_id;
 
--- Reconstruire les CHECK sans la dimension cognitive. Pattern
--- NOT VALID + VALIDATE pour minimiser le verrou : NOT VALID prend
--- ACCESS EXCLUSIVE bref, VALIDATE prend SHARE UPDATE EXCLUSIVE
--- (lectures/écritures concurrentes possibles).
+
+-- 2.b program_exercises : drop des colonnes liées au domaine cognitif.
+--      La table elle-même reste (anticipée pour d'autres outils PM).
+ALTER TABLE public.program_exercises
+  DROP CONSTRAINT IF EXISTS chk_pe_cognitive_requires_phase;
+
+DROP INDEX IF EXISTS public.idx_program_exercises_cognitive_test_id;
+
+ALTER TABLE public.program_exercises
+  DROP COLUMN IF EXISTS preset_id;
+
+ALTER TABLE public.program_exercises
+  DROP COLUMN IF EXISTS cognitive_test_id;
+
+
+-- =====================================================================
+-- 3. Drop des tables hors MVP (15 tables)
+-- =====================================================================
+
+-- Bloc cognitif (ordre enfant → parent ; presets et benchmarks
+-- pointent vers cognitive_test_definitions, donc en avant-dernier) :
+DROP TABLE IF EXISTS public.cognitive_trials;
+DROP TABLE IF EXISTS public.cognitive_sessions;
+DROP TABLE IF EXISTS public.cognitive_baselines;
+DROP TABLE IF EXISTS public.cognitive_normative_stats;
+DROP TABLE IF EXISTS public.cognitive_test_presets;
+DROP TABLE IF EXISTS public.cognitive_benchmarks;
+DROP TABLE IF EXISTS public.cognitive_test_definitions;
+
+-- Liaison programmes ↔ cognitif :
+DROP TABLE IF EXISTS public.program_exercise_cognitive_types;
+
+-- Marketplace experts :
+DROP TABLE IF EXISTS public.expert_profiles;
+
+-- Profile intelligence avancé :
+DROP TABLE IF EXISTS public.profile_intelligence;
+DROP TABLE IF EXISTS public.profile_centroids;
+DROP TABLE IF EXISTS public.profile_compatibility;
+DROP TABLE IF EXISTS public.study_reference_data;
+DROP TABLE IF EXISTS public.elite_markers;
+DROP TABLE IF EXISTS public.global_predictors;
+
+
+-- =====================================================================
+-- 4. Nettoyer les programme_etapes orphelines
+-- =====================================================================
+-- Maintenant que cognitive_sessions n'existe plus, plus aucune cascade
+-- ne ricoche dans le domaine cognitif. Le DELETE est sûr.
+
+DO $$
+DECLARE
+  cognitif_rows    int;
+  one_fk_zero_rows int;
+BEGIN
+  SELECT count(*) INTO cognitif_rows
+    FROM public.programme_etapes
+    WHERE type_seance = 'cognitif';
+  RAISE NOTICE 'programme_etapes rows with type_seance=cognitif: %', cognitif_rows;
+
+  -- Rows sans aucun FK de séance non-cognitive après le DROP COLUMN.
+  SELECT count(*) INTO one_fk_zero_rows
+    FROM public.programme_etapes
+    WHERE cabinet_session_id    IS NULL
+      AND autonomous_session_id IS NULL
+      AND recurring_template_id IS NULL;
+  RAISE NOTICE 'programme_etapes rows with no kept FK (will be deleted): %', one_fk_zero_rows;
+END $$;
+
+DELETE FROM public.programme_etapes
+ WHERE cabinet_session_id    IS NULL
+   AND autonomous_session_id IS NULL
+   AND recurring_template_id IS NULL;
+
+
+-- =====================================================================
+-- 5. Reconstruire les CHECK constraints sans la dimension cognitive
+-- =====================================================================
+-- Pattern NOT VALID + VALIDATE pour minimiser le verrou.
+
 ALTER TABLE public.programme_etapes
   ADD CONSTRAINT programme_etapes_type_seance_check
     CHECK (type_seance IN ('cabinet', 'autonomie', 'recurrente'))
@@ -126,64 +154,6 @@ ALTER TABLE public.programme_etapes
   ) NOT VALID;
 ALTER TABLE public.programme_etapes
   VALIDATE CONSTRAINT programme_etapes_one_fk;
-
-
--- 1.b program_exercises : retirer les colonnes liées au domaine
---      cognitif. La table elle-même est conservée (anticipée pour
---      d'autres outils PM) mais les colonnes cognitives n'ont plus
---      de cible.
-ALTER TABLE public.program_exercises
-  DROP CONSTRAINT IF EXISTS chk_pe_cognitive_requires_phase;
-
-DROP INDEX IF EXISTS public.idx_program_exercises_cognitive_test_id;
-
-ALTER TABLE public.program_exercises
-  DROP COLUMN IF EXISTS preset_id;
-
-ALTER TABLE public.program_exercises
-  DROP COLUMN IF EXISTS cognitive_test_id;
-
-
--- =====================================================================
--- 2. Bloc cognitif (ordre : enfants → presets/benchmarks → définitions)
--- -- cognitive_test_presets et cognitive_benchmarks pointent vers
---    cognitive_test_definitions ; cognitive_sessions.preset_id pointe
---    vers cognitive_test_presets. Ordre :
---      trials → sessions → baselines → normative_stats →
---      presets → benchmarks → definitions.
--- -- cognitive_benchmarks (seuils normatifs Elite/Average/Poor) avait
---    été oubliée dans la liste initiale de la spec.
--- =====================================================================
-DROP TABLE IF EXISTS public.cognitive_trials;
-DROP TABLE IF EXISTS public.cognitive_sessions;
-DROP TABLE IF EXISTS public.cognitive_baselines;
-DROP TABLE IF EXISTS public.cognitive_normative_stats;
-DROP TABLE IF EXISTS public.cognitive_test_presets;
-DROP TABLE IF EXISTS public.cognitive_benchmarks;
-DROP TABLE IF EXISTS public.cognitive_test_definitions;
-
-
--- =====================================================================
--- 3. Liaison programmes ↔ cognitif (table de jointure orpheline)
--- =====================================================================
-DROP TABLE IF EXISTS public.program_exercise_cognitive_types;
-
-
--- =====================================================================
--- 4. Marketplace experts
--- =====================================================================
-DROP TABLE IF EXISTS public.expert_profiles;
-
-
--- =====================================================================
--- 5. Profile intelligence avancé
--- =====================================================================
-DROP TABLE IF EXISTS public.profile_intelligence;
-DROP TABLE IF EXISTS public.profile_centroids;
-DROP TABLE IF EXISTS public.profile_compatibility;
-DROP TABLE IF EXISTS public.study_reference_data;
-DROP TABLE IF EXISTS public.elite_markers;
-DROP TABLE IF EXISTS public.global_predictors;
 
 
 COMMIT;
