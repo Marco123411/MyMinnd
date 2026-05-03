@@ -130,18 +130,21 @@ ALTER TABLE public.program_exercises
 
 
 -- =====================================================================
--- 2. Bloc cognitif (ordre : enfants → presets → définitions)
--- -- cognitive_test_presets est intercalée :
---    cognitive_sessions.preset_id REFERENCES cognitive_test_presets,
---    et cognitive_test_presets.cognitive_test_id REFERENCES
---    cognitive_test_definitions. Donc :
---      trials → sessions → baselines → normative_stats → presets → definitions.
+-- 2. Bloc cognitif (ordre : enfants → presets/benchmarks → définitions)
+-- -- cognitive_test_presets et cognitive_benchmarks pointent vers
+--    cognitive_test_definitions ; cognitive_sessions.preset_id pointe
+--    vers cognitive_test_presets. Ordre :
+--      trials → sessions → baselines → normative_stats →
+--      presets → benchmarks → definitions.
+-- -- cognitive_benchmarks (seuils normatifs Elite/Average/Poor) avait
+--    été oubliée dans la liste initiale de la spec.
 -- =====================================================================
 DROP TABLE IF EXISTS public.cognitive_trials;
 DROP TABLE IF EXISTS public.cognitive_sessions;
 DROP TABLE IF EXISTS public.cognitive_baselines;
 DROP TABLE IF EXISTS public.cognitive_normative_stats;
 DROP TABLE IF EXISTS public.cognitive_test_presets;
+DROP TABLE IF EXISTS public.cognitive_benchmarks;
 DROP TABLE IF EXISTS public.cognitive_test_definitions;
 
 

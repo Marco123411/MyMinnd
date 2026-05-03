@@ -30,7 +30,8 @@ INSERT INTO pg_temp.phase4_audit (section, detail, verdict)
 WITH cibles(t) AS (VALUES
   ('cognitive_trials'),('cognitive_sessions'),('cognitive_baselines'),
   ('cognitive_normative_stats'),('cognitive_test_definitions'),
-  ('cognitive_test_presets'),('program_exercise_cognitive_types'),
+  ('cognitive_test_presets'),('cognitive_benchmarks'),
+  ('program_exercise_cognitive_types'),
   ('expert_profiles'),('profile_intelligence'),('profile_centroids'),
   ('profile_compatibility'),('study_reference_data'),
   ('elite_markers'),('global_predictors')
@@ -50,7 +51,7 @@ SELECT
     WHEN tc.table_name IN (
       'cognitive_trials','cognitive_sessions','cognitive_baselines',
       'cognitive_normative_stats','cognitive_test_definitions',
-      'cognitive_test_presets','program_exercise_cognitive_types',
+      'cognitive_test_presets','cognitive_benchmarks','program_exercise_cognitive_types',
       'expert_profiles','profile_intelligence','profile_centroids',
       'profile_compatibility','study_reference_data',
       'elite_markers','global_predictors'
@@ -87,7 +88,7 @@ WHERE table_schema = 'public'
   AND table_name NOT IN (
     'cognitive_trials','cognitive_sessions','cognitive_baselines',
     'cognitive_normative_stats','cognitive_test_definitions',
-    'cognitive_test_presets','program_exercise_cognitive_types',
+    'cognitive_test_presets','cognitive_benchmarks','program_exercise_cognitive_types',
     'expert_profiles','profile_intelligence','profile_centroids',
     'profile_compatibility','study_reference_data','elite_markers',
     'global_predictors'
@@ -112,7 +113,7 @@ WHERE c.relkind IN ('v','m')
   AND t.relname IN (
     'cognitive_trials','cognitive_sessions','cognitive_baselines',
     'cognitive_normative_stats','cognitive_test_definitions',
-    'cognitive_test_presets','program_exercise_cognitive_types',
+    'cognitive_test_presets','cognitive_benchmarks','program_exercise_cognitive_types',
     'expert_profiles','profile_intelligence','profile_centroids',
     'profile_compatibility','study_reference_data','elite_markers',
     'global_predictors'
@@ -129,7 +130,7 @@ SELECT
 FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
-  AND p.prosrc ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
+  AND p.prosrc ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
 
 
 -- ── 5. Triggers liés à des fonctions concernées ──────────────────────
@@ -142,7 +143,7 @@ FROM pg_trigger t
 JOIN pg_class c ON c.oid = t.tgrelid
 JOIN pg_proc  p ON p.oid = t.tgfoid
 WHERE NOT t.tgisinternal
-  AND p.prosrc ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
+  AND p.prosrc ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
 
 
 -- ── 6. Policies RLS référençant ces tables ────────────────────────────
@@ -153,8 +154,8 @@ SELECT
   '⛔ UNEXPECTED — policy qui bloquera le DROP'
 FROM pg_policy pol
 JOIN pg_class c ON c.oid = pol.polrelid
-WHERE pg_get_expr(pol.polqual, pol.polrelid)      ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M'
-   OR pg_get_expr(pol.polwithcheck, pol.polrelid) ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
+WHERE pg_get_expr(pol.polqual, pol.polrelid)      ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M'
+   OR pg_get_expr(pol.polwithcheck, pol.polrelid) ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
 
 
 -- ── 7. Defaults de colonnes référençant ces tables ───────────────────
@@ -166,7 +167,7 @@ SELECT
 FROM information_schema.columns
 WHERE table_schema = 'public'
   AND column_default IS NOT NULL
-  AND column_default ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
+  AND column_default ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
 
 
 -- ── 8. Generated columns référençant ces tables ──────────────────────
@@ -178,7 +179,7 @@ SELECT
 FROM information_schema.columns
 WHERE table_schema = 'public'
   AND generation_expression IS NOT NULL
-  AND generation_expression ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
+  AND generation_expression ~ '\m(cognitive_trials|cognitive_sessions|cognitive_baselines|cognitive_normative_stats|cognitive_test_definitions|cognitive_test_presets|cognitive_benchmarks|program_exercise_cognitive_types|expert_profiles|profile_intelligence|profile_centroids|profile_compatibility|study_reference_data|elite_markers|global_predictors)\M';
 
 
 -- ── 9. Volumes (info uniquement) ─────────────────────────────────────
@@ -190,7 +191,7 @@ BEGIN
   FOR t IN SELECT unnest(ARRAY[
     'cognitive_trials','cognitive_sessions','cognitive_baselines',
     'cognitive_normative_stats','cognitive_test_definitions',
-    'cognitive_test_presets','program_exercise_cognitive_types',
+    'cognitive_test_presets','cognitive_benchmarks','program_exercise_cognitive_types',
     'expert_profiles','profile_intelligence','profile_centroids',
     'profile_compatibility','study_reference_data','elite_markers',
     'global_predictors'
