@@ -16,7 +16,6 @@ interface TestCompletedCoachEmailProps {
   coachName: string
   clientName: string
   testName: string
-  levelSlug: string
   globalScore: number
   annotateUrl: string
 }
@@ -86,7 +85,6 @@ TestCompletedCoachEmail.PreviewProps = {
   coachName: 'Marie Dupont',
   clientName: 'Jean Martin',
   testName: 'Profil Mental Athlétique (PMA)',
-  levelSlug: 'complete',
   globalScore: 7.4,
   annotateUrl: 'https://myminnd.com/coach/tests/abc-123/results',
 } satisfies TestCompletedCoachEmailProps

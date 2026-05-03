@@ -97,6 +97,11 @@ function enrichEtapes(rawEtapes: RawEtapeRow[]): ProgrammeEtapeEnrichie[] {
         template = etape.recurring_templates ?? undefined
         est_complete = false  // récurrents n'ont pas de statut global
         titre_display = template?.titre ?? 'Routine supprimée'
+      } else {
+        // Type legacy non supporté en MVP (ex. 'cognitif' Phase 3.1) — placeholder
+        // pour ne pas bloquer l'affichage. La Phase 4 supprimera ces rows en BDD.
+        titre_display = etape.titre ?? 'Étape archivée'
+        est_complete = true
       }
 
       return {

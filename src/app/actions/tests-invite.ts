@@ -19,7 +19,8 @@ function getResend() {
 const createInvitationSchema = z.object({
   clientId: z.string().uuid(),
   testDefinitionId: z.string().uuid(),
-  levelSlug: z.enum(['discovery', 'complete', 'expert']),
+  // MVP : un seul niveau de test (Phase 3.7).
+  levelSlug: z.literal('complete'),
 })
 
 // Construit l'URL d'invitation à partir du token

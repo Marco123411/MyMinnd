@@ -82,8 +82,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
   if (session.mode === 'subscription') {
     await handleSubscriptionCheckout(session, userId)
+    return
   }
-  // Mode 'payment' (achat unitaire de test) supprimé en MVP — un seul abonnement coach
+  // Mode 'payment' (achat unitaire) supprimé en MVP : on log l'évènement pour
+  // détecter d'éventuels Stripe Prices one-time encore actifs ou anciens liens
+  // checkout-test utilisés par un client.
+  console.warn(
+    '[stripe webhook] Session mode non géré:',
+    session.mode,
+    'session_id:',
+    session.id,
+    'user_id:',
+    userId,
+  )
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {

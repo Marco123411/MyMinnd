@@ -15,6 +15,7 @@ interface TestRow {
   score_global: number | null
   profile_id: string | null
   test_definition_id: string
+  results_released_at: string | null
   test_definitions: {
     id: string
     name: string
@@ -66,7 +67,7 @@ export default async function ResultsPage({ params }: PageProps) {
 
   if (testError || !testRow) redirect(`/test/${slug}`)
 
-  const test = testRow as unknown as TestRow & { results_released_at: string | null }
+  const test = testRow as unknown as TestRow
 
   // Redirige si le test n'est pas encore terminé
   if (test.status !== 'completed') redirect(`/test/${slug}/pass/${testId}`)
