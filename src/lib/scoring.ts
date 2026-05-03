@@ -1,6 +1,6 @@
 /**
  * Moteur de scoring MINND
- * Calcule : scores feuilles, domaines, global, percentiles, profil K-Means
+ * Calcule : scores feuilles, domaines, global, percentiles
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -76,16 +76,7 @@ export async function computeTestScores(
   admin: SupabaseClient
 ): Promise<ScoringResult> {
 
-  // ── 1. Récupère la config (clustering_algo uniquement) ──
-  const { data: testDef } = await admin
-    .from('test_definitions')
-    .select('clustering_algo')
-    .eq('id', testDefinitionId)
-    .single()
-
-  const clusteringAlgo = (testDef?.clustering_algo ?? 'none') as string
-
-  // ── 2. Mapping question_id → competency_node_id ──
+  // ── 1. Mapping question_id → competency_node_id ──
   const { data: questions } = await admin
     .from('questions')
     .select('id, competency_node_id')
@@ -97,13 +88,13 @@ export async function computeTestScores(
     questionNodeMap[q.id] = q.competency_node_id
   }
 
-  // ── 3. Réponses du test ──
+  // ── 2. Réponses du test ──
   const { data: responses } = await admin
     .from('responses')
     .select('question_id, computed_score')
     .eq('test_id', testId)
 
-  // ── 4. Regroupement computed_score par nœud feuille ──
+  // ── 3. Regroupement computed_score par nœud feuille ──
   const leafScoreMap: Record<string, number[]> = {}
   for (const r of responses ?? []) {
     const nodeId = questionNodeMap[r.question_id]
@@ -112,19 +103,19 @@ export async function computeTestScores(
     leafScoreMap[nodeId].push(r.computed_score)
   }
 
-  // ── 5. Score feuille = moyenne des réponses (NON-NÉGOCIABLE) ──
+  // ── 4. Score feuille = moyenne des réponses (NON-NÉGOCIABLE) ──
   const leafAvgs: Record<string, number> = {}
   for (const [nodeId, scores] of Object.entries(leafScoreMap)) {
     leafAvgs[nodeId] = round2(scores.reduce((a, b) => a + b, 0) / scores.length)
   }
 
-  // ── 6. Score global = moyenne de TOUTES les feuilles (pas des domaines) ──
+  // ── 5. Score global = moyenne de TOUTES les feuilles (pas des domaines) ──
   const allLeafScores = Object.values(leafAvgs)
   const globalScore = allLeafScores.length > 0
     ? round2(allLeafScores.reduce((a, b) => a + b, 0) / allLeafScores.length)
     : null
 
-  // ── 7. Arbre de compétences (nœuds + noms) ──
+  // ── 6. Arbre de compétences (nœuds + noms) ──
   const { data: competencyNodes } = await admin
     .from('competency_tree')
     .select('id, parent_id, name, depth, is_leaf')
@@ -135,7 +126,7 @@ export async function computeTestScores(
     nodeNameMap[n.id] = n.name
   }
 
-  // ── 8. Score domaine = moyenne des scores feuilles enfants (NON-NÉGOCIABLE) ──
+  // ── 7. Score domaine = moyenne des scores feuilles enfants (NON-NÉGOCIABLE) ──
   const domainAvgs: Record<string, number> = {}
   for (const node of (competencyNodes ?? []).filter((n) => n.depth === 0)) {
     const childLeafIds = (competencyNodes ?? [])
@@ -147,7 +138,7 @@ export async function computeTestScores(
     }
   }
 
-  // ── 9. Stats normatives (nécessaires pour les percentiles ET le profil K-Means) ──
+  // ── 8. Stats normatives (nécessaires pour les percentiles) ──
   const normativeMap: Record<string, { mean: number; std_dev: number }> = {}
   const { data: normStats } = await admin
     .from('normative_stats')
@@ -173,50 +164,7 @@ export async function computeTestScores(
     return zToPercentile((score - stat.mean) / stat.std_dev)
   }
 
-  // ── 10. Attribution du profil K-Means ──
-  let profileId: string | null = null
-  if (clusteringAlgo !== 'none') {
-    const { data: profiles } = await admin
-      .from('profiles')
-      .select('id')
-      .eq('test_definition_id', testDefinitionId)
-
-    const { data: centroids } = await admin
-      .from('profile_centroids')
-      .select('profile_id, competency_node_id, value')
-      .in('profile_id', (profiles ?? []).map((p) => p.id))
-
-    if (centroids && centroids.length > 0 && profiles && profiles.length > 0) {
-      // Calcule la distance euclidienne entre les z-scores du test et chaque centroïde
-      let minDistance = Infinity
-
-      for (const profile of profiles) {
-        const profileCentroids = centroids.filter((c) => c.profile_id === profile.id)
-        let sumSq = 0
-        let dimensions = 0
-
-        for (const centroid of profileCentroids) {
-          const leafScore = leafAvgs[centroid.competency_node_id]
-          const stat      = normativeMap[centroid.competency_node_id]
-          // Sans stats normatives, on ne peut pas calculer le z-score — skip cette dimension
-          if (leafScore === undefined || !stat || stat.std_dev === 0) continue
-          const z    = (leafScore - stat.mean) / stat.std_dev
-          const diff = z - centroid.value
-          sumSq += diff * diff
-          dimensions++
-        }
-
-        if (dimensions === 0) continue
-        const distance = Math.sqrt(sumSq)
-        if (distance < minDistance) {
-          minDistance = distance
-          profileId   = profile.id
-        }
-      }
-    }
-  }
-
-  // ── 11. Construction des résultats ──
+  // ── 9. Construction des résultats ──
   const leafScores: ScoredNode[] = Object.entries(leafAvgs).map(([nodeId, score]) => ({
     nodeId,
     name:       nodeNameMap[nodeId] ?? nodeId,
@@ -233,5 +181,5 @@ export async function computeTestScores(
 
   const globalPercentile = globalScore !== null ? calcPercentile(globalScore, null) : null
 
-  return { globalScore, globalPercentile, profileId, leafScores, domainScores }
+  return { globalScore, globalPercentile, profileId: null, leafScores, domainScores }
 }
