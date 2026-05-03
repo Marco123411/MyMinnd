@@ -356,7 +356,6 @@ export async function declineContactRequestAction(
           athleteName: athleteFirstName,
           coachName: coachFullName,
           coachMessage: parsed.data.coach_response_message ?? null,
-          marketplaceUrl: `${getAppUrl()}/marketplace`,
         }),
       })
       if (emailError) {

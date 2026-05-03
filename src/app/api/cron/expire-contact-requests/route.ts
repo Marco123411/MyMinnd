@@ -53,7 +53,6 @@ export async function GET(request: NextRequest) {
 
   const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
   const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'MINND <noreply@myminnd.com>'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://myminnd.com'
 
   // Préchargement en bulk des identités (évite N+1)
   const athleteIds = Array.from(new Set(rows.map((r) => r.athlete_user_id)))
@@ -90,7 +89,6 @@ export async function GET(request: NextRequest) {
           react: ContactRequestExpiredEmail({
             athleteName: athleteFirstName,
             coachName: coachFullName,
-            marketplaceUrl: `${appUrl}/marketplace`,
           }),
         })
         if (emailError) {
