@@ -4,12 +4,10 @@ import { FileDown } from 'lucide-react'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getClientTestDetail } from '@/app/actions/client-data'
-import { getProfileIntelligenceData } from '@/app/actions/profile-intelligence'
 import { RadarChart } from '@/components/ui/radar-chart'
 import { SubcompetenceBar } from '@/components/test/SubcompetenceBar'
 import { ProfileCard } from '@/components/client/ProfileCard'
-import { ClientProfileView } from '@/components/profile-intelligence/ClientProfileView'
-import { ProfileTeaser } from '@/components/profile-intelligence/ProfileTeaser'
+import { ProfileTeaser } from '@/components/test/ProfileTeaser'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -58,10 +56,7 @@ export default async function ClientResultsPage({ params }: PageProps) {
   const hasCoach = clientRow?.coach_id !== null && clientRow?.coach_id !== undefined
   const displayMode: 'teaser' | 'full' = hasCoach ? 'full' : 'teaser'
 
-  const [detail, intelligenceData] = await Promise.all([
-    getClientTestDetail(testId),
-    getProfileIntelligenceData(testId),
-  ])
+  const detail = await getClientTestDetail(testId)
 
   if (!detail) notFound()
 
@@ -264,14 +259,6 @@ export default async function ClientResultsPage({ params }: PageProps) {
               ))}
             </ul>
           </div>
-        </div>
-      )}
-
-      {/* Vue intelligence profil (Complete / Expert uniquement) */}
-      {intelligenceData && !isDiscovery && (
-        <div>
-          <h2 className="text-lg font-semibold text-[#141325] mb-4">Analyse de profil détaillée</h2>
-          <ClientProfileView data={intelligenceData} />
         </div>
       )}
 
