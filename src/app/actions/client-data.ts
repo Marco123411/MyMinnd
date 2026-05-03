@@ -699,7 +699,6 @@ export interface ClientNavVisibility {
   hasExercises: boolean
   hasSessions: boolean
   hasTests: boolean
-  hasCognitive: boolean
   hasProgramme: boolean
 }
 
@@ -709,10 +708,10 @@ export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { hasExercises: false, hasSessions: false, hasTests: false, hasCognitive: false, hasProgramme: false }
+    return { hasExercises: false, hasSessions: false, hasTests: false, hasProgramme: false }
   }
 
-  const [exercises, sessions, tests, cognitive, programmes] = await Promise.all([
+  const [exercises, sessions, tests, programmes] = await Promise.all([
     supabase
       .from('exercises')
       .select('id', { count: 'exact', head: true })
@@ -730,11 +729,6 @@ export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
       .eq('status', 'completed')
       .limit(1),
     supabase
-      .from('cognitive_sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .limit(1),
-    supabase
       .from('programmes')
       .select('id', { count: 'exact', head: true })
       .eq('client_id', user.id)
@@ -746,7 +740,6 @@ export async function getClientNavVisibility(): Promise<ClientNavVisibility> {
     hasExercises: (exercises.count ?? 0) > 0,
     hasSessions: (sessions.count ?? 0) > 0,
     hasTests: (tests.count ?? 0) > 0,
-    hasCognitive: (cognitive.count ?? 0) > 0,
     hasProgramme: (programmes.count ?? 0) > 0,
   }
 }

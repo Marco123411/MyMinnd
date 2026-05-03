@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { StatsCards } from '@/components/coach/StatsCards'
 import { AlertsList, type CoachAlert } from '@/components/coach/AlertsList'
 import { Badge } from '@/components/ui/badge'
-import { UserPlus, Brain } from 'lucide-react'
-import { getCoachCognitiveStatsAction } from '@/app/actions/cognitive-results'
+import { UserPlus } from 'lucide-react'
 
 export default async function CoachPage() {
   const supabase = await createClient()
@@ -72,7 +71,6 @@ export default async function CoachPage() {
     { data: recentTestRows },
     { data: pendingTests },
     { data: recentResults },
-    { data: cognitiveStats },
   ] = await Promise.all([
     // Tests complétés dans les 3 derniers mois pour ces clients
     // Croise par client_id (tests assignés par coach) ET user_id (tests auto-démarrés)
@@ -115,8 +113,6 @@ export default async function CoachPage() {
       .eq('status', 'completed')
       .order('completed_at', { ascending: false })
       .limit(5),
-    // Stats cognitives (widget)
-    getCoachCognitiveStatsAction(),
   ])
 
   // Calcul des alertes en mémoire
@@ -190,40 +186,6 @@ export default async function CoachPage() {
         testsEnvoyesMois={testsEnvoyesMois ?? 0}
         tauxCompletion={tauxCompletion}
       />
-
-      {/* Widget tests cognitifs */}
-      {cognitiveStats && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="h-4 w-4 text-[#7069F4]" />
-              Tests cognitifs
-              <Badge variant="secondary" className="ml-auto text-xs">
-                {cognitiveStats.count} ce mois
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {cognitiveStats.recent.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun test cognitif complété récemment.</p>
-            ) : (
-              <ul className="space-y-2">
-                {cognitiveStats.recent.map((s) => {
-                  const client = s.computed_metrics ? clientByUserId.get(s.id) : null
-                  return (
-                    <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="font-medium">{s.test_name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {s.completed_at ? new Date(s.completed_at).toLocaleDateString('fr-FR') : ''}
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Alertes */}
