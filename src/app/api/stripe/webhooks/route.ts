@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
-import { createDispatch } from '@/lib/dispatch'
 import type { SubscriptionTier, SubscriptionStatus } from '@/types'
 
 const WEBHOOK_SECRET: string = process.env.STRIPE_WEBHOOK_SECRET ?? ''
@@ -119,15 +118,6 @@ async function handleOneTimePaymentCheckout(session: Stripe.Checkout.Session, us
       .update({ payment_id: payment.id, status: 'pending' })
       .eq('id', testId)
     if (testError) throw new Error(`Mise à jour test échouée: ${testError.message}`)
-  }
-
-  // Level 3 : créer le dispatch admin (étape 11)
-  if (levelSlug === 'expert' && testId && payment?.id) {
-    const { error: dispatchError } = await createDispatch(userId, testId, payment.id)
-    if (dispatchError) {
-      // On log sans relancer — le paiement est enregistré, le dispatch peut être créé manuellement
-      console.error('Erreur création dispatch Level 3:', dispatchError)
-    }
   }
 }
 

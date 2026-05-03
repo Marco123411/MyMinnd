@@ -378,56 +378,6 @@ export interface Payment {
 }
 
 // ============================================================
-// Dispatch types — workflow mission expert Level 3
-// ============================================================
-
-export type DispatchStatus =
-  | 'nouveau'
-  | 'en_cours'
-  | 'dispatche'
-  | 'accepte'
-  | 'en_session'
-  | 'termine'
-  | 'annule'
-
-export interface Dispatch {
-  id: string
-  client_id: string
-  test_id: string
-  payment_id: string
-  status: DispatchStatus
-  expert_id: string | null
-  dispatched_at: string | null
-  accepted_at: string | null
-  contacted_at: string | null
-  completed_at: string | null
-  expert_payment_id: string | null
-  notes_admin: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface DispatchWithDetails extends Dispatch {
-  client_nom: string
-  client_prenom: string | null
-  client_context: string | null
-  client_sport: string | null
-  test_score_global: number | null
-  test_profile_name: string | null
-  test_profile_color: string | null
-  expert_nom: string | null
-  expert_prenom: string | null
-}
-
-export interface AvailableExpert {
-  id: string
-  nom: string
-  prenom: string | null
-  context: string | null
-  subscription_tier: 'pro' | 'expert'
-}
-
-// ============================================================
 // Exercises — bibliothèque + exercices interactifs MINND
 // ============================================================
 
@@ -521,71 +471,6 @@ export interface InteractiveExerciseResult {
   autonomous_session_id: string | null
   data: Record<string, unknown>
   created_at: string
-}
-
-// ============================================================
-// MARKETPLACE — Profils experts + Avis vérifiés
-// ============================================================
-
-export type ExpertPublicCible = ClientNiveau | 'jeunes'
-
-export interface ExpertProfile {
-  id: string
-  user_id: string
-  photo_url: string | null
-  titre: string
-  specialites: string[]
-  sports: string[]
-  contexts_couverts: ClientContext[]
-  public_cible: ExpertPublicCible[]
-  localisation: string
-  tarif_seance: number | null
-  bio: string
-  badge_certifie: boolean
-  nb_profils_analyses: number
-  disponibilites: Record<string, unknown> | null
-  note_moyenne: number
-  nb_avis: number
-  taux_reponse: number
-  is_visible: boolean
-  created_at: string
-  updated_at: string
-}
-
-// Profil expert enrichi avec les infos utilisateur (pour l'affichage marketplace)
-export interface ExpertProfileWithUser extends ExpertProfile {
-  nom: string
-  prenom: string | null
-  email?: string
-}
-
-export interface Review {
-  id: string
-  expert_user_id: string
-  reviewer_user_id: string
-  dispatch_id: string
-  rating: number
-  comment: string | null
-  expert_response: string | null
-  is_published: boolean
-  is_edited: boolean
-  edited_before: string | null
-  created_at: string
-  updated_at: string
-  // Champs calculés pour l'affichage
-  reviewer_display_name?: string  // "Prénom N."
-}
-
-export interface ExpertFilters {
-  sport?: string
-  context?: ClientContext
-  public_cible?: ExpertPublicCible
-  localisation?: string
-  specialite?: string
-  tarif_min?: number
-  tarif_max?: number
-  note_min?: number
-  sortBy?: 'pertinence' | 'note' | 'prix' | 'nb_profils'
 }
 
 // ============================================================
@@ -707,26 +592,6 @@ export interface AdminUser extends User {
   test_count: number
 }
 
-export interface AdminExpertWithStats {
-  user_id: string
-  nom: string
-  prenom: string | null
-  email: string
-  subscription_tier: SubscriptionTier
-  badge_certifie: boolean
-  is_visible: boolean
-  nb_dispatches: number
-  note_moyenne: number
-  nb_avis: number
-  taux_reponse: number
-  last_login_at: string | null
-  // Onboarding checklist
-  has_photo: boolean
-  has_bio: boolean
-  has_titre: boolean
-  has_specialites: boolean
-}
-
 export interface MonitoringMetric {
   key: string
   label: string
@@ -750,11 +615,6 @@ export interface AdminDashboardStats {
   mrr_this_month: number
   // Inscriptions
   signups_this_week: number
-  // Dispatches
-  dispatches_pending: number
-  // Alertes
-  alert_pending_2h: number
-  alert_expert_4h: number
 }
 
 export interface AdminContentExercise {
