@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { Lock, Share2, ArrowRight } from 'lucide-react'
+import { Lock, Share2 } from 'lucide-react'
 import { RadarChart } from '@/components/ui/radar-chart'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -255,46 +254,12 @@ export function ProfileTeaser({
             <h3 className="text-lg font-bold text-[#1A1A2E] mb-2">
               Contenu verrouillé
             </h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground">
               Débloquez votre analyse complète avec un préparateur mental certifié MINND.
             </p>
-            <Button asChild className="bg-[#20808D] hover:bg-[#1a6b76]">
-              <Link href="/marketplace">
-                Trouver un préparateur <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </Button>
           </Card>
         </div>
       </div>
-
-      {/* Section 6 — CTA sticky en bas */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t shadow-lg p-4 sm:hidden">
-        <Button
-          asChild
-          className="w-full h-12 bg-[#20808D] hover:bg-[#1a6b76] text-base"
-        >
-          <Link href="/marketplace">
-            Trouver un préparateur mental <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
-
-      {/* Section 6 — CTA desktop (non-sticky, après overlay) */}
-      <Card className="hidden sm:block p-8 bg-gradient-to-r from-[#20808D] to-[#1a6b76] text-white text-center">
-        <h3 className="text-2xl font-bold mb-2">Débloquez votre analyse complète</h3>
-        <p className="text-base mb-4 text-white/90">
-          Votre préparateur recevra vos résultats et pourra vous accompagner.
-        </p>
-        <Button
-          asChild
-          size="lg"
-          className="bg-[#FFC553] text-[#1A1A2E] hover:bg-[#e6b14b] h-12 px-8"
-        >
-          <Link href="/marketplace">
-            Trouver un préparateur mental <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
-        </Button>
-      </Card>
     </div>
   )
 }

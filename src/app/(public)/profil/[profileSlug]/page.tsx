@@ -175,10 +175,6 @@ export default async function ProfilePublicPage({ params }: PageProps) {
           <Link href="/" className="hover:underline">
             Retour à l&apos;accueil
           </Link>
-          <span className="mx-2">·</span>
-          <Link href="/marketplace" className="hover:underline">
-            Trouver un préparateur mental
-          </Link>
         </p>
       </div>
     </div>
